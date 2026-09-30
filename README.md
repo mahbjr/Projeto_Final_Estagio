@@ -1,0 +1,1 @@
+Repositório dosistema web de Ordens de Serviço em CodeIgniter, responsivo para celular, cobrindo o ciclo completo de uma OS de energia: cadastro, atendimento em campo, controle de estoque de medidores, relatórios e anexos de fotos. O sistema será executado em ambiente local ou de demonstração, sem deploy na AWS.
