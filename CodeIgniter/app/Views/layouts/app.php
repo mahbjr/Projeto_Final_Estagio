@@ -18,7 +18,7 @@
     </a>
     <button class="mobile-menu icon-button" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="Abrir navegação" data-nav-toggle><?= heroicon('bars-3', 'outline', 'icon') ?></button>
     <nav class="app-navigation" id="main-navigation" aria-label="Navegação principal">
-        <?php foreach ([['inicio', 'inicio', 'home', 'Visão geral'], ['clientes.index', 'clientes', 'building-office-2', 'Clientes'], ['usuarios.index', 'usuarios', 'users', 'Equipe']] as [$permission, $path, $icon, $label]): ?>
+        <?php foreach ([['inicio', 'inicio', 'home', 'Visão geral'], ['clientes.index', 'clientes', 'building-office-2', 'Clientes'], ['usuarios.index', 'usuarios', 'users', 'Equipe'], ['medidores.index', 'medidores', 'cube', 'Estoque']] as [$permission, $path, $icon, $label]): ?>
             <?php if ($can($permission)): ?>
                 <a class="nav-item <?= ($active ?? '') === $path ? 'is-active' : '' ?>" href="<?= site_url($path) ?>" <?= ($active ?? '') === $path ? 'aria-current="page"' : '' ?>><?= heroicon($icon, 'outline', 'icon') ?><span><?= esc($label) ?></span></a>
             <?php endif ?>

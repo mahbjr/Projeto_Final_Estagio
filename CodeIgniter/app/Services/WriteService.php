@@ -41,6 +41,7 @@ abstract class WriteService
             $this->db->transRollback();
             $this->db->resetTransStatus();
             if ($e instanceof DatabaseException) {
+                log_message('error', 'Falha transacional em {service}; código {code}.', ['service' => static::class, 'code' => $e->getCode()]);
                 // SQL, credentials and password hashes must never reach the form.
                 throw new FormException(['operacao' => 'Não foi possível salvar. Verifique se os identificadores já estão cadastrados.']);
             }

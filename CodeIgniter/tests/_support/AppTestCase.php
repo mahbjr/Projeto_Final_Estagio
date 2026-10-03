@@ -56,12 +56,12 @@ abstract class AppTestCase extends CIUnitTestCase
 
     protected function userInput(array $overrides = []): array
     {
-        return $overrides + ['nome_usu' => 'novo@teste.example', 'papel_usu' => 'operador', 'ativo_usu' => '1', 'senha' => 'novaSenha123', 'confirmacao' => 'novaSenha123'];
+        return $overrides + ['nome_completo_usu' => 'Funcionário de Teste', 'cpf_usu' => '12345678900', 'cargo_usu' => 'Assistente', 'nome_usu' => 'novo@teste.example', 'papel_usu' => 'operador', 'ativo_usu' => '1', 'senha' => 'novaSenha123', 'confirmacao' => 'novaSenha123'];
     }
 
     protected function technicalInput(array $overrides = []): array
     {
-        return $overrides + $this->userInput(['papel_usu' => 'eletricista']) + ['nome_ele' => 'Técnico de Teste', 'cpf_ele' => '12345678900', 'telefone_ele' => '(85) 99999-0000', 'matricula_ele' => 'ELE-TESTE-01'];
+        return $overrides + $this->userInput(['papel_usu' => 'eletricista']) + ['telefone_usu' => '(85) 99999-0000', 'matricula_ele' => 'ELE-TESTE-01'];
     }
 
     protected function clearPendingWork(): void

@@ -10,17 +10,17 @@ use CodeIgniter\Exceptions\PageNotFoundException;
 
 class UsuariosController extends ApplicationController
 {
-    private const FIELDS = ['nome_usu', 'papel_usu', 'ativo_usu', 'nome_ele', 'cpf_ele', 'telefone_ele', 'matricula_ele'];
+    private const FIELDS = ['nome_usu', 'papel_usu', 'ativo_usu', 'nome_completo_usu', 'cpf_usu', 'telefone_usu', 'cargo_usu', 'matricula_ele'];
 
     public function index()
     {
         $model = new UsuarioModel();
         $query = $this->request->getGet('q');
         $query = is_string($query) ? mb_substr(trim($query), 0, 150) : '';
-        $model->select('tbl_usuario.id_usu, nome_usu, papel_usu, ativo_usu, nome_ele, matricula_ele')
+        $model->select('tbl_usuario.id_usu, nome_usu, papel_usu, ativo_usu, nome_completo_usu, cargo_usu, matricula_ele')
             ->join('tbl_eletricista', 'usuario_ele = id_usu AND data_exclusao_ele IS NULL', 'left');
         if ($query !== '') {
-            $model->groupStart()->like('nome_usu', $query)->orLike('nome_ele', $query)->groupEnd();
+            $model->groupStart()->like('nome_usu', $query)->orLike('nome_completo_usu', $query)->orLike('cpf_usu', $query)->orLike('cargo_usu', $query)->groupEnd();
         }
         $rows = $model->orderBy('id_usu', 'DESC')->paginate(15);
         return $this->page('usuarios/index', ['title' => 'Funcionários e usuários', 'active' => 'usuarios', 'rows' => $rows, 'pager' => $model->pager, 'query' => $query]);
@@ -82,7 +82,7 @@ class UsuariosController extends ApplicationController
         $record = (new UsuarioModel())->publicFind($id);
         if (!$record) { throw PageNotFoundException::forPageNotFound('Usuário não encontrado.'); }
         $technical = (new EletricistaModel())->where('usuario_ele', $id)->first() ?? [];
-        return $record + array_intersect_key($technical, array_flip(['nome_ele', 'cpf_ele', 'telefone_ele', 'matricula_ele']));
+        return $record + array_intersect_key($technical, array_flip(['matricula_ele']));
     }
 
     private function form(array $record, array $errors = [], int $status = 200, ?string $originalRole = null)
