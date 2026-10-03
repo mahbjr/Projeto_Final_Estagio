@@ -125,4 +125,6 @@ _modules/*
 /results/
 /phpunit.xml
 
+# Documentos e prototipos permanecem apenas no ambiente local.
 /docs/
+/designs/
