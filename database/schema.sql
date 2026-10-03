@@ -55,19 +55,16 @@ CREATE TABLE `tbl_eletricista` (
 
 -- ---------------------------------------------------------------------
 -- 3. TABELA DE CLIENTES (tbl_cliente)
--- Clientes titulares de Unidades Consumidoras (PF ou Empresa)
+-- Empresas contratantes de serviços de campo (B2B)
 -- ---------------------------------------------------------------------
 DROP TABLE IF EXISTS `tbl_cliente`;
 CREATE TABLE `tbl_cliente` (
     `id_cli` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    `nome_cli` VARCHAR(150) NOT NULL COMMENT 'nome ou razao social',
-    `tipo_cli` ENUM('pessoa_fisica', 'empresa') NOT NULL,
-    `cpf_cli` VARCHAR(14) DEFAULT NULL COMMENT 'nullable - quando tipo = pessoa_fisica',
-    `cnpj_cli` VARCHAR(18) DEFAULT NULL COMMENT 'nullable - quando tipo = empresa',
-    `unidade_consumidora_cli` VARCHAR(50) NOT NULL COMMENT 'codigo da UC',
+    `nome_cli` VARCHAR(150) NOT NULL COMMENT 'razao social da empresa contratante',
+    `cnpj_cli` VARCHAR(14) NOT NULL COMMENT '12 caracteres alfanumericos e 2 digitos, sem mascara, maiusculo',
     `email_cli` VARCHAR(120) DEFAULT NULL,
     `telefone_cli` VARCHAR(20) NOT NULL,
-    `endereco_cli` VARCHAR(255) NOT NULL,
+    `endereco_cli` VARCHAR(255) NOT NULL COMMENT 'endereco comercial, nao local de atendimento',
     `bairro_cli` VARCHAR(100) NOT NULL,
     `cidade_cli` VARCHAR(100) NOT NULL,
     `estado_cli` CHAR(2) NOT NULL,
@@ -77,8 +74,6 @@ CREATE TABLE `tbl_cliente` (
     `data_atualizacao_cli` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     `data_exclusao_cli` DATETIME DEFAULT NULL,
     PRIMARY KEY (`id_cli`),
-    UNIQUE KEY `uk_cli_unidade_consumidora` (`unidade_consumidora_cli`),
-    UNIQUE KEY `uk_cli_cpf` (`cpf_cli`),
     UNIQUE KEY `uk_cli_cnpj` (`cnpj_cli`),
     INDEX `idx_cliente_nome` (`nome_cli`),
     INDEX `idx_cliente_status` (`status_cli`),
@@ -122,6 +117,12 @@ CREATE TABLE `tbl_os` (
     `tipo_oss` ENUM('corte', 'nova_ligacao') NOT NULL,
     `status_oss` ENUM('aberta', 'em_andamento', 'concluida', 'cancelada') NOT NULL DEFAULT 'aberta',
     `descricao_oss` TEXT NOT NULL,
+    `unidade_consumidora_oss` VARCHAR(50) NOT NULL COMMENT 'UC atendida, pode receber varias OS',
+    `endereco_oss` VARCHAR(255) NOT NULL COMMENT 'local de atendimento registrado nesta OS',
+    `bairro_oss` VARCHAR(100) NOT NULL,
+    `cidade_oss` VARCHAR(100) NOT NULL,
+    `estado_oss` CHAR(2) NOT NULL,
+    `cep_oss` VARCHAR(10) NOT NULL,
     `data_abertura_oss` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `data_fechamento_oss` DATETIME DEFAULT NULL,
     `data_criacao_oss` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

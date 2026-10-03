@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f5cce40800fa5dae1504b9364f585e6a",
+    "content-hash": "cc3f38e9f4adcbdcb4a07b2a30bbc212",
     "packages": [
         {
             "name": "codeigniter4/framework",
@@ -82,6 +82,36 @@
                 "source": "https://github.com/codeigniter4/CodeIgniter4"
             },
             "time": "2026-07-07T09:23:35+00:00"
+        },
+        {
+            "name": "evelution87/heroicons",
+            "version": "v2.1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/evelution87/heroicons.git",
+                "reference": "7f871a89e2e81b3cb555f747923426524fc6d572"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/evelution87/heroicons/zipball/7f871a89e2e81b3cb555f747923426524fc6d572",
+                "reference": "7f871a89e2e81b3cb555f747923426524fc6d572",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A set of free MIT-licensed high-quality SVG icons for UI development.",
+            "homepage": "https://github.com/evelution87/heroicons",
+            "keywords": [
+                "Heroicons",
+                "evelution87"
+            ],
+            "support": {
+                "source": "https://github.com/evelution87/heroicons/tree/v2.1.5"
+            },
+            "time": "2024-09-02T00:23:50+00:00"
         },
         {
             "name": "laminas/laminas-escaper",

@@ -21,6 +21,7 @@ class Validation extends BaseConfig
      * @var list<string>
      */
     public array $ruleSets = [
+        \App\Validation\BusinessRules::class,
         Rules::class,
         FormatRules::class,
         FileRules::class,

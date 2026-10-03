@@ -1,0 +1,1 @@
+<?php if (!empty($errors)): ?><div class="alert alert-danger" role="alert"><strong>Não foi possível concluir.</strong><ul class="mb-0 mt-2"><?php foreach ($errors as $message): ?><li><?= esc($message) ?></li><?php endforeach ?></ul></div><?php endif ?>
