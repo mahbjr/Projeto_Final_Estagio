@@ -19,6 +19,10 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
+    public static function auth(bool $getShared = true): \App\Services\AuthService
+    {
+        return $getShared ? static::getSharedInstance('auth') : new \App\Services\AuthService();
+    }
     /*
      * public static function example($getShared = true)
      * {
