@@ -3,7 +3,7 @@
 <?php $editing = isset($record['id_cli']); ?>
 <div class="page-heading"><div><a class="back-link" href="<?= site_url('clientes') ?>"><?= heroicon('arrow-left', 'outline', 'icon') ?> Clientes</a><h1><?= esc($title) ?></h1><p>Dados da empresa contratante. Campos com * são obrigatórios.</p></div></div>
 <?= $this->include('components/errors') ?>
-<form class="panel form-panel" action="<?= site_url($editing ? 'clientes/' . $record['id_cli'] . '/atualizar' : 'clientes') ?>" method="post">
+<form class="panel form-panel" action="<?= site_url($editing ? 'clientes/' . $record['id_cli'] . '/atualizar' : 'clientes') ?>" method="post" data-validate>
     <?= csrf_field() ?><h2>Dados comerciais</h2><div class="row g-3">
         <?= app_field('nome_cli', 'Razão social', $record, $errors, ['required' => true, 'max' => 150]) ?>
         <?= app_field('cnpj_cli', 'CNPJ', $record, $errors, ['required' => true, 'max' => 18, 'help' => 'Aceita letras e números, com ou sem máscara.']) ?>

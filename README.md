@@ -1,6 +1,6 @@
 # GPM Soluções — serviços de campo B2B
 
-Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Esta etapa entrega autenticação por sessão, permissões e cadastros de funcionários/empresas. OS, estoque, relatórios e anexos serão implementados posteriormente.
+Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Esta etapa entrega autenticação, permissões, funcionários com dados pessoais/cargo, empresas e medidores com transferências auditadas. Atendimento de OS, instalação/retirada em campo, relatórios e anexos permanecem para etapas posteriores.
 
 ## Executar
 
@@ -85,4 +85,23 @@ Views baseadas em `designs/`, logo oficial, Heroicons, Bootstrap 5.3.8 e Inter l
 - [Retrospectiva](docs/RETROSPECTIVA.md)
 - [Entrega, validação e organização das branches](docs/EntregaAutenticacao.md)
 
-O trabalho está na branch `feature/autenticacao-acesso-b2b`, organizado em seis commits e branches locais cumulativas. PRs ainda não foram publicados.
+A autenticação foi desenvolvida em `feature/autenticacao-acesso-b2b`; a ampliação atual está em `feature/cadastros-base`. Consulte a entrega dos cadastros base para validação e situação dos PRs.
+
+
+## Cadastros base e migração de funcionários
+
+Acesse `/usuarios`, `/clientes` e `/medidores`. Gestor administra funcionários e estoque; Operador consulta medidores/histórico e gerencia empresas sem excluí-las. Cargo não altera permissões.
+
+Antes de migrar um banco existente, faça backup completo e suspenda escritas de todas as instâncias da aplicação. Em ambiente de demonstração, execute em `CodeIgniter/`:
+
+```bash
+php spark migrate -g demo
+```
+
+A migração `CentralizeFuncionarioData` verifica CPF inválido/duplicado e técnicos sem conta antes do DDL. Copia os dados pessoais para a conta, preserva IDs, hashes, auditoria, papéis e FKs, e remove as três colunas pessoais do cadastro técnico. Contas sem informação permanecem com campos nulos, inclusive cargo; o login funciona e a próxima edição exige preenchimento. Não reaplique seeds em banco existente.
+
+DDL MySQL não tem rollback transacional. Em falha parcial, mantenha as escritas suspensas e restaure o backup completo antes de repetir; `migrate:rollback` não desfaz esta migração. Nunca execute os scripts de recriação no banco original. Estados legados de medidores não são corrigidos automaticamente.
+
+Testes de concorrência usam processos PHP (`pcntl`) e conexões separadas dentro de um único teste. Continue executando a suíte sequencialmente no MySQL `_tests`.
+
+Veja [entrega dos cadastros base](docs/EntregaCadastrosBase.md) para evidências e limitações.

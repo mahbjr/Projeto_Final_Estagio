@@ -9,5 +9,5 @@
         <input class="form-control <?= $error ? 'is-invalid' : '' ?>" type="<?= esc($type) ?>" id="<?= esc($name) ?>" name="<?= esc($name) ?>" value="<?= esc((string) $value) ?>" <?= !empty($options['required']) ? 'required' : '' ?> <?= isset($options['max']) ? 'maxlength="' . (int) $options['max'] . '"' : '' ?> <?= isset($options['autocomplete']) ? 'autocomplete="' . esc($options['autocomplete']) . '"' : '' ?> <?= $error ? 'aria-invalid="true" aria-describedby="' . esc($name) . '-error"' : '' ?>>
     <?php endif ?>
     <?php if ($error): ?><div class="invalid-feedback" id="<?= esc($name) ?>-error"><?= esc($error) ?></div><?php endif ?>
-    <?php if (isset($options['help'])): ?><div class="form-text"><?= esc($options['help']) ?></div><?php endif ?>
+    <?php if (isset($options['help'])): ?><div class="form-text" id="<?= esc($name) ?>-help"><?= esc($options['help']) ?></div><?php endif ?>
 </div>
