@@ -10,7 +10,7 @@ $routes->post('logout', 'AuthController::logout', ['as' => 'logout']);
 $routes->get('/', 'Home::index', ['as' => 'entrada']);
 $routes->get('inicio', 'Home::dashboard', ['as' => 'inicio']);
 
-foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController'] as $resource => $controller) {
+foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController'] as $resource => $controller) {
     $routes->get($resource, $controller . '::index', ['as' => $resource . '.index']);
     $routes->get($resource . '/novo', $controller . '::new', ['as' => $resource . '.new']);
     $routes->post($resource, $controller . '::create', ['as' => $resource . '.create']);
@@ -19,3 +19,6 @@ foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController'
     $routes->post($resource . '/(:num)/atualizar', $controller . '::update/$1', ['as' => $resource . '.update']);
     $routes->post($resource . '/(:num)/excluir', $controller . '::delete/$1', ['as' => $resource . '.delete']);
 }
+
+$routes->post('medidores/(:num)/enviar', 'MedidoresController::send/$1', ['as' => 'medidores.send']);
+$routes->post('medidores/(:num)/devolver', 'MedidoresController::returnToDepot/$1', ['as' => 'medidores.return']);
