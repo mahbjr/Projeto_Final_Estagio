@@ -25,7 +25,10 @@ class Filters extends BaseFilters
      * or [filter_name => [classname1, classname2, ...]]
      */
     public array $aliases = [
-        'csrf'          => CSRF::class,
+        'auth'         => \App\Filters\AuthFilter::class,
+        'permission'   => \App\Filters\PermissionFilter::class,
+        'nocache'      => \App\Filters\NoCacheFilter::class,
+        'csrf'          => \App\Filters\CsrfFilter::class,
         'toolbar'       => DebugToolbar::class,
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
@@ -52,12 +55,9 @@ class Filters extends BaseFilters
     public array $required = [
         'before' => [
             'forcehttps', // Force Global Secure Requests
-            'pagecache',  // Web Page Caching
         ],
         'after' => [
-            'pagecache',   // Web Page Caching
             'performance', // Performance Metrics
-            'toolbar',     // Debug Toolbar
         ],
     ];
 
@@ -72,13 +72,13 @@ class Filters extends BaseFilters
      */
     public array $globals = [
         'before' => [
-            // 'honeypot',
-            // 'csrf',
-            // 'invalidchars',
+            'auth',
+            'permission',
+            'csrf',
         ],
         'after' => [
-            // 'honeypot',
-            // 'secureheaders',
+            'nocache',
+            'secureheaders',
         ],
     ];
 

@@ -2,10 +2,15 @@
 
 namespace App\Controllers;
 
-class Home extends BaseController
+class Home extends ApplicationController
 {
-    public function index(): string
+    public function index()
     {
-        return view('welcome_message');
+        return redirect()->to(site_url('inicio'));
+    }
+
+    public function dashboard()
+    {
+        return $this->page('home', ['title' => 'Visão geral', 'active' => 'inicio']);
     }
 }
