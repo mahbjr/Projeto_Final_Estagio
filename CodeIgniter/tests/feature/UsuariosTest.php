@@ -27,9 +27,9 @@ final class UsuariosTest extends AppTestCase
         $this->requestAs(1, 'POST', 'usuarios', $input)->assertStatus(303);
         $created = $this->db->table('tbl_usuario')->where('nome_usu', $input['nome_usu'])->get()->getRowArray();
         $technical = $this->db->table('tbl_eletricista')->where('usuario_ele', $created['id_usu'])->get()->getRowArray();
-        $this->assertSame('123.456.789-00', $technical['cpf_ele']);
+        $this->assertSame('123.456.789-00', $created['cpf_usu']);
         $this->requestAs(null, 'POST', 'login', ['identificador' => $input['nome_usu'], 'senha' => 'novaSenha123'])->assertStatus(303);
-        $this->requestAs(1, 'POST', 'usuarios', $this->technicalInput(['nome_usu' => 'segundo@teste.example', 'cpf_ele' => '123.456.789-00', 'matricula_ele' => 'ELE-TESTE-02']))->assertStatus(422);
+        $this->requestAs(1, 'POST', 'usuarios', $this->technicalInput(['nome_usu' => 'segundo@teste.example', 'cpf_usu' => '123.456.789-00', 'matricula_ele' => 'ELE-TESTE-02']))->assertStatus(422);
         $this->assertSame(0, $this->db->table('tbl_usuario')->where('nome_usu', 'segundo@teste.example')->countAllResults());
     }
 
@@ -47,7 +47,7 @@ final class UsuariosTest extends AppTestCase
     public function testBlankPasswordPreservesHashAndNewPasswordWorks(): void
     {
         $existing = $this->db->table('tbl_usuario')->where('id_usu', 2)->get()->getRowArray();
-        $input = ['nome_usu' => $existing['nome_usu'], 'papel_usu' => 'operador', 'ativo_usu' => '1', 'senha' => '', 'confirmacao' => ''];
+        $input = ['nome_usu' => $existing['nome_usu'], 'papel_usu' => 'operador', 'ativo_usu' => '1', 'senha' => '', 'confirmacao' => ''] + $existing;
         $this->requestAs(1, 'POST', 'usuarios/2/atualizar', $input)->assertStatus(303);
         $this->assertSame($existing['senha_usu'], $this->db->table('tbl_usuario')->where('id_usu', 2)->get()->getRowArray()['senha_usu']);
         $input['senha'] = $input['confirmacao'] = 'alterada123';
@@ -65,7 +65,7 @@ final class UsuariosTest extends AppTestCase
         $input['papel_usu'] = 'eletricista';
         $this->requestAs(1, 'POST', 'usuarios/2/atualizar', $input)->assertStatus(422);
         $technical = $this->db->table('tbl_eletricista')->where('id_ele', 1)->get()->getRowArray();
-        $input = $technical + ['nome_usu' => 'eletricista1@energia.com.br', 'ativo_usu' => '1', 'senha' => '', 'confirmacao' => ''];
+        $input = $technical + ['nome_usu' => 'eletricista1@energia.com.br', 'ativo_usu' => '1', 'senha' => '', 'confirmacao' => ''] + $this->db->table('tbl_usuario')->where('id_usu', 3)->get()->getRowArray();
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(303);
         $input['papel_usu'] = 'gestor';
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(422);
@@ -79,6 +79,23 @@ final class UsuariosTest extends AppTestCase
         $this->requestAs(1, 'POST', 'usuarios/1/atualizar', $this->userInput(['nome_usu' => 'gestor@energia.com.br', 'papel_usu' => 'gestor', 'ativo_usu' => '0']))->assertStatus(422);
         $this->expectException(FormException::class);
         (new FuncionarioService())->delete(1, 2);
+    }
+
+    public function testPersonalFieldsRequiredForAllRolesAndReservedAfterDeletion(): void
+    {
+        foreach (['gestor', 'operador', 'eletricista'] as $role) {
+            foreach (['nome_completo_usu', 'cpf_usu', 'cargo_usu'] as $field) {
+                $this->requestAs(1, 'POST', 'usuarios', $this->technicalInput(['papel_usu' => $role, $field => '   ']))->assertStatus(422);
+            }
+        }
+        $this->requestAs(1, 'POST', 'usuarios', $this->userInput(['cpf_usu' => '123 45678900']))->assertStatus(422);
+        $this->requestAs(1, 'POST', 'usuarios', $this->userInput())->assertStatus(303);
+        $id = (int) $this->db->table('tbl_usuario')->where('nome_usu', 'novo@teste.example')->get()->getRow()->id_usu;
+        $this->requestAs(1, 'POST', "usuarios/$id/excluir")->assertStatus(303);
+        $this->requestAs(1, 'POST', 'usuarios', $this->userInput(['nome_usu' => 'outro@teste.example']))->assertStatus(422);
+        $this->db->table('tbl_usuario')->where('id_usu', 2)->update(['nome_completo_usu' => null, 'cpf_usu' => null, 'cargo_usu' => null]);
+        $this->requestAs(2, 'GET', 'inicio')->assertStatus(200);
+        $this->requestAs(1, 'POST', 'usuarios/2/atualizar', ['nome_usu' => 'operador@energia.com.br', 'papel_usu' => 'operador', 'ativo_usu' => '1'])->assertStatus(422);
     }
 
     public static function statuses(): array
@@ -102,7 +119,7 @@ final class UsuariosTest extends AppTestCase
     public function testCustodyAndPendingOrdersBlockDeactivation(): void
     {
         $technical = $this->db->table('tbl_eletricista')->where('id_ele', 1)->get()->getRowArray();
-        $input = $technical + ['nome_usu' => 'eletricista1@energia.com.br', 'ativo_usu' => '0', 'senha' => '', 'confirmacao' => ''];
+        $input = $technical + ['nome_usu' => 'eletricista1@energia.com.br', 'ativo_usu' => '0', 'senha' => '', 'confirmacao' => ''] + $this->db->table('tbl_usuario')->where('id_usu', 3)->get()->getRowArray();
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(422);
         $this->db->table('tbl_os')->update(['status_oss' => 'concluida']);
         $this->requestAs(1, 'POST', 'usuarios/3/excluir')->assertStatus(422);

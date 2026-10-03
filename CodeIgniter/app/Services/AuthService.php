@@ -34,9 +34,9 @@ class AuthService
                 return null;
             }
             $user['id_ele'] = $technical['id_ele'];
-            $user['display_name'] = $technical['nome_ele'];
+            $user['display_name'] = $user['nome_completo_usu'] ?: $user['nome_usu'];
         } else {
-            $user['display_name'] = $user['nome_usu'];
+            $user['display_name'] = $user['nome_completo_usu'] ?: $user['nome_usu'];
         }
         $session->set('auth_last_activity', time());
         return $this->user = $user;

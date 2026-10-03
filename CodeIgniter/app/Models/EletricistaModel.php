@@ -9,7 +9,7 @@ class EletricistaModel extends Model
     protected $table = 'tbl_eletricista';
     protected $primaryKey = 'id_ele';
     protected $returnType = 'array';
-    protected $allowedFields = ['usuario_ele', 'nome_ele', 'cpf_ele', 'telefone_ele', 'matricula_ele'];
+    protected $allowedFields = ['usuario_ele', 'matricula_ele'];
     protected $useSoftDeletes = true;
     protected $useTimestamps = true;
     protected $createdField = 'data_criacao_ele';

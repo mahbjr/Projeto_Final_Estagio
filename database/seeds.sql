@@ -44,9 +44,9 @@ INSERT INTO `tbl_usuario` (`id_usu`, `nome_usu`, `senha_usu`, `papel_usu`, `ativ
 -- 2. CADASTRO TÉCNICO DE ELETRICISTAS (tbl_eletricista)
 -- Vinculados 1:1 com usuários do papel eletricista
 -- ---------------------------------------------------------------------
-INSERT INTO `tbl_eletricista` (`id_ele`, `usuario_ele`, `cpf_ele`, `nome_ele`, `telefone_ele`, `matricula_ele`) VALUES
-(1, 3, '333.333.333-33', 'João Eletricista', '(11) 97123-4567', 'ELE-2024-001'),
-(2, 4, '444.444.444-44', 'Lucas Eletricista', '(11) 97987-6543', 'ELE-2024-002');
+INSERT INTO `tbl_eletricista` (`id_ele`, `usuario_ele`, `matricula_ele`) VALUES
+(1, 3, 'ELE-2024-001'),
+(2, 4, 'ELE-2024-002');
 
 -- ---------------------------------------------------------------------
 -- 3. EMPRESAS CONTRATANTES (tbl_cliente)
@@ -150,3 +150,11 @@ INSERT INTO `tbl_anexo` (`id_anx`, `ordem_servico_anx`, `arquivo_anx`, `tipo_anx
 (3, 3, 'uploads/os/3/termo_aceite.pdf', 'documento', 'Termo de vistoria e entrega assinado pelo cliente', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+UPDATE tbl_usuario SET nome_completo_usu='Ana Gestora', cpf_usu='111.111.111-11', cargo_usu='Supervisora' WHERE id_usu=1;
+UPDATE tbl_usuario SET nome_completo_usu='Pedro Operador', cpf_usu='222.222.222-22', cargo_usu='Assistente' WHERE id_usu=2;
+UPDATE tbl_usuario SET nome_completo_usu='João Eletricista', cpf_usu='333.333.333-33', telefone_usu='(11) 97123-4567', cargo_usu='Técnico' WHERE id_usu=3;
+UPDATE tbl_usuario SET nome_completo_usu='Lucas Eletricista', cpf_usu='444.444.444-44', telefone_usu='(11) 97987-6543', cargo_usu='Técnico' WHERE id_usu=4;
+UPDATE tbl_medidor SET eletricista_posse_med=NULL, status_med='instalado', localizacao_med='cliente' WHERE id_med=5;
+UPDATE tbl_medidor SET eletricista_posse_med=1, status_med='em_transito', localizacao_med='viatura' WHERE id_med=6;
+INSERT INTO tbl_estoque_mov (medidor_emv, ordem_servico_emv, eletricista_emv, tipo_emv, motivo_emv, origem_emv, destino_emv, quantidade_emv, observacao_emv) VALUES (6,2,1,'entrada','ajuste','cliente','eletricista',1,'Retirada em campo na OS #2');

@@ -29,7 +29,15 @@ class FuncionarioService extends WriteService
                 'senha' => is_string($input['senha'] ?? null) ? $input['senha'] : '',
                 'confirmacao' => is_string($input['confirmacao'] ?? null) ? $input['confirmacao'] : '',
             ];
+            foreach (['nome_completo_usu', 'cpf_usu', 'telefone_usu', 'cargo_usu'] as $field) {
+                $data[$field] = is_string($input[$field] ?? null) ? trim($input[$field]) : '';
+            }
+            $data['cpf_usu'] = Identifiers::cpf($data['cpf_usu']);
             $rules = [
+                'nome_completo_usu' => 'required|max_length[120]',
+                'cpf_usu' => 'required|cpf_formato|' . ($id ? 'is_unique[tbl_usuario.cpf_usu,id_usu,{id_usu}]' : 'is_unique[tbl_usuario.cpf_usu]'),
+                'telefone_usu' => 'permit_empty|max_length[20]',
+                'cargo_usu' => 'required|max_length[80]',
                 'nome_usu' => ['label' => 'Identificador', 'rules' => 'required|max_length[150]|' . ($id ? 'is_unique[tbl_usuario.nome_usu,id_usu,{id_usu}]' : 'is_unique[tbl_usuario.nome_usu]')],
                 'papel_usu' => ['label' => 'Papel', 'rules' => 'required|in_list[gestor,operador,eletricista]'],
                 'ativo_usu' => ['label' => 'Situação', 'rules' => 'required|in_list[0,1]'],
@@ -39,15 +47,11 @@ class FuncionarioService extends WriteService
             if ($id) { $rules['id_usu'] = 'required|is_natural_no_zero'; }
             $technicalData = [];
             if ($role === 'eletricista') {
-                foreach (['nome_ele', 'cpf_ele', 'telefone_ele', 'matricula_ele'] as $field) {
+                foreach (['matricula_ele'] as $field) {
                     $technicalData[$field] = is_string($input[$field] ?? null) ? trim($input[$field]) : '';
                 }
-                $technicalData['cpf_ele'] = Identifiers::cpf($technicalData['cpf_ele']);
                 $technicalData['id_ele'] = $technical['id_ele'] ?? null;
                 $rules += [
-                    'nome_ele' => ['label' => 'Nome completo', 'rules' => 'required|max_length[120]'],
-                    'cpf_ele' => ['label' => 'CPF', 'rules' => 'required|cpf_formato|' . ($technical ? 'is_unique[tbl_eletricista.cpf_ele,id_ele,{id_ele}]' : 'is_unique[tbl_eletricista.cpf_ele]')],
-                    'telefone_ele' => ['label' => 'Telefone', 'rules' => 'permit_empty|max_length[20]'],
                     'matricula_ele' => ['label' => 'Matrícula', 'rules' => 'required|max_length[50]|' . ($technical ? 'is_unique[tbl_eletricista.matricula_ele,id_ele,{id_ele}]' : 'is_unique[tbl_eletricista.matricula_ele]')],
                 ];
                 if ($technical) { $rules['id_ele'] = 'required|is_natural_no_zero'; }
@@ -65,7 +69,7 @@ class FuncionarioService extends WriteService
                     $this->assertNoPendingWork((int) $technical['id_ele']);
                 }
             }
-            $account = array_intersect_key($data, array_flip(['nome_usu', 'papel_usu', 'ativo_usu']));
+            $account = array_intersect_key($data, array_flip(['nome_usu', 'papel_usu', 'ativo_usu', 'nome_completo_usu', 'cpf_usu', 'telefone_usu', 'cargo_usu']));
             if ($data['senha'] !== '') { $account['senha_usu'] = password_hash($data['senha'], PASSWORD_DEFAULT); }
             $users = new UsuarioModel($this->db);
             if ($id) { $users->update($id, $account); }

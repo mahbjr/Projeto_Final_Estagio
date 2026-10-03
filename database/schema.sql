@@ -16,6 +16,10 @@ DROP TABLE IF EXISTS `tbl_usuario`;
 CREATE TABLE `tbl_usuario` (
     `id_usu` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `nome_usu` VARCHAR(150) NOT NULL COMMENT 'login ou email',
+    `nome_completo_usu` VARCHAR(120) DEFAULT NULL,
+    `cpf_usu` VARCHAR(14) DEFAULT NULL,
+    `telefone_usu` VARCHAR(20) DEFAULT NULL,
+    `cargo_usu` VARCHAR(80) DEFAULT NULL,
     `senha_usu` VARCHAR(255) NOT NULL COMMENT 'hash bcrypt/argon2',
     `papel_usu` ENUM('gestor', 'operador', 'eletricista') NOT NULL,
     `ativo_usu` TINYINT(1) NOT NULL DEFAULT 1 COMMENT '1=ativo, 0=inativo',
@@ -23,6 +27,7 @@ CREATE TABLE `tbl_usuario` (
     `data_atualizacao_usu` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     `data_exclusao_usu` DATETIME DEFAULT NULL COMMENT 'soft delete',
     PRIMARY KEY (`id_usu`),
+    UNIQUE KEY `uk_cpf_usu` (`cpf_usu`),
     UNIQUE KEY `uk_nome_usu` (`nome_usu`),
     INDEX `idx_usuario_papel` (`papel_usu`),
     INDEX `idx_usuario_ativo` (`ativo_usu`),
@@ -37,18 +42,13 @@ DROP TABLE IF EXISTS `tbl_eletricista`;
 CREATE TABLE `tbl_eletricista` (
     `id_ele` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `usuario_ele` INT UNSIGNED DEFAULT NULL COMMENT 'UK nullable - 1:1 com tbl_usuario',
-    `cpf_ele` VARCHAR(14) NOT NULL,
-    `nome_ele` VARCHAR(120) NOT NULL,
-    `telefone_ele` VARCHAR(20) DEFAULT NULL,
     `matricula_ele` VARCHAR(50) NOT NULL,
     `data_criacao_ele` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `data_atualizacao_ele` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     `data_exclusao_ele` DATETIME DEFAULT NULL,
     PRIMARY KEY (`id_ele`),
-    UNIQUE KEY `uk_cpf_ele` (`cpf_ele`),
     UNIQUE KEY `uk_usuario_ele` (`usuario_ele`),
     UNIQUE KEY `uk_matricula_ele` (`matricula_ele`),
-    INDEX `idx_eletricista_nome` (`nome_ele`),
     INDEX `idx_eletricista_exclusao` (`data_exclusao_ele`),
     CONSTRAINT `fk_ele_usuario` FOREIGN KEY (`usuario_ele`) REFERENCES `tbl_usuario` (`id_usu`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
