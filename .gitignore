@@ -128,3 +128,21 @@ _modules/*
 # Documentos e prototipos permanecem apenas no ambiente local.
 /docs/
 /designs/
+AGENTS.md
+
+# CodeIgniter temporários e caches
+CodeIgniter/build/
+CodeIgniter/writable/cache/*
+!CodeIgniter/writable/cache/index.html
+CodeIgniter/writable/logs/*
+!CodeIgniter/writable/logs/index.html
+CodeIgniter/writable/session/*
+!CodeIgniter/writable/session/index.html
+CodeIgniter/writable/uploads/*
+!CodeIgniter/writable/uploads/index.html
+CodeIgniter/writable/debugbar/*
+!CodeIgniter/writable/debugbar/index.html
+
+# Backups e variações locais de ambiente
+.env.*
+!.env.example
