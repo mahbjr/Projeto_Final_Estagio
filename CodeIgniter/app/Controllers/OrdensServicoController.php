@@ -77,6 +77,7 @@ final class OrdensServicoController extends ApplicationController
     }
 
     public function startAttendance(int $id) { return $this->attendanceAction($id, 'start'); }
+    public function closeAttendance(int $id) { return $this->attendanceAction($id, 'close'); }
     public function noteAttendance(int $id) { return $this->attendanceAction($id, 'note'); }
 
     private function attendanceAction(int $id, string $action)
@@ -84,12 +85,17 @@ final class OrdensServicoController extends ApplicationController
         $record = $this->record($id);
         $user = service('auth')->user();
         if ((int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
-        $input = $this->safeInput(['observacao_atendimento']);
+        $input = $this->safeInput($action === 'close' ? \App\Services\AtendimentoService::FINAL_FIELDS : ['observacao_atendimento']);
         try {
             $service = new \App\Services\AtendimentoService();
             if ($action === 'start') { $service->start($id, (int) $user['id_usu']); }
+            elseif ($action === 'close') {
+                $final = [];
+                foreach (\App\Services\AtendimentoService::FINAL_FIELDS as $field) { $final[$field] = $this->request->getPost($field) ?? ''; }
+                $service->close($id, $final, (int) $user['id_usu']);
+            }
             else { $service->note($id, $input['observacao_atendimento'], (int) $user['id_usu']); }
-            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', $action === 'start' ? 'Atendimento iniciado.' : 'Observação do atendimento registrada.');
+            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', match ($action) { 'start' => 'Atendimento iniciado.', 'close' => 'OS encerrada. Dados finais e histórico preservados.', default => 'Observação do atendimento registrada.' });
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
     }
 
@@ -103,14 +109,17 @@ final class OrdensServicoController extends ApplicationController
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
     }
 
-    public function answerBeginning(int $id, int $template)
+    public function answerBeginning(int $id, int $template) { return $this->answerChecklist($id, $template, false); }
+    public function answerClosing(int $id, int $template) { return $this->answerChecklist($id, $template, true); }
+
+    private function answerChecklist(int $id, int $template, bool $closing)
     {
         $record = $this->record($id);
         if ((int) $record['eletricista_oss'] !== (int) service('auth')->user()['id_ele']) { return $this->show($id); }
         $input = ['template' => $template, 'respostas' => $this->request->getPost('respostas') ?? [], 'observacoes' => $this->request->getPost('observacoes') ?? []];
         try {
-            (new \App\Services\ChecklistInicioService())->answer($id, $template, $input['respostas'], $input['observacoes'], (int) service('auth')->user()['id_usu']);
-            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Checklist de início registrado.');
+            ($closing ? new \App\Services\ChecklistFechamentoService() : new \App\Services\ChecklistInicioService())->answer($id, $template, $input['respostas'], $input['observacoes'], (int) service('auth')->user()['id_usu']);
+            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', $closing ? 'Checklist de fechamento registrado.' : 'Checklist de início registrado.');
         } catch (FormException $e) { return $this->details($record, $e->errors, 422, $input); }
     }
 
@@ -227,6 +236,6 @@ final class OrdensServicoController extends ApplicationController
         }
         $latestBeginning = [];
         foreach ($evaluations as $evaluation) { if ($evaluation['etapa_cav'] === 'inicio' && !isset($latestBeginning[$evaluation['checklist_cav']])) { $latestBeginning[$evaluation['checklist_cav']] = (int) $evaluation['id_cav']; } }
-        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'availableMeters' => (new MedidorModel())->where('status_med', 'disponivel')->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null)->orderBy('numero_med')->findAll(), 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
+        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'availableMeters' => (new MedidorModel())->where('status_med', 'disponivel')->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null)->orderBy('numero_med')->findAll(), 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
     }
 }

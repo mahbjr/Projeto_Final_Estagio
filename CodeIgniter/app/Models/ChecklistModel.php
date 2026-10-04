@@ -8,7 +8,12 @@ class ChecklistModel extends Model
 {
     public function beginning(string $type): array
     {
-        $templates = $this->where('tipo_os_chk', $type)->where('etapa_chk', 'inicio')->where('ativo_chk', 1)->orderBy('id_chk')->findAll();
+        return $this->forStage($type, 'inicio');
+    }
+
+    public function forStage(string $type, string $stage): array
+    {
+        $templates = $this->where('tipo_os_chk', $type)->where('etapa_chk', $stage)->where('ativo_chk', 1)->orderBy('id_chk')->findAll();
         foreach ($templates as &$template) {
             $template['items'] = (new ChecklistItemModel($this->db))->where('checklist_chi', $template['id_chk'])->orderBy('ordem_chi')->orderBy('id_chi')->findAll();
         }

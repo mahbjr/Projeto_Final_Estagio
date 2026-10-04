@@ -1,6 +1,6 @@
 # GPM Soluções — serviços de campo B2B
 
-Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Fechamento, relatórios e anexos permanecem para etapas posteriores.
+Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e conciliação dos materiais, registrando resultado e dados finais. Relatórios e anexos permanecem para etapas posteriores.
 
 ## Executar
 
@@ -183,3 +183,14 @@ Na própria OS em atendimento, Eletricista registra consumo parcial/integral lim
 Nova ligação permite aplicação do medidor entregue em bom estado na própria posse, com instalação na UC da OS e auditoria. Retirada exige equipamento instalado na UC e empresa da OS; deixa medidor na viatura até o recebimento físico pelo Gestor. Histórico permanece preservado, enquanto instalação atual deixa de apontar equipamento retirado. Só o retorno físico disponibiliza novamente no depósito. Operações são transacionais e recusam estado inválido, vínculo alheio e repetição de aplicação/retirada.
 
 Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechamento, fotos e relatório continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4B aguarda revisão.
+
+
+## Encerramento em campo — etapa 4C
+
+Gestor configura e ativa modelos de checklist de **fechamento** para cada tipo de OS em `/checklists`. Eletricista responde todos os modelos ativos na própria OS em atendimento; itens informativos não bloqueiam. Item bloqueante reprovado exige nova avaliação corrigida, sem liberação do Gestor. Alteração de perguntas exige nova resposta.
+
+Antes de encerrar, registre o consumo dos materiais e solicite ao Gestor o recebimento físico das sobras e dos medidores não aplicados/retirados, inclusive defeituosos na viatura. Perdas exigem baixa administrativa. Outras OS e equipamentos avulsos em custódia não são conciliados automaticamente.
+
+Selecione `executado`, `parcial` ou `nao_executado` e informe observações finais (até 2.000 caracteres), justificando o resultado. Nova ligação executada exige medidor aplicado nesta OS e ainda instalado na UC. Corte executado exige confirmação e leitura final não negativa (zero permitido; até três casas decimais com ponto/vírgula). Corte parcial/não executado pode não ter confirmação/leitura. Confirmação e leitura não se aplicam à nova ligação.
+
+Os POST `/os/{id}/checklists/{modelo}/responder-fechamento` e `/os/{id}/encerrar` verificam papel, vínculo, status, CSRF e campos no servidor. Encerramento grava status `encerrada`, horário do servidor, resultado/dados finais e histórico na mesma transação. Não há reabertura nem edição dos dados finais. Galeria/upload e relatório de estoque continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md).

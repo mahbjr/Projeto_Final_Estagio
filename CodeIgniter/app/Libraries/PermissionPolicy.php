@@ -28,6 +28,8 @@ final class PermissionPolicy
         'os.consumiveis.reserve' => ['gestor'],
         'os.consumiveis.deliver' => ['gestor'],
         'os.consumiveis.receive' => ['gestor'],
+        'os.checklist.closing' => ['eletricista'],
+        'os.attendance.close' => ['eletricista'],
         'os.checklist.answer' => ['eletricista'],
         'os.checklist.release' => ['gestor'],
         'os.index' => ['gestor', 'operador', 'eletricista'],

@@ -60,3 +60,6 @@ $routes->post('os/(:num)/observacoes-atendimento', 'OrdensServicoController::not
 $routes->post('os/(:num)/consumiveis/(:num)/consumir', 'OrdensServicoController::consumeConsumable/$1/$2', ['as' => 'os.consumiveis.consume']);
 $routes->post('os/(:num)/medidores/(:num)/aplicar', 'OrdensServicoController::applyMeter/$1/$2', ['as' => 'os.medidores.apply']);
 $routes->post('os/(:num)/medidores/(:num)/retirar', 'OrdensServicoController::withdrawMeter/$1/$2', ['as' => 'os.medidores.withdraw']);
+
+$routes->post('os/(:num)/checklists/(:num)/responder-fechamento', 'OrdensServicoController::answerClosing/$1/$2', ['as' => 'os.checklist.closing']);
+$routes->post('os/(:num)/encerrar', 'OrdensServicoController::closeAttendance/$1', ['as' => 'os.attendance.close']);
