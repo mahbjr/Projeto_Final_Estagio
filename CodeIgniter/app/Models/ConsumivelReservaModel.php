@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class ConsumivelReservaModel extends Model
 {
+    public function withMaterials(): self
+    {
+        return $this->select('tbl_consumivel_reserva.*, nome_con, unidade_con')
+            ->join('tbl_consumivel', 'consumivel_rco = id_con');
+    }
     protected $table = 'tbl_consumivel_reserva';
     protected $primaryKey = 'id_rco';
     protected $returnType = 'array';

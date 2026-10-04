@@ -1,0 +1,9 @@
+<section class="panel detail-panel mt-4"><h2>Consumíveis da OS</h2><div class="table-responsive"><table class="table app-table"><thead><tr><th>Material</th><th>Unidade</th><th>Reservado</th><th>Entregue</th><th>Consumido</th><th>Devolvido</th><th>Situação</th></tr></thead><tbody>
+<?php foreach ($reservations as $reservation): ?><tr><td><?= esc($reservation['nome_con']) ?></td><td><?= esc($reservation['unidade_con']) ?></td><td><?= esc($reservation['quantidade_rco']) ?></td><td><?= esc($reservation['entregue_rco']) ?></td><td><?= esc($reservation['consumido_rco']) ?></td><td><?= esc($reservation['devolvido_rco']) ?></td><td><?= esc(['reservada' => 'Reservada no depósito', 'entregue' => 'Em custódia — conciliação pendente', 'conciliada' => 'Conciliada', 'liberada' => 'Liberada'][$reservation['status_rco']]) ?></td></tr><?php endforeach ?>
+<?php if (!$reservations): ?><tr><td colspan="7">Nenhum consumível vinculado.</td></tr><?php endif ?>
+</tbody></table></div>
+<?php if ($can('os.consumiveis.reserve') && $orderRecord['status_oss'] === 'atribuida'): ?><h3>Reservar no depósito</h3><p>A reserva reduz a disponibilidade; o saldo físico permanece no depósito.</p><form method="post" action="<?= site_url('os/' . $orderRecord['id_oss'] . '/consumiveis/reservar') ?>" data-validate><?= csrf_field() ?><div class="row g-3">
+<?= app_field('consumivel', 'Material', $input, $errors, ['required' => true, 'choices' => ['' => 'Selecione'] + array_combine(array_column($materials, 'id_con'), array_map(static fn ($m) => $m['nome_con'] . ' (' . $m['unidade_con'] . ', ' . $m['precisao_con'] . ' casas decimais)', $materials))]) ?>
+<?= app_field('quantidade', 'Quantidade a reservar', $input, $errors, ['required' => true, 'max' => 16]) ?>
+</div><button class="btn btn-primary mt-3" type="submit">Reservar material</button></form><?php endif ?>
+</section>

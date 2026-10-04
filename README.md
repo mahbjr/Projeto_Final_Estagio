@@ -135,6 +135,17 @@ Eletricista consulta somente suas OS em `/os` e `/os/{id}`. Consultas manuais a 
 
 Gestor configura modelos em `/checklists`: cria inativo, adiciona perguntas (resposta esperada Sim/Não, obrigatoriedade, nível bloqueante/informativo, ordem) e ativa quando houver pelo menos uma pergunta. Perguntas são removidas logicamente. Avaliações/respostas anteriores preservam seu texto e evidências; modelos já utilizados não mudam tipo/etapa. Não há versionamento de modelos nem avaliação de checklist pela interface nesta etapa.
 
-Cancelamento de OS com materiais vinculados permanece bloqueado até a implementação da conciliação de estoque na etapa 3. Os botões de iniciar, concluir, movimentar materiais e anexar fotos não são exibidos antecipadamente.
+Na etapa 2, cancelamento com materiais vinculados era bloqueado; a etapa 3A libera reservas de consumíveis ainda no depósito, conforme descrito abaixo. Vínculos operacionais de medidores continuam bloqueados até a integração seguinte. Os botões de iniciar, concluir, movimentar materiais e anexar fotos não são exibidos antecipadamente.
 
 Todas as alterações usam POST, CSRF e política central de permissões. As operações de OS e histórico compartilham transação e a proteção já usada na alteração de responsáveis/clientes. Novas rotas: GET `/os`, `/os/nova`, `/os/{id}`, `/os/{id}/editar`; POST `/os`, `/os/{id}/atualizar`, `/os/{id}/atribuir`, `/os/{id}/cancelar`. A configuração de modelos/perguntas usa GET/POST explícitos sob `/checklists`.
+
+
+## Consumíveis e reservas — etapa 3A
+
+Gestor cadastra materiais em `/consumiveis` com unidade e precisão de 0 a 3 casas decimais, registra entradas com quantidade/referência e reserva pela consulta de uma OS atribuída. Operador consulta catálogo, saldos por detentor e histórico. Eletricista vê os materiais apenas nas próprias OS. Entradas têm ator, horário, origem/destino; reserva é auditada no histórico da OS e não movimenta quantidade física.
+
+Quantidades usam ponto ou vírgula decimal, sem separador de milhar; cálculo exato em milésimos e validação no servidor impedem arredondamento e saldo negativo. Reserva exige disponibilidade e não pode se repetir enquanto ativa para o mesmo material/OS. Unidade e precisão não mudam após movimentação, reserva ou saldo positivo. Exclusão lógica exige todos os saldos zerados e nenhuma reserva ativa.
+
+Cancelamento libera somente reservas de consumíveis não entregues. Custódia e conciliações pendentes não são apagadas nem creditadas ficticiamente ao depósito e bloqueiam desativação/exclusão do responsável. Entrega, consumo, devolução, reserva operacional de medidores e checklist em campo seguem nos próximos pontos de revisão. O estoque completo ainda não está entregue. Não há mudança de banco/dependências para este recorte; exige a fundação operacional atual.
+
+Validação e limites: [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Branch local `feature/checklist-estoque`, baseada no commit aprovado da etapa 2 (`baa2208`), aguardando revisão para commit deste recorte.

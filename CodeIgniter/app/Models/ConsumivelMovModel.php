@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class ConsumivelMovModel extends Model
 {
+    public function withActors(): self
+    {
+        return $this->select('tbl_consumivel_mov.*, nome_completo_usu AS ator_nome')
+            ->join('tbl_usuario', 'usuario_mco = id_usu', 'left');
+    }
     protected $table = 'tbl_consumivel_mov';
     protected $primaryKey = 'id_mco';
     protected $returnType = 'array';

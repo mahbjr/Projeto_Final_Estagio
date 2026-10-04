@@ -10,7 +10,7 @@ $routes->post('logout', 'AuthController::logout', ['as' => 'logout']);
 $routes->get('/', 'Home::index', ['as' => 'entrada']);
 $routes->get('inicio', 'Home::dashboard', ['as' => 'inicio']);
 
-foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController'] as $resource => $controller) {
+foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController', 'consumiveis' => 'ConsumiveisController'] as $resource => $controller) {
     $routes->get($resource, $controller . '::index', ['as' => $resource . '.index']);
     $routes->get($resource . '/novo', $controller . '::new', ['as' => $resource . '.new']);
     $routes->post($resource, $controller . '::create', ['as' => $resource . '.create']);
@@ -22,6 +22,8 @@ foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController'
 
 $routes->post('medidores/(:num)/enviar', 'MedidoresController::send/$1', ['as' => 'medidores.send']);
 $routes->post('medidores/(:num)/devolver', 'MedidoresController::returnToDepot/$1', ['as' => 'medidores.return']);
+$routes->post('consumiveis/(:num)/entrada', 'ConsumiveisController::entry/$1', ['as' => 'consumiveis.entry']);
+$routes->post('os/(:num)/consumiveis/reservar', 'OrdensServicoController::reserveConsumable/$1', ['as' => 'os.consumiveis.reserve']);
 
 $routes->get('os', 'OrdensServicoController::index', ['as' => 'os.index']);
 $routes->get('os/nova', 'OrdensServicoController::new', ['as' => 'os.new']);

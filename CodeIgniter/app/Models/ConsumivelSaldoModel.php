@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class ConsumivelSaldoModel extends Model
 {
+    public function withOwners(): self
+    {
+        return $this->select('tbl_consumivel_saldo.*, nome_completo_usu AS detentor_nome')
+            ->join('tbl_eletricista', 'eletricista_sco = id_ele', 'left')->join('tbl_usuario', 'usuario_ele = id_usu', 'left');
+    }
     protected $table = 'tbl_consumivel_saldo';
     protected $primaryKey = 'id_sco';
     protected $returnType = 'array';

@@ -19,6 +19,7 @@
 <?= app_field('motivo', 'Motivo do cancelamento', $input, $errors, ['required' => true, 'type' => 'textarea', 'max' => 1000, 'column' => 'col-12']) ?>
 </div><button class="btn btn-outline-danger mt-3" type="submit">Cancelar OS</button></form></section>
 <?php endif ?>
+<?= view('os/consumiveis', ['orderRecord' => $record, 'reservations' => $reservations, 'materials' => $materials, 'input' => $input, 'errors' => $errors]) ?>
 <section class="panel detail-panel mt-4"><h2>Histórico</h2><div class="table-responsive"><table class="table app-table"><thead><tr><th>Data</th><th>Autor</th><th>Evento</th><th>Status</th><th>Observação</th></tr></thead><tbody>
 <?php foreach ($history as $event): ?><tr><td><?= esc($event['data_osh']) ?></td><td><?= esc($event['ator_nome'] ?: 'Autor não informado no registro legado') ?></td><td><?= esc(['criacao' => 'Criação', 'edicao' => 'Edição', 'atribuicao' => 'Atribuição', 'cancelamento' => 'Cancelamento', 'status' => 'Status'][$event['evento_osh']] ?? $event['evento_osh']) ?></td><td><?= esc($event['status_anterior_osh'] ? os_label($event['status_anterior_osh']) . ' → ' : '') ?><?= esc(os_label($event['status_osh'])) ?></td><td><?= esc($event['observacao_osh'] ?: '—') ?><?php if ($event['dados_osh']): ?><details><summary>Dados da alteração</summary><pre class="history-data"><?= esc(json_encode(json_decode($event['dados_osh']), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) ?></pre></details><?php endif ?></td></tr><?php endforeach ?>
 <?php if (!$history): ?><tr><td colspan="5">Sem histórico registrado.</td></tr><?php endif ?>

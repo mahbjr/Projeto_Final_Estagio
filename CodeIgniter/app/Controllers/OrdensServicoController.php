@@ -76,6 +76,16 @@ final class OrdensServicoController extends ApplicationController
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
     }
 
+    public function reserveConsumable(int $id)
+    {
+        $this->record($id);
+        $input = $this->safeInput(['consumivel', 'quantidade']);
+        try {
+            (new \App\Services\ConsumivelService())->reserve($id, $input['consumivel'], $input['quantidade'], (int) service('auth')->user()['id_usu']);
+            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Consumível reservado no depósito.');
+        } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
+    }
+
     private function save(?int $id = null)
     {
         $input = $this->safeInput(OrdemServicoService::FIELDS);
@@ -105,6 +115,8 @@ final class OrdensServicoController extends ApplicationController
 
     private function details(array $record, array $errors = [], int $status = 200, array $input = [])
     {
-        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'errors' => $errors, 'input' => $input], $status);
+        $materials = (new \App\Models\ConsumivelModel())->depotOverview()->orderBy('nome_con')->findAll();
+        $reservations = (new \App\Models\ConsumivelReservaModel())->withMaterials()->where('ordem_servico_rco', $record['id_oss'])->orderBy('id_rco')->findAll();
+        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'errors' => $errors, 'input' => $input], $status);
     }
 }
