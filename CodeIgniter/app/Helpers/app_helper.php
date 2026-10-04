@@ -19,3 +19,11 @@ function meter_label(string $value): string
 {
     return ['disponivel' => 'Disponível', 'em_transito' => 'Em trânsito', 'instalado' => 'Instalado', 'defeito' => 'Defeito', 'deposito' => 'Depósito', 'viatura' => 'Viatura', 'cliente' => 'Cliente', 'galpao' => 'Galpão', 'eletricista' => 'Eletricista', 'fornecedor' => 'Fornecedor', 'descarte' => 'Descarte', 'entrada' => 'Entrada', 'transferencia' => 'Transferência', 'baixa_saida' => 'Baixa'][$value] ?? $value;
 }
+
+function os_label(string $value): string
+{
+    return ['aberta' => 'Aberta', 'atribuida' => 'Atribuída', 'em_atendimento' => 'Em Atendimento',
+        'encerrada' => 'Encerrada', 'cancelada' => 'Cancelada', 'corte' => 'Corte de energia', 'nova_ligacao' => 'Nova ligação',
+        'baixa' => 'Baixa', 'normal' => 'Normal', 'alta' => 'Alta', 'urgente' => 'Urgente',
+        'inicio' => 'Início', 'fechamento' => 'Fechamento', 'executado' => 'Executado', 'parcial' => 'Parcial', 'nao_executado' => 'Não executado'][$value] ?? $value;
+}

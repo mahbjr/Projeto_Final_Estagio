@@ -7,6 +7,25 @@ final class PermissionPolicy
     public const PUBLIC_ROUTES = ['login.form', 'login.submit'];
 
     private const PERMISSIONS = [
+        'os.index' => ['gestor', 'operador', 'eletricista'],
+        'os.show' => ['gestor', 'operador', 'eletricista'],
+        'os.new' => ['gestor', 'operador'],
+        'os.create' => ['gestor', 'operador'],
+        'os.edit' => ['gestor', 'operador'],
+        'os.update' => ['gestor', 'operador'],
+        'os.assign' => ['gestor', 'operador'],
+        'os.cancel' => ['gestor', 'operador'],
+        'checklists.index' => ['gestor'],
+        'checklists.new' => ['gestor'],
+        'checklists.create' => ['gestor'],
+        'checklists.show' => ['gestor'],
+        'checklists.edit' => ['gestor'],
+        'checklists.update' => ['gestor'],
+        'checklists.item.create' => ['gestor'],
+        'checklists.item.edit' => ['gestor'],
+        'checklists.item.update' => ['gestor'],
+        'checklists.item.delete' => ['gestor'],
+
         'medidores.index' => ['gestor', 'operador'],
         'medidores.show' => ['gestor', 'operador'],
         'medidores.new' => ['gestor'],

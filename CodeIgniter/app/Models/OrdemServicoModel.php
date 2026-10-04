@@ -22,4 +22,19 @@ class OrdemServicoModel extends Model
     protected $createdField = 'data_criacao_oss';
     protected $updatedField = 'data_atualizacao_oss';
     protected $deletedField = 'data_exclusao_oss';
+
+    public function overview(): self
+    {
+        return $this->select('tbl_os.*, tbl_cliente.nome_cli, tbl_usuario.nome_completo_usu AS eletricista_nome')
+            ->join('tbl_cliente', 'cliente_oss = id_cli', 'left')
+            ->join('tbl_eletricista', 'eletricista_oss = id_ele', 'left')
+            ->join('tbl_usuario', 'usuario_ele = id_usu', 'left');
+    }
+
+    public function history(int $id): array
+    {
+        return $this->db->table('tbl_os_historico')->select('tbl_os_historico.*, tbl_usuario.nome_completo_usu AS ator_nome')
+            ->join('tbl_usuario', 'usuario_osh = id_usu', 'left')->where('ordem_servico_osh', $id)
+            ->orderBy('id_osh', 'DESC')->get()->getResultArray();
+    }
 }

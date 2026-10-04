@@ -126,3 +126,15 @@ A migration `CreateOperationalFlow` atende um banco de cadastros compatível com
 O banco `_tests` continua separado do default e demo; suíte sequencial: `vendor/bin/phpunit --no-coverage`. Os testes cobrem estados, rejeição de banco preenchido, preservação de cadastros e constraints físicas. Novos models não autorizam acesso: filtros e Services das próximas etapas realizarão essa verificação.
 
 Branch da etapa: `feature/banco-auth`. Próximas etapas só avançam após revisão explícita. Os PRs do plano têm `develop` como destino; essa branch ainda não existe localmente e não foi criada/publicada nesta etapa. Login e roles existentes são reutilizados, sem recriação de autenticação.
+
+## Gestão de OS e modelos de checklist — etapa 2
+
+Gestor e Operador consultam, cadastram e editam OS em `/os`, atribuem Eletricista ativo e cancelam antes do atendimento. Cadastro começa em `aberta`; atribuição muda para `atribuida`; cancelamento exige motivo e mantém histórico com autor, horário e mudanças. UC/endereço são próprios de cada OS; agendamento é opcional. OS finalizadas são somente consulta. Em atendimento, edição limitada a prioridade, agendamento e observações administrativas.
+
+Eletricista consulta somente suas OS em `/os` e `/os/{id}`. Consultas manuais a OS de outros profissionais retornam 403. A execução em campo será entregue nas próximas etapas. Não há reatribuição, exclusão ou reabertura de OS.
+
+Gestor configura modelos em `/checklists`: cria inativo, adiciona perguntas (resposta esperada Sim/Não, obrigatoriedade, nível bloqueante/informativo, ordem) e ativa quando houver pelo menos uma pergunta. Perguntas são removidas logicamente. Avaliações/respostas anteriores preservam seu texto e evidências; modelos já utilizados não mudam tipo/etapa. Não há versionamento de modelos nem avaliação de checklist pela interface nesta etapa.
+
+Cancelamento de OS com materiais vinculados permanece bloqueado até a implementação da conciliação de estoque na etapa 3. Os botões de iniciar, concluir, movimentar materiais e anexar fotos não são exibidos antecipadamente.
+
+Todas as alterações usam POST, CSRF e política central de permissões. As operações de OS e histórico compartilham transação e a proteção já usada na alteração de responsáveis/clientes. Novas rotas: GET `/os`, `/os/nova`, `/os/{id}`, `/os/{id}/editar`; POST `/os`, `/os/{id}/atualizar`, `/os/{id}/atribuir`, `/os/{id}/cancelar`. A configuração de modelos/perguntas usa GET/POST explícitos sob `/checklists`.

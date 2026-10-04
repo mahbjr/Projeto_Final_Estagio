@@ -22,3 +22,22 @@ foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController'
 
 $routes->post('medidores/(:num)/enviar', 'MedidoresController::send/$1', ['as' => 'medidores.send']);
 $routes->post('medidores/(:num)/devolver', 'MedidoresController::returnToDepot/$1', ['as' => 'medidores.return']);
+
+$routes->get('os', 'OrdensServicoController::index', ['as' => 'os.index']);
+$routes->get('os/nova', 'OrdensServicoController::new', ['as' => 'os.new']);
+$routes->post('os', 'OrdensServicoController::create', ['as' => 'os.create']);
+$routes->get('os/(:num)', 'OrdensServicoController::show/$1', ['as' => 'os.show']);
+$routes->get('os/(:num)/editar', 'OrdensServicoController::edit/$1', ['as' => 'os.edit']);
+$routes->post('os/(:num)/atualizar', 'OrdensServicoController::update/$1', ['as' => 'os.update']);
+$routes->post('os/(:num)/atribuir', 'OrdensServicoController::assign/$1', ['as' => 'os.assign']);
+$routes->post('os/(:num)/cancelar', 'OrdensServicoController::cancel/$1', ['as' => 'os.cancel']);
+$routes->get('checklists', 'ChecklistsController::index', ['as' => 'checklists.index']);
+$routes->get('checklists/novo', 'ChecklistsController::new', ['as' => 'checklists.new']);
+$routes->post('checklists', 'ChecklistsController::create', ['as' => 'checklists.create']);
+$routes->get('checklists/(:num)', 'ChecklistsController::show/$1', ['as' => 'checklists.show']);
+$routes->get('checklists/(:num)/editar', 'ChecklistsController::edit/$1', ['as' => 'checklists.edit']);
+$routes->post('checklists/(:num)/atualizar', 'ChecklistsController::update/$1', ['as' => 'checklists.update']);
+$routes->post('checklists/(:num)/itens', 'ChecklistsController::createItem/$1', ['as' => 'checklists.item.create']);
+$routes->get('checklists/(:num)/itens/(:num)/editar', 'ChecklistsController::editItem/$1/$2', ['as' => 'checklists.item.edit']);
+$routes->post('checklists/(:num)/itens/(:num)/atualizar', 'ChecklistsController::updateItem/$1/$2', ['as' => 'checklists.item.update']);
+$routes->post('checklists/(:num)/itens/(:num)/excluir', 'ChecklistsController::deleteItem/$1/$2', ['as' => 'checklists.item.delete']);

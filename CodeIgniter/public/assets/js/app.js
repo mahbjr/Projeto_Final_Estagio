@@ -46,8 +46,8 @@ document.querySelectorAll('form[data-validate]').forEach((form) => {
         if (field.required && !value) message = 'Preencha este campo.';
         if (value && field.name === 'cpf_usu' && !/^[0-9]{11}$/.test(value.replace(/[.\-]/g, ''))) message = 'Informe um CPF com 11 dígitos.';
         if (value && field.name === 'cnpj_cli' && !/^[A-Za-z0-9]{12}[0-9]{2}$/.test(value.replace(/[./\-]/g, ''))) message = 'Informe 12 letras ou números e dois dígitos finais.';
-        if (value && field.name === 'cep_cli' && !/^[0-9]{8}$/.test(value.replace(/-/g, ''))) message = 'Informe um CEP com oito dígitos.';
-        if (value && field.name === 'estado_cli' && !'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ').includes(value.toUpperCase())) message = 'Informe uma UF válida.';
+        if (value && ['cep_cli', 'cep_oss'].includes(field.name) && !/^[0-9]{8}$/.test(value.replace(/-/g, ''))) message = 'Informe um CEP com oito dígitos.';
+        if (value && ['estado_cli', 'estado_oss'].includes(field.name) && !'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ').includes(value.toUpperCase())) message = 'Informe uma UF válida.';
         if (field.name === 'senha' && field.value && ([...field.value].length < 8 || new TextEncoder().encode(field.value).length > 72)) message = 'Use pelo menos oito caracteres e no máximo 72 bytes.';
         if (field.name === 'confirmacao' && field.value !== form.elements.senha.value) message = 'A confirmação deve ser igual à senha.';
         field.setCustomValidity(message);
