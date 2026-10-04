@@ -53,3 +53,6 @@ $routes->post('os/(:num)/medidores/(:num)/entregar', 'OrdensServicoController::d
 $routes->post('os/(:num)/medidores/(:num)/receber', 'OrdensServicoController::receiveMeter/$1/$2', ['as' => 'os.medidores.receive']);
 $routes->post('os/(:num)/medidores/(:num)/ocorrencia', 'OrdensServicoController::meterOccurrence/$1/$2', ['as' => 'os.medidores.occurrence']);
 $routes->post('medidores/(:num)/ocorrencia', 'MedidoresController::occurrence/$1', ['as' => 'medidores.occurrence']);
+
+$routes->post('os/(:num)/iniciar-atendimento', 'OrdensServicoController::startAttendance/$1', ['as' => 'os.attendance.start']);
+$routes->post('os/(:num)/observacoes-atendimento', 'OrdensServicoController::noteAttendance/$1', ['as' => 'os.attendance.note']);

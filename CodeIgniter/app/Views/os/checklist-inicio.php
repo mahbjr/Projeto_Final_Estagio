@@ -1,4 +1,4 @@
-<section class="panel detail-panel mt-4"><h2>Checklist de início</h2><p>Todos os modelos ativos devem estar aprovados ou liberados pelo Gestor antes da entrega física. Se as perguntas mudarem, responda novamente.</p>
+<section class="panel detail-panel mt-4"><h2>Checklist de início</h2><p><?= $orderRecord['status_oss'] === 'atribuida' ? 'Todos os modelos ativos devem estar aprovados ou liberados pelo Gestor antes da entrega física e do início do atendimento. Se as perguntas mudarem, responda novamente.' : 'Consulte as avaliações de início registradas para esta OS.' ?></p>
 <?php if (!$beginningTemplates): ?><p>Nenhum modelo de início ativo para este tipo de serviço. Solicite configuração ao Gestor.</p><?php endif ?>
 <?php if ($can('os.checklist.answer') && $orderRecord['status_oss'] === 'atribuida'): ?>
 <?php foreach ($beginningTemplates as $template): ?>

@@ -76,6 +76,23 @@ final class OrdensServicoController extends ApplicationController
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
     }
 
+    public function startAttendance(int $id) { return $this->attendanceAction($id, 'start'); }
+    public function noteAttendance(int $id) { return $this->attendanceAction($id, 'note'); }
+
+    private function attendanceAction(int $id, string $action)
+    {
+        $record = $this->record($id);
+        $user = service('auth')->user();
+        if ((int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
+        $input = $this->safeInput(['observacao_atendimento']);
+        try {
+            $service = new \App\Services\AtendimentoService();
+            if ($action === 'start') { $service->start($id, (int) $user['id_usu']); }
+            else { $service->note($id, $input['observacao_atendimento'], (int) $user['id_usu']); }
+            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', $action === 'start' ? 'Atendimento iniciado.' : 'Observação do atendimento registrada.');
+        } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
+    }
+
     public function reserveConsumable(int $id)
     {
         $this->record($id);

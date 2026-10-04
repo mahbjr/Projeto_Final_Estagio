@@ -166,4 +166,11 @@ Gestor reserva medidor disponível para nova ligação atribuída e confirma ent
 
 Eletricista registra perda/roubo/dano do equipamento em sua posse na própria OS. Gestor registra ocorrências e baixa com justificativa; Operador consulta. Defeito em campo mantém posse até recebimento. Perda mantém último responsável/local e bloqueia sua desativação/exclusão; baixa administrativa encerra custódia ativa, preservando dados históricos e impedindo reativação. Ocorrências e movimentos físicos têm auditorias distintas.
 
-Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência administrativa sem reserva ativa. Sem alteração de banco/dependências: exige esquema operacional atual. Aplicação/retirada, consumo, início/fechamento, fotos e relatório continuam pendentes. Validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 3C aguarda revisão.
+Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência administrativa sem reserva ativa. Sem alteração de banco/dependências: exige esquema operacional atual. Aplicação/retirada, consumo, início/fechamento, fotos e relatório continuam pendentes. Validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 3C aprovada/commitada em `9da5491`.
+
+
+## Atendimento em campo — etapa 4A
+
+Eletricista inicia a própria OS atribuída após checklist de início aprovado/liberado e entrega dos materiais reservados. Nova ligação exige medidor entregue em bom estado e em sua posse. O início registra status em_atendimento e horário do servidor; repetir não altera horário. Durante atendimento, acrescenta observações de até 2.000 caracteres pelo celular, preservadas no histórico com autoria. Gestor/Operador consultam, sem executar essas ações em nome do Eletricista.
+
+Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Consumo, aplicação/retirada, fechamento, fotos e relatório ainda pendentes. Evidências e limites em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4A aguarda revisão.

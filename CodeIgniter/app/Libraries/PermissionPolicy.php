@@ -7,6 +7,8 @@ final class PermissionPolicy
     public const PUBLIC_ROUTES = ['login.form', 'login.submit'];
 
     private const PERMISSIONS = [
+        'os.attendance.start' => ['eletricista'],
+        'os.attendance.note' => ['eletricista'],
         'os.medidores.reserve' => ['gestor'],
         'os.medidores.deliver' => ['gestor'],
         'os.medidores.receive' => ['gestor'],
