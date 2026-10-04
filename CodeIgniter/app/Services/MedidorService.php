@@ -130,10 +130,9 @@ class MedidorService extends WriteService
         }
         foreach (['tbl_os_medidor' => ['medidor_osm', 'ordem_servico_osm', 'data_exclusao_osm'], 'tbl_estoque_mov' => ['medidor_emv', 'ordem_servico_emv', 'data_exclusao_emv']] as $table => [$meter, $order, $deleted]) {
             $pending = $this->db->table($table)->join('tbl_os', "$order = id_oss")->where($meter, $id)->where($deleted, null)->where('data_exclusao_oss', null)->whereIn('status_oss', StatusOS::PENDENTES);
-            if ($table === 'tbl_estoque_mov') {
-                // A completed physical return ends custody even while its OS remains open.
-                $pending->where("NOT EXISTS (SELECT 1 FROM tbl_medidor_reserva WHERE medidor_rme = medidor_emv AND ordem_servico_rme = ordem_servico_emv AND data_exclusao_rme IS NULL AND status_rme IN ('devolvida','liberada'))", null, false);
-            }
+            // A completed physical return ends custody even while its OS remains open.
+            // Column names come exclusively from the fixed table mapping above.
+            $pending->where("NOT EXISTS (SELECT 1 FROM tbl_medidor_reserva WHERE medidor_rme = $meter AND ordem_servico_rme = $order AND data_exclusao_rme IS NULL AND status_rme IN ('devolvida','liberada'))", null, false);
             if ($pending->countAllResults()) {
                 throw new FormException(['operacao' => 'O medidor está vinculado a uma OS pendente.']);
             }

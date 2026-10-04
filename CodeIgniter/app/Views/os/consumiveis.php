@@ -18,3 +18,17 @@
 <div class="col-md-6"><label class="form-label" for="<?= esc($prefix) ?>-observacao">Referência ou motivo *</label><input class="form-control <?= isset($errors['observacao_devolucao']) ? 'is-invalid' : '' ?>" id="<?= esc($prefix) ?>-observacao" name="observacao_devolucao" value="<?= esc($returnInput['observacao_devolucao'] ?? '') ?>" maxlength="255" required <?= isset($errors['observacao_devolucao']) ? 'aria-invalid="true" aria-describedby="' . esc($prefix) . '-observacao-error"' : '' ?>><?php if (isset($errors['observacao_devolucao'])): ?><div class="invalid-feedback" id="<?= esc($prefix) ?>-observacao-error"><?= esc($errors['observacao_devolucao']) ?></div><?php endif ?></div></div><button class="btn btn-primary mt-3" type="submit">Registrar recebimento físico</button></form></section>
 <?php endif ?>
 <?php endforeach ?>
+
+<?php if ($can('os.consumiveis.consume') && $orderRecord['status_oss'] === 'em_atendimento'): ?>
+<?php foreach ($reservations as $reservation): ?>
+<?php if ($reservation['status_rco'] === 'entregue'): ?>
+<?php $consumeInput = ($input['reserva_consumo'] ?? null) === (int) $reservation['id_rco'] ? $input : []; $consumeErrors = ($input['reserva_consumo'] ?? null) === (int) $reservation['id_rco'] ? $errors : []; $prefix = 'consumo-' . $reservation['id_rco']; ?>
+<section class="panel form-panel mt-4"><h3>Registrar consumo de <?= esc($reservation['nome_con']) ?></h3><p>Informe o material usado neste atendimento, em <?= esc($reservation['unidade_con']) ?>.</p><form method="post" action="<?= site_url('os/'.$orderRecord['id_oss'].'/consumiveis/'.$reservation['id_rco'].'/consumir') ?>" data-validate><?= csrf_field() ?><div class="row g-3">
+<?php foreach (['quantidade_consumo'=>'Quantidade consumida','observacao_consumo'=>'Referência ou motivo'] as $field=>$label): ?>
+<?php $error = $consumeErrors[$field] ?? null; $fieldId = $prefix . '-' . $field; ?>
+<div class="col-md-6"><label for="<?= esc($fieldId) ?>" class="form-label"><?= esc($label) ?> *</label><input id="<?= esc($fieldId) ?>" class="form-control <?= $error ? 'is-invalid' : '' ?>" name="<?= esc($field) ?>" value="<?= esc($consumeInput[$field] ?? '') ?>" required maxlength="<?= $field === 'quantidade_consumo' ? '16' : '255' ?>" <?= $field === 'quantidade_consumo' ? 'inputmode="decimal"' : '' ?> <?= $error ? 'aria-invalid="true" aria-describedby="' . esc($fieldId) . '-error"' : '' ?>><?php if ($error): ?><div class="invalid-feedback" id="<?= esc($fieldId) ?>-error"><?= esc($error) ?></div><?php endif ?></div>
+<?php endforeach ?>
+</div><button type="submit" class="btn btn-primary mt-3">Registrar consumo</button></form></section>
+<?php endif ?>
+<?php endforeach ?>
+<?php endif ?>

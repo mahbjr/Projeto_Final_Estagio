@@ -135,6 +135,29 @@ final class ConsumivelService extends WriteService
         });
     }
 
+    public function consume(int $orderId, int $reservationId, mixed $amount, mixed $note, int $actorId): void
+    {
+        $note = is_string($note) ? trim($note) : '';
+        $this->validate(['observacao_consumo' => $note], ['observacao_consumo' => 'required|max_length[255]']);
+        $this->transaction(function () use ($orderId, $reservationId, $amount, $note, $actorId) {
+            $actor = $this->operationalActor($actorId, ['eletricista']);
+            $order = $this->operationalOrder($orderId, $actor, ['em_atendimento']);
+            $reservation = $this->reservation($orderId, $reservationId);
+            $material = $this->material((int) $reservation['consumivel_rco']);
+            $quantity = Quantidade::parse($amount, (int) $material['precisao_con'], 'quantidade_consumo');
+            $pending = Quantidade::stored($reservation['entregue_rco']) - Quantidade::stored($reservation['consumido_rco']) - Quantidade::stored($reservation['devolvido_rco']);
+            if ($reservation['status_rco'] !== 'entregue' || (int) $reservation['eletricista_rco'] !== $actor['id_ele'] || $quantity > $pending) {
+                throw new FormException(['quantidade_consumo' => 'Consuma somente o material entregue em sua reserva, limitado à quantidade ainda em custódia.']);
+            }
+            $custody = $this->custody((int) $reservation['consumivel_rco'], $actor['id_ele']);
+            if ($quantity > Quantidade::stored($custody['quantidade_sco'])) { throw new FormException(['operacao' => 'Saldo de custódia incompatível.']); }
+            (new ConsumivelSaldoModel($this->db))->update($custody['id_sco'], ['quantidade_sco' => Quantidade::decimal(Quantidade::stored($custody['quantidade_sco']) - $quantity)]);
+            (new ConsumivelReservaModel($this->db))->update($reservationId, ['consumido_rco' => Quantidade::decimal(Quantidade::stored($reservation['consumido_rco']) + $quantity), 'status_rco' => $quantity === $pending ? 'conciliada' : 'entregue']);
+            $this->stockMovement($reservation, $actorId, 'consumo', 'eletricista', 'consumo', $quantity, $note);
+            (new OsHistoricoModel($this->db))->insert(['ordem_servico_osh' => $orderId, 'usuario_osh' => $actorId, 'eletricista_osh' => $actor['id_ele'], 'evento_osh' => 'consumo_consumivel', 'status_anterior_osh' => $order['status_oss'], 'status_osh' => $order['status_oss'], 'observacao_osh' => $note, 'dados_osh' => json_encode(['reserva' => $reservationId, 'consumivel' => (int) $reservation['consumivel_rco'], 'quantidade' => Quantidade::decimal($quantity)])]);
+        });
+    }
+
     private function reservation(int $order, int $id): array
     {
         $record = $this->db->query('SELECT * FROM tbl_consumivel_reserva WHERE id_rco = ? AND ordem_servico_rco = ? AND data_exclusao_rco IS NULL FOR UPDATE', [$id, $order])->getRowArray();

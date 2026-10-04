@@ -74,6 +74,54 @@ final class MedidorOsService extends MedidorService
         });
     }
 
+    public function apply(int $orderId, int $reservationId, int $actorId): void
+    {
+        $this->transaction(function () use ($orderId, $reservationId, $actorId) {
+            $actor = $this->operationalActor($actorId, ['eletricista']);
+            $order = $this->operationalOrder($orderId, $actor, ['em_atendimento']);
+            $reservation = $this->reservation($orderId, $reservationId);
+            $meter = $this->locked((int) $reservation['medidor_rme']);
+            $this->assertState($meter);
+            if ($order['tipo_oss'] !== 'nova_ligacao' || $reservation['status_rme'] !== 'entregue' || (int) $reservation['eletricista_rme'] !== $actor['id_ele'] || $meter['status_med'] !== 'em_transito' || (int) $meter['eletricista_posse_med'] !== $actor['id_ele']) {
+                throw new FormException(['operacao' => 'Aplique somente o medidor entregue em sua posse para nova ligação em atendimento.']);
+            }
+            if ($this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $orderId)->where('medidor_osm', $meter['id_med'])->where('tipo_osm', 'retirado')->countAllResults()
+                || $this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $orderId)->where('tipo_osm', 'instalado')->countAllResults()
+                || $this->db->table('tbl_instalacao_atual')->where('medidor_ins', $meter['id_med'])->countAllResults()) {
+                throw new FormException(['operacao' => 'Esta OS já registrou aplicação, o equipamento foi retirado nesta OS ou já possui instalação atual.']);
+            }
+            $this->transition($meter, 'instalado', ['localizacao_med' => 'cliente', 'eletricista_posse_med' => null]);
+            (new MedidorReservaModel($this->db))->update($reservationId, ['status_rme' => 'aplicada']);
+            (new \App\Models\InstalacaoAtualModel($this->db))->insert(['medidor_ins' => $meter['id_med'], 'ordem_servico_ins' => $orderId, 'unidade_consumidora_ins' => $order['unidade_consumidora_oss'], 'usuario_ins' => $actorId]);
+            (new \App\Models\OsMedidorModel($this->db))->insert(['medidor_osm' => $meter['id_med'], 'ordem_servico_osm' => $orderId, 'tipo_osm' => 'instalado']);
+            $this->movement((int) $meter['id_med'], $actorId, 'baixa_saida', 'eletricista', 'cliente', $actor['id_ele'], 'Aplicação na UC ' . $order['unidade_consumidora_oss'], 'consumo', $orderId);
+            $this->history($order, $actorId, 'aplicacao_medidor', 'Medidor aplicado na unidade consumidora.', ['reserva' => $reservationId, 'medidor' => (int) $meter['id_med'], 'uc' => $order['unidade_consumidora_oss']]);
+        });
+    }
+
+    public function withdraw(int $orderId, int $meterId, int $actorId): void
+    {
+        $this->transaction(function () use ($orderId, $meterId, $actorId) {
+            $actor = $this->operationalActor($actorId, ['eletricista']);
+            $order = $this->operationalOrder($orderId, $actor, ['em_atendimento']);
+            $meter = $this->locked($meterId);
+            $this->assertState($meter);
+            $installation = $this->db->query('SELECT tbl_instalacao_atual.* FROM tbl_instalacao_atual JOIN tbl_os ON ordem_servico_ins = id_oss WHERE medidor_ins = ? AND unidade_consumidora_ins = ? AND cliente_oss = ? FOR UPDATE', [$meterId, $order['unidade_consumidora_oss'], $order['cliente_oss']])->getRowArray();
+            if (!$installation) { $this->notFound(); }
+            if ($meter['status_med'] !== 'instalado' || $this->db->table('tbl_medidor_reserva')->where('medidor_rme', $meterId)->where('data_exclusao_rme', null)->whereIn('status_rme', ['reservada','entregue','devolucao_pendente'])->countAllResults()
+                || $this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $orderId)->where('medidor_osm', $meterId)->where('tipo_osm', 'retirado')->countAllResults()) {
+                throw new FormException(['operacao' => 'O medidor não está disponível para retirada nesta UC ou a retirada já foi registrada nesta OS.']);
+            }
+            $this->transition($meter, 'em_transito', ['localizacao_med' => 'viatura', 'eletricista_posse_med' => $actor['id_ele']]);
+            // This table is only the current installation projection; immutable OS/movement history stays intact.
+            (new \App\Models\InstalacaoAtualModel($this->db))->delete($installation['id_ins']);
+            $reservationId = (int) (new MedidorReservaModel($this->db))->insert(['medidor_rme' => $meterId, 'ordem_servico_rme' => $orderId, 'eletricista_rme' => $actor['id_ele'], 'usuario_rme' => $actorId, 'status_rme' => 'entregue']);
+            (new \App\Models\OsMedidorModel($this->db))->insert(['medidor_osm' => $meterId, 'ordem_servico_osm' => $orderId, 'tipo_osm' => 'retirado']);
+            $this->movement($meterId, $actorId, 'entrada', 'cliente', 'eletricista', $actor['id_ele'], 'Retirada na UC ' . $order['unidade_consumidora_oss'], 'ajuste', $orderId);
+            $this->history($order, $actorId, 'retirada_medidor', 'Medidor retirado para a custódia do Eletricista.', ['reserva' => $reservationId, 'medidor' => $meterId, 'uc' => $order['unidade_consumidora_oss'], 'os_instalacao_anterior' => (int) $installation['ordem_servico_ins']]);
+        });
+    }
+
     public function occurrence(int $meterId, mixed $type, mixed $reason, int $actorId, ?int $orderId = null): void
     {
         $reason = is_string($reason) ? trim($reason) : '';

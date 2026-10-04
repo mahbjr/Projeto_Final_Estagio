@@ -1,6 +1,6 @@
 # GPM Soluções — serviços de campo B2B
 
-Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Esta etapa entrega autenticação, permissões, funcionários com dados pessoais/cargo, empresas e medidores com transferências auditadas. Atendimento de OS, instalação/retirada em campo, relatórios e anexos permanecem para etapas posteriores.
+Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Fechamento, relatórios e anexos permanecem para etapas posteriores.
 
 ## Executar
 
@@ -173,4 +173,13 @@ Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência 
 
 Eletricista inicia a própria OS atribuída após checklist de início aprovado/liberado e entrega dos materiais reservados. Nova ligação exige medidor entregue em bom estado e em sua posse. O início registra status em_atendimento e horário do servidor; repetir não altera horário. Durante atendimento, acrescenta observações de até 2.000 caracteres pelo celular, preservadas no histórico com autoria. Gestor/Operador consultam, sem executar essas ações em nome do Eletricista.
 
-Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Consumo, aplicação/retirada, fechamento, fotos e relatório ainda pendentes. Evidências e limites em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4A aguarda revisão.
+Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Consumo, aplicação/retirada, fechamento, fotos e relatório ainda pendentes. Evidências e limites em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4A aprovada/commitada em `2551f04`.
+
+
+## Operações de campo — etapa 4B
+
+Na própria OS em atendimento, Eletricista registra consumo parcial/integral limitado à reserva entregue e ao saldo em custódia. Quantidades seguem precisão do material, com ponto/vírgula e cálculo exato; depósito não é debitado novamente. Consumo e devolução conciliam reserva quando zerar pendência.
+
+Nova ligação permite aplicação do medidor entregue em bom estado na própria posse, com instalação na UC da OS e auditoria. Retirada exige equipamento instalado na UC e empresa da OS; deixa medidor na viatura até o recebimento físico pelo Gestor. Histórico permanece preservado, enquanto instalação atual deixa de apontar equipamento retirado. Só o retorno físico disponibiliza novamente no depósito. Operações são transacionais e recusam estado inválido, vínculo alheio e repetição de aplicação/retirada.
+
+Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechamento, fotos e relatório continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4B aguarda revisão.

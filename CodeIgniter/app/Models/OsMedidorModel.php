@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class OsMedidorModel extends Model
 {
+    public function forOrder(int $id): array
+    {
+        return $this->select('tbl_os_medidor.*, numero_med')->join('tbl_medidor', 'medidor_osm = id_med')->where('ordem_servico_osm', $id)->orderBy('id_osm')->findAll();
+    }
+
     protected $table = 'tbl_os_medidor';
     protected $primaryKey = 'id_osm';
     protected $returnType = 'array';

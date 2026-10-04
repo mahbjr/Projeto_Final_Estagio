@@ -56,3 +56,7 @@ $routes->post('medidores/(:num)/ocorrencia', 'MedidoresController::occurrence/$1
 
 $routes->post('os/(:num)/iniciar-atendimento', 'OrdensServicoController::startAttendance/$1', ['as' => 'os.attendance.start']);
 $routes->post('os/(:num)/observacoes-atendimento', 'OrdensServicoController::noteAttendance/$1', ['as' => 'os.attendance.note']);
+
+$routes->post('os/(:num)/consumiveis/(:num)/consumir', 'OrdensServicoController::consumeConsumable/$1/$2', ['as' => 'os.consumiveis.consume']);
+$routes->post('os/(:num)/medidores/(:num)/aplicar', 'OrdensServicoController::applyMeter/$1/$2', ['as' => 'os.medidores.apply']);
+$routes->post('os/(:num)/medidores/(:num)/retirar', 'OrdensServicoController::withdrawMeter/$1/$2', ['as' => 'os.medidores.withdraw']);
