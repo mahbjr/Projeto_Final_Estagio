@@ -9,28 +9,6 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-DELETE FROM `tbl_consumivel`;
-
-DELETE FROM `tbl_consumivel_saldo`;
-
-DELETE FROM `tbl_consumivel_reserva`;
-
-DELETE FROM `tbl_consumivel_mov`;
-
-DELETE FROM `tbl_medidor_reserva`;
-
-DELETE FROM `tbl_instalacao_atual`;
-
-DELETE FROM `tbl_checklist`;
-
-DELETE FROM `tbl_checklist_item`;
-
-DELETE FROM `tbl_checklist_avaliacao`;
-
-DELETE FROM `tbl_checklist_resposta`;
-
-DELETE FROM `tbl_medidor_ocorrencia`;
-
 -- Limpeza prévia para garantir idempotência ao reexecutar as seeds
 DELETE FROM `tbl_anexo`;
 DELETE FROM `tbl_estoque_mov`;
@@ -103,17 +81,17 @@ INSERT INTO `tbl_medidor` (`id_med`, `eletricista_posse_med`, `numero_med`, `mod
 
 -- ---------------------------------------------------------------------
 -- 5. ORDENS DE SERVIÇO (tbl_os)
--- Tipos: corte, nova_ligacao | Status: aberta, em_atendimento, encerrada, cancelada
+-- Tipos: corte, nova_ligacao | Status: aberta, em_andamento, concluida, cancelada
 -- ---------------------------------------------------------------------
 INSERT INTO `tbl_os` (`id_oss`, `cliente_oss`, `eletricista_oss`, `tipo_oss`, `status_oss`, `descricao_oss`, `unidade_consumidora_oss`, `endereco_oss`, `bairro_oss`, `cidade_oss`, `estado_oss`, `cep_oss`, `data_abertura_oss`, `data_fechamento_oss`) VALUES
 -- OS 1: Nova Ligação em aberto atribuída ao João
-(1, 1, 1, 'nova_ligacao', 'atribuida', 'Nova ligação solicitada pela Alfa para unidade comercial.', 'UC-CE-100234', 'Rua das Flores, 100', 'Centro', 'Fortaleza', 'CE', '60010-000', NOW(), NULL),
+(1, 1, 1, 'nova_ligacao', 'aberta', 'Nova ligação solicitada pela Alfa para unidade comercial.', 'UC-CE-100234', 'Rua das Flores, 100', 'Centro', 'Fortaleza', 'CE', '60010-000', NOW(), NULL),
 
 -- OS 2: Corte por inadimplência em andamento com João
-(2, 1, 1, 'corte', 'em_atendimento', 'Corte solicitado pela Alfa em outra UC, com recolhimento de medidor.', 'UC-CE-200456', 'Rua dos Jardins, 245', 'Meireles', 'Fortaleza', 'CE', '60165-000', NOW(), NULL),
+(2, 1, 1, 'corte', 'em_andamento', 'Corte solicitado pela Alfa em outra UC, com recolhimento de medidor.', 'UC-CE-200456', 'Rua dos Jardins, 245', 'Meireles', 'Fortaleza', 'CE', '60165-000', NOW(), NULL),
 
 -- OS 3: Concluída por Lucas
-(3, 3, 2, 'nova_ligacao', 'encerrada', 'Ligação finalizada na UC indicada pela Beta Engenharia.', 'UC-CE-300789', 'Rua das Acácias, 80', 'Cocó', 'Fortaleza', 'CE', '60192-000', DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY));
+(3, 3, 2, 'nova_ligacao', 'concluida', 'Ligação finalizada na UC indicada pela Beta Engenharia.', 'UC-CE-300789', 'Rua das Acácias, 80', 'Cocó', 'Fortaleza', 'CE', '60192-000', DATE_SUB(NOW(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- ---------------------------------------------------------------------
 -- 6. HISTÓRICO DAS ORDENS DE SERVIÇO (tbl_os_historico)
@@ -122,10 +100,10 @@ INSERT INTO `tbl_os` (`id_oss`, `cliente_oss`, `eletricista_oss`, `tipo_oss`, `s
 INSERT INTO `tbl_os_historico` (`id_osh`, `ordem_servico_osh`, `eletricista_osh`, `status_osh`, `observacao_osh`, `data_osh`) VALUES
 (1, 1, 1, 'aberta', 'OS gerada pelo operador e atribuída ao eletricista João.', NOW()),
 (2, 2, NULL, 'aberta', 'Ordem de corte cadastrada pelo operador.', DATE_SUB(NOW(), INTERVAL 1 HOUR)),
-(3, 2, 1, 'em_atendimento', 'Eletricista João iniciou deslocamento para o local.', NOW()),
+(3, 2, 1, 'em_andamento', 'Eletricista João iniciou deslocamento para o local.', NOW()),
 (4, 3, NULL, 'aberta', 'Abertura da OS de nova ligação.', DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(5, 3, 2, 'em_atendimento', 'Eletricista Lucas iniciou a instalação.', DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(6, 3, 2, 'encerrada', 'Instalação finalizada com sucesso e medidor homologado.', DATE_SUB(NOW(), INTERVAL 1 DAY));
+(5, 3, 2, 'em_andamento', 'Eletricista Lucas iniciou a instalação.', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(6, 3, 2, 'concluida', 'Instalação finalizada com sucesso e medidor homologado.', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- ---------------------------------------------------------------------
 -- 7. MEDIDORES DA OS (tbl_os_medidor)
@@ -163,7 +141,13 @@ INSERT INTO `tbl_estoque_mov` (
 (9, 5, 3, 2, 'baixa_saida', 'consumo', 'eletricista', 'cliente', 1, 'Instalação na UC indicada pela Beta Engenharia na OS #3', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 -- ---------------------------------------------------------------------
--- Fotos são criadas por upload real nas próximas etapas.
+-- 9. ANEXOS / FOTOS DA OS (tbl_anexo)
+-- Tipos: foto, documento
+-- ---------------------------------------------------------------------
+INSERT INTO `tbl_anexo` (`id_anx`, `ordem_servico_anx`, `arquivo_anx`, `tipo_anx`, `descricao_anx`, `data_anx`) VALUES
+(1, 2, 'uploads/os/2/foto_corte_medidor.jpg', 'foto', 'Registro fotográfico do medidor recolhido no corte', NOW()),
+(2, 3, 'uploads/os/3/foto_padrao_instalado.jpg', 'foto', 'Foto do novo padrão instalado e energizado', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(3, 3, 'uploads/os/3/termo_aceite.pdf', 'documento', 'Termo de vistoria e entrega assinado pelo cliente', DATE_SUB(NOW(), INTERVAL 1 DAY));
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -174,12 +158,3 @@ UPDATE tbl_usuario SET nome_completo_usu='Lucas Eletricista', cpf_usu='444.444.4
 UPDATE tbl_medidor SET eletricista_posse_med=NULL, status_med='instalado', localizacao_med='cliente' WHERE id_med=5;
 UPDATE tbl_medidor SET eletricista_posse_med=1, status_med='em_transito', localizacao_med='viatura' WHERE id_med=6;
 INSERT INTO tbl_estoque_mov (medidor_emv, ordem_servico_emv, eletricista_emv, tipo_emv, motivo_emv, origem_emv, destino_emv, quantidade_emv, observacao_emv) VALUES (6,2,1,'entrada','ajuste','cliente','eletricista',1,'Retirada em campo na OS #2');
-
--- Auditoria dos dados demonstrativos, sem atribuir autores a dados legados.
-UPDATE tbl_os_historico SET usuario_osh=CASE WHEN eletricista_osh=1 THEN 3 WHEN eletricista_osh=2 THEN 4 ELSE 2 END;
-UPDATE tbl_estoque_mov SET usuario_emv=CASE WHEN ordem_servico_emv=3 THEN 4 WHEN origem_emv='cliente' THEN 3 ELSE 1 END;
-UPDATE tbl_os SET resultado_oss='executado' WHERE status_oss='encerrada';
-INSERT INTO tbl_instalacao_atual (medidor_ins,ordem_servico_ins,unidade_consumidora_ins,usuario_ins) VALUES (5,3,'UC-CE-300789',4);
-INSERT INTO tbl_consumivel (id_con,nome_con,unidade_con,precisao_con) VALUES (1,'Lacre de demonstração','unidade',0),(2,'Fita de demonstração','metro',3);
-INSERT INTO tbl_consumivel_saldo (consumivel_sco,quantidade_sco) VALUES (1,100),(2,25.500);
-INSERT INTO tbl_consumivel_mov (consumivel_mco,usuario_mco,tipo_mco,origem_mco,destino_mco,quantidade_mco,observacao_mco) VALUES (1,1,'entrada','fornecedor','deposito',100,'Carga demonstrativa'),(2,1,'entrada','fornecedor','deposito',25.500,'Carga demonstrativa');

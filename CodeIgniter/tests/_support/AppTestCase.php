@@ -66,7 +66,7 @@ abstract class AppTestCase extends CIUnitTestCase
 
     protected function clearPendingWork(): void
     {
-        $this->db->table('tbl_os')->update(['status_oss' => 'concluida']);
+        $this->db->table('tbl_os')->update(['status_oss' => 'encerrada']);
         $this->db->table('tbl_medidor')->update(['eletricista_posse_med' => null]);
     }
 }

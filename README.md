@@ -49,7 +49,7 @@ Senha das seeds: `senha123`. O quadro de acessos no login aparece somente com `a
 
 - Gestor administra usuários; Gestor/Operador gerenciam empresas, mas somente Gestor pode excluí-las.
 - Eletricista tem papel fixo. A própria conta não pode ser excluída/desativada/rebaixada; o último Gestor ativo é preservado.
-- OS `aberta`/`em_andamento` bloqueia inativação/exclusão dos envolvidos; medidores em posse bloqueiam o eletricista.
+- OS `aberta`/`atribuida`/`em_atendimento` bloqueia inativação/exclusão dos envolvidos; medidores em posse bloqueiam o eletricista.
 - Escritas/logout são POST com CSRF. Sessão expira após duas horas de inatividade; situação/papel são relidos por requisição.
 - CNPJ normalizado de 14 posições, inclusive alfanumérico. UC/endereço de atendimento pertencem à OS.
 - Soft delete mantém identificadores reservados e preserva o histórico.
@@ -105,3 +105,24 @@ DDL MySQL não tem rollback transacional. Em falha parcial, mantenha as escritas
 Testes de concorrência usam processos PHP (`pcntl`) e conexões separadas dentro de um único teste. Continue executando a suíte sequencialmente no MySQL `_tests`.
 
 Veja [entrega dos cadastros base](docs/EntregaCadastrosBase.md) para evidências e limitações.
+
+
+## Fluxo operacional — etapa 1 (04/10/2026)
+
+Implementada a fundação de dados, ainda sem telas ou operações de OS: estados `aberta`, `atribuida`, `em_atendimento`, `encerrada`, `cancelada`; resultado separado `executado`, `parcial`, `nao_executado`. Os três estados não finais bloqueiam inativação/exclusão dos envolvidos. Domínio de medidores inclui reserva, perda e baixa, mantendo localização e posse independentes.
+
+Estruturas para reservas exclusivas de medidores, instalação atual, consumíveis com saldos decimais, reservas e movimentos, checklists com itens bloqueantes/informativos, avaliações/respostas, ocorrências e autoria em FK. CHECKs protegem saldos e impedem liberação do checklist de fechamento. O início admite liberação justificada pelo Gestor nas próximas etapas.
+
+Esta entrega é greenfield: migração recusa OS existentes e dados operacionais legados, sem conversão ou limpeza automática. Inicializar banco separado vazio, suspender escritas e fazer backup antes de DDL. Não aplicar código com estados novos contra esquema operacional antigo. Recuperação de DDL parcial exige restauração, pois MySQL não oferece rollback transacional para toda a migração.
+
+Gestor e Operador gerenciarão OS; Eletricista atenderá apenas as próprias. Reservas, atendimento, bloqueios, uploads e relatório ainda não estão disponíveis pela interface. Sem kits, versões de modelos, cadastro de medidor externo, workflow de reparo, miniaturas ou offline. Consulte `EntregaFluxoOperacional.md` para revisão e validação da etapa.
+
+### Inicialização e migração da fundação operacional
+
+Execute comandos a partir de `CodeIgniter/`. `php spark app:prepare-demo --group demo` inicializa somente um banco demo vazio, diferente do default, usando o esquema atual e dados demonstrativos. Não reexecute schema/seeds em banco com dados.
+
+A migration `CreateOperationalFlow` atende um banco de cadastros compatível com tabelas operacionais vazias. Confirme `database.defaultGroup = demo` e as credenciais do banco separado antes de executar `php spark migrate -g demo`, após backup e pausa de escritas. O argumento `-g` não substitui a configuração da conexão default utilizada pelo MigrationRunner. Se houver OS antigas, a migration recusa e exige outro banco vazio. `migrate:rollback` não remove evidências: recuperar por restauração do backup. O novo código depende do esquema atualizado.
+
+O banco `_tests` continua separado do default e demo; suíte sequencial: `vendor/bin/phpunit --no-coverage`. Os testes cobrem estados, rejeição de banco preenchido, preservação de cadastros e constraints físicas. Novos models não autorizam acesso: filtros e Services das próximas etapas realizarão essa verificação.
+
+Branch da etapa: `feature/banco-auth`. Próximas etapas só avançam após revisão explícita. Os PRs do plano têm `develop` como destino; essa branch ainda não existe localmente e não foi criada/publicada nesta etapa. Login e roles existentes são reutilizados, sem recriação de autenticação.

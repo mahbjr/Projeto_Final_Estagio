@@ -131,6 +131,6 @@ class MedidorService extends WriteService
 
     protected function movement(int $id, int $actor, string $type, string $origin, string $destination, ?int $electrician, string $description, string $reason = 'ajuste'): void
     {
-        $this->db->table('tbl_estoque_mov')->insert(['medidor_emv' => $id, 'eletricista_emv' => $electrician, 'tipo_emv' => $type, 'motivo_emv' => $reason, 'origem_emv' => $origin, 'destino_emv' => $destination, 'quantidade_emv' => 1, 'observacao_emv' => $description . ' — usuário #' . $actor, 'data_emv' => date('Y-m-d H:i:s')]);
+        $this->db->table('tbl_estoque_mov')->insert(['medidor_emv' => $id, 'usuario_emv' => $actor, 'eletricista_emv' => $electrician, 'tipo_emv' => $type, 'motivo_emv' => $reason, 'origem_emv' => $origin, 'destino_emv' => $destination, 'quantidade_emv' => 1, 'observacao_emv' => $description . ' — usuário #' . $actor, 'data_emv' => date('Y-m-d H:i:s')]);
     }
 }

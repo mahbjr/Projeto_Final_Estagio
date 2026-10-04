@@ -100,7 +100,7 @@ final class UsuariosTest extends AppTestCase
 
     public static function statuses(): array
     {
-        return [['aberta', true], ['em_andamento', true], ['concluida', false], ['cancelada', false]];
+        return [['aberta', true], ['atribuida', true], ['em_atendimento', true], ['encerrada', false], ['cancelada', false]];
     }
 
     #[DataProvider('statuses')]
@@ -121,7 +121,7 @@ final class UsuariosTest extends AppTestCase
         $technical = $this->db->table('tbl_eletricista')->where('id_ele', 1)->get()->getRowArray();
         $input = $technical + ['nome_usu' => 'eletricista1@energia.com.br', 'ativo_usu' => '0', 'senha' => '', 'confirmacao' => ''] + $this->db->table('tbl_usuario')->where('id_usu', 3)->get()->getRowArray();
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(422);
-        $this->db->table('tbl_os')->update(['status_oss' => 'concluida']);
+        $this->db->table('tbl_os')->update(['status_oss' => 'encerrada']);
         $this->requestAs(1, 'POST', 'usuarios/3/excluir')->assertStatus(422);
         $this->db->table('tbl_medidor')->update(['eletricista_posse_med' => null]);
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(303);
