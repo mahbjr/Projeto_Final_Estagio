@@ -7,6 +7,7 @@ final class PermissionPolicy
     public const PUBLIC_ROUTES = ['login.form', 'login.submit'];
 
     private const PERMISSIONS = [
+        'relatorios.estoque' => ['gestor', 'operador'],
         'os.photos.upload' => ['eletricista'],
         'os.photos.show' => ['gestor','operador','eletricista'],
         'os.photos.remove' => ['gestor','eletricista'],

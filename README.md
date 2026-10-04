@@ -1,6 +1,6 @@
 # GPM Soluções — serviços de campo B2B
 
-Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e conciliação dos materiais, registrando resultado e dados finais. Fotos podem ser anexadas durante o atendimento e consultadas com acesso protegido pela OS. Relatório de estoque permanece para a próxima etapa.
+Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e conciliação dos materiais, registrando resultado e dados finais. Fotos podem ser anexadas durante o atendimento e consultadas com acesso protegido pela OS. Gestor e Operador consultam o relatório de estoque atual, com medidores e saldos de consumíveis por detentor.
 
 ## Executar
 
@@ -212,4 +212,17 @@ Configure o PHP do ambiente para permitir 10 MiB por arquivo e um POST maior que
 php -d upload_max_filesize=10M -d post_max_size=12M spark serve --host 127.0.0.1 --port 8080
 ```
 
-Limites menores do PHP recusam o upload antes da validação de conteúdo; um POST acima do limite global pode ser recusado por CSRF por perder seus campos. Não repita a ação presumindo sucesso: confirme o anexo na galeria. Não há alteração de schema/migração/seeds/dependências nesta etapa; usar o esquema operacional atual. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Relatório de estoque é o próximo ponto de revisão.
+Limites menores do PHP recusam o upload antes da validação de conteúdo; um POST acima do limite global pode ser recusado por CSRF por perder seus campos. Não repita a ação presumindo sucesso: confirme o anexo na galeria. Não há alteração de schema/migração/seeds/dependências nesta etapa; usar o esquema operacional atual. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 4D aprovada e commitada em `b86cb96`. O relatório de estoque está descrito na etapa 5 abaixo.
+
+
+## Relatório de estoque atual — etapa 5
+
+Gestor e Operador acessam `/relatorios/estoque`, pelos links **Relatório de estoque** nas telas Estoque e Consumíveis. Eletricista não acessa o relatório global. A rota é somente GET, autenticada, protegida pela política central e sem cache; não altera estoque. O relatório consulta os dados atuais a cada requisição, sem fotografia histórica, exportação ou agregação de quantidades de materiais/unidades diferentes.
+
+Na aba Medidores, filtre série/modelo/fabricante, estado, localização e detentor/último responsável. Cada equipamento não excluído aparece uma vez, com reserva ativa e UC da instalação atual, quando existentes. Históricos de reservas/aplicações/retiradas não duplicam linhas. Perdidos/baixados ficam explícitos e preservam último local/responsável para auditoria; não representam equipamentos físicos disponíveis, e baixado não representa posse ativa. Os links abrem a OS da reserva ativa e o histórico do medidor.
+
+Na aba Consumíveis, filtre nome e detentor (Todos, Depósito ou eletricista). Cada linha corresponde a material e saldo atual de um detentor, com unidade, físico, reservado e disponível (`físico − reservado`, em DECIMAL exato). Contas inativas/excluídas não ocultam a custódia histórica. No filtro Depósito, materiais sem saldo ativo aparecem como **Saldo não cadastrado**, distinguindo-os de saldo conhecido zero. Em Todos, são listados os saldos ativos de cada material; material sem nenhum saldo aparece sem saldo cadastrado. Os links abrem o histórico de movimentos e autores. Materiais/saldos logicamente excluídos não entram no relatório.
+
+Há 15 registros por página, contagem total dos resultados filtrados e filtros preservados na paginação. Parâmetros não escalares/enums/detentores inválidos são normalizados para os valores padrão; busca tem limite de 100 caracteres. Página deve ser inteiro positivo de até nove dígitos, caso contrário usa a primeira. Busca usa Query Builder, e conteúdo exibido é escapado. A consulta não é uma fotografia transacional: escritas concorrentes podem alterar resultados entre requisições/páginas. Reservas, entregas, aplicação/retirada e devoluções continuam sujeitas às regras transacionais dos Services existentes.
+
+Sem alterações de banco/schema/diagrama/migração/seeds/dependências ou configuração `.env`/`.gitignore`. Requer o esquema operacional atual. Esta entrega conclui o relatório de estoque do plano; dashboards e relatórios de produtividade gerais da especificação não estão incluídos. Validação e revisão em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md).

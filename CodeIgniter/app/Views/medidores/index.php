@@ -1,6 +1,7 @@
 <?= $this->extend('layouts/app') ?>
 <?= $this->section('content') ?>
 <div class="page-heading"><div><h1>Estoque de medidores</h1><p>Consulte equipamentos, transferências e histórico.</p></div><?php if ($can('medidores.create')): ?><a class="btn btn-primary" href="<?= site_url('medidores/novo') ?>"><?= heroicon('plus', 'outline', 'icon') ?> Novo medidor</a><?php endif ?></div>
+<?php if ($can('relatorios.estoque')): ?><p><a class="btn btn-outline-secondary" href="<?= site_url('relatorios/estoque?tipo=medidores') ?>">Relatório de estoque</a></p><?php endif ?>
 <section class="panel"><div class="panel-toolbar"><form method="get" action="<?= site_url('medidores') ?>" class="row g-3 w-100">
 <?= app_field('q', 'Número ou modelo', $filters, [], ['max' => 100]) ?>
 <?= app_field('status_med', 'Status', $filters, [], ['choices' => ['' => 'Todos', 'disponivel' => 'Disponível', 'em_transito' => 'Em trânsito', 'instalado' => 'Instalado', 'defeito' => 'Defeito', 'reservado' => 'Reservado', 'perdido' => 'Perdido', 'baixado' => 'Baixado']]) ?>
