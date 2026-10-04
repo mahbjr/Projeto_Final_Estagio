@@ -146,6 +146,15 @@ Gestor cadastra materiais em `/consumiveis` com unidade e precisão de 0 a 3 cas
 
 Quantidades usam ponto ou vírgula decimal, sem separador de milhar; cálculo exato em milésimos e validação no servidor impedem arredondamento e saldo negativo. Reserva exige disponibilidade e não pode se repetir enquanto ativa para o mesmo material/OS. Unidade e precisão não mudam após movimentação, reserva ou saldo positivo. Exclusão lógica exige todos os saldos zerados e nenhuma reserva ativa.
 
-Cancelamento libera somente reservas de consumíveis não entregues. Custódia e conciliações pendentes não são apagadas nem creditadas ficticiamente ao depósito e bloqueiam desativação/exclusão do responsável. Entrega, consumo, devolução, reserva operacional de medidores e checklist em campo seguem nos próximos pontos de revisão. O estoque completo ainda não está entregue. Não há mudança de banco/dependências para este recorte; exige a fundação operacional atual.
+Cancelamento libera somente reservas de consumíveis não entregues. Custódia e conciliações pendentes não são apagadas nem creditadas ficticiamente ao depósito e bloqueiam desativação/exclusão do responsável. Checklist de início, entrega e devolução foram ampliados na etapa 3B, descrita abaixo; consumo e operações de medidores seguem nos próximos pontos de revisão. O estoque completo ainda não está entregue. Não há mudança de banco/dependências para este recorte; exige a fundação operacional atual.
 
-Validação e limites: [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Branch local `feature/checklist-estoque`, baseada no commit aprovado da etapa 2 (`baa2208`), aguardando revisão para commit deste recorte.
+Validação e limites: [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3A aprovada e commitada em `ec26890`, na branch local `feature/checklist-estoque`, baseada no commit aprovado da etapa 2 (`baa2208`). Os próximos recortes seguem nessa branch.
+
+
+## Checklist de início e custódia — etapa 3B
+
+Eletricista responde os modelos ativos de início na própria OS atribuída. Respostas obrigatórias ausentes recusam o formulário; item bloqueante reprovado/sem resposta impede entrega. Gestor pode liberar somente a avaliação atual de início com justificativa. Informativos não bloqueiam; fechamento nunca aceita liberação. Correções preservam as avaliações/respostas/liberações anteriores, consultáveis na OS.
+
+Gestor confirma entrega física integral das reservas de consumíveis após aprovação/liberação de todos os modelos de início ativos. Modelo alterado exige novas respostas. A entrega transfere saldo do depósito para custódia e registra movimento com OS/reserva/ator; não inicia automaticamente atendimento. Gestor recebe devolução parcial/integral, inclusive após cancelamento, debitando a custódia e conciliando a reserva quando não restar material. Repetição não duplica entrega/crédito; pendências impedem desativação/exclusão do responsável. Operador consulta os dados, sem realizar entregas ou liberar bloqueios.
+
+Consumo, operações de medidores, execução/fechamento e fotos permanecem nos próximos pontos de revisão. Detalhes e validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3A aprovada/commitada em `ec26890`; etapa 3B aguarda revisão antes do próximo commit.

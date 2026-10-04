@@ -24,6 +24,10 @@ $routes->post('medidores/(:num)/enviar', 'MedidoresController::send/$1', ['as' =
 $routes->post('medidores/(:num)/devolver', 'MedidoresController::returnToDepot/$1', ['as' => 'medidores.return']);
 $routes->post('consumiveis/(:num)/entrada', 'ConsumiveisController::entry/$1', ['as' => 'consumiveis.entry']);
 $routes->post('os/(:num)/consumiveis/reservar', 'OrdensServicoController::reserveConsumable/$1', ['as' => 'os.consumiveis.reserve']);
+$routes->post('os/(:num)/consumiveis/(:num)/entregar', 'OrdensServicoController::deliverConsumable/$1/$2', ['as' => 'os.consumiveis.deliver']);
+$routes->post('os/(:num)/consumiveis/(:num)/receber', 'OrdensServicoController::receiveConsumable/$1/$2', ['as' => 'os.consumiveis.receive']);
+$routes->post('os/(:num)/checklists/(:num)/responder-inicio', 'OrdensServicoController::answerBeginning/$1/$2', ['as' => 'os.checklist.answer']);
+$routes->post('os/(:num)/avaliacoes/(:num)/liberar-inicio', 'OrdensServicoController::releaseBeginning/$1/$2', ['as' => 'os.checklist.release']);
 
 $routes->get('os', 'OrdensServicoController::index', ['as' => 'os.index']);
 $routes->get('os/nova', 'OrdensServicoController::new', ['as' => 'os.new']);

@@ -90,10 +90,77 @@ final class ConsumivelService extends WriteService
         });
     }
 
+    public function deliver(int $orderId, int $reservationId, int $actorId): void
+    {
+        $this->transaction(function () use ($orderId, $reservationId, $actorId) {
+            $actor = $this->operationalActor($actorId, ['gestor']);
+            $order = $this->operationalOrder($orderId, $actor, ['atribuida']);
+            $reservation = $this->reservation($orderId, $reservationId);
+            if ($reservation['status_rco'] !== 'reservada' || Quantidade::stored($reservation['entregue_rco']) !== 0 || (int) $reservation['eletricista_rco'] !== (int) $order['eletricista_oss']) { throw new FormException(['operacao' => 'Reserva não disponível para entrega.']); }
+            $tech = $this->db->table('tbl_eletricista')->join('tbl_usuario', 'usuario_ele = id_usu')->where('id_ele', $order['eletricista_oss'])->where('data_exclusao_ele', null)->where('data_exclusao_usu', null)->where('ativo_usu', 1)->where('papel_usu', 'eletricista')->get()->getRowArray();
+            if (!$tech || trim($tech['matricula_ele']) === '') { throw new FormException(['operacao' => 'Responsável inativo ou sem matrícula.']); }
+            ChecklistInicioService::assertApproved($this->db, $order);
+            $this->material((int) $reservation['consumivel_rco']);
+            $depot = $this->depot((int) $reservation['consumivel_rco']);
+            $quantity = Quantidade::stored($reservation['quantidade_rco']);
+            $physical = Quantidade::stored($depot['quantidade_sco']); $reserved = Quantidade::stored($depot['reservado_sco']);
+            if ($quantity > $physical || $quantity > $reserved) { throw new FormException(['operacao' => 'Reserva e saldo incompatíveis.']); }
+            $custody = $this->custody((int) $reservation['consumivel_rco'], (int) $reservation['eletricista_rco']);
+            (new ConsumivelSaldoModel($this->db))->update($depot['id_sco'], ['quantidade_sco' => Quantidade::decimal($physical - $quantity), 'reservado_sco' => Quantidade::decimal($reserved - $quantity)]);
+            (new ConsumivelSaldoModel($this->db))->update($custody['id_sco'], ['quantidade_sco' => Quantidade::decimal(Quantidade::stored($custody['quantidade_sco']) + $quantity)]);
+            (new ConsumivelReservaModel($this->db))->update($reservationId, ['entregue_rco' => Quantidade::decimal($quantity), 'status_rco' => 'entregue']);
+            $this->stockMovement($reservation, $actorId, 'entrega', 'deposito', 'eletricista', $quantity, 'Entrega física integral da reserva.');
+        });
+    }
+
+    public function receive(int $orderId, int $reservationId, mixed $amount, mixed $note, int $actorId): void
+    {
+        $note = is_string($note) ? trim($note) : '';
+        $this->validate(['observacao_devolucao' => $note], ['observacao_devolucao' => 'required|max_length[255]']);
+        $this->transaction(function () use ($orderId, $reservationId, $amount, $note, $actorId) {
+            $actor = $this->operationalActor($actorId, ['gestor']);
+            $this->operationalOrder($orderId, $actor, ['atribuida', 'em_atendimento', 'encerrada', 'cancelada']);
+            $reservation = $this->reservation($orderId, $reservationId);
+            $material = $this->material((int) $reservation['consumivel_rco']);
+            $quantity = Quantidade::parse($amount, (int) $material['precisao_con'], 'quantidade_devolucao');
+            $pending = Quantidade::stored($reservation['entregue_rco']) - Quantidade::stored($reservation['consumido_rco']) - Quantidade::stored($reservation['devolvido_rco']);
+            if ($reservation['status_rco'] !== 'entregue' || $quantity > $pending) { throw new FormException(['quantidade_devolucao' => 'Quantidade maior que a pendência desta reserva ou reserva já conciliada.']); }
+            $depot = $this->depot((int) $reservation['consumivel_rco']);
+            $custody = $this->custody((int) $reservation['consumivel_rco'], (int) $reservation['eletricista_rco']);
+            if ($quantity > Quantidade::stored($custody['quantidade_sco'])) { throw new FormException(['operacao' => 'Saldo de custódia incompatível.']); }
+            (new ConsumivelSaldoModel($this->db))->update($custody['id_sco'], ['quantidade_sco' => Quantidade::decimal(Quantidade::stored($custody['quantidade_sco']) - $quantity)]);
+            (new ConsumivelSaldoModel($this->db))->update($depot['id_sco'], ['quantidade_sco' => Quantidade::decimal(Quantidade::stored($depot['quantidade_sco']) + $quantity)]);
+            (new ConsumivelReservaModel($this->db))->update($reservationId, ['devolvido_rco' => Quantidade::decimal(Quantidade::stored($reservation['devolvido_rco']) + $quantity), 'status_rco' => $quantity === $pending ? 'conciliada' : 'entregue']);
+            $this->stockMovement($reservation, $actorId, 'devolucao', 'eletricista', 'deposito', $quantity, $note);
+        });
+    }
+
+    private function reservation(int $order, int $id): array
+    {
+        $record = $this->db->query('SELECT * FROM tbl_consumivel_reserva WHERE id_rco = ? AND ordem_servico_rco = ? AND data_exclusao_rco IS NULL FOR UPDATE', [$id, $order])->getRowArray();
+        if (!$record) { $this->notFound(); }
+        return $record;
+    }
+
+    private function custody(int $material, int $electrician): array
+    {
+        $record = $this->db->query('SELECT * FROM tbl_consumivel_saldo WHERE consumivel_sco = ? AND eletricista_sco = ? FOR UPDATE', [$material, $electrician])->getRowArray();
+        if (!$record) {
+            $id = (new ConsumivelSaldoModel($this->db))->insert(['consumivel_sco' => $material, 'eletricista_sco' => $electrician]);
+            $record = (new ConsumivelSaldoModel($this->db))->find($id);
+        }
+        if ($record['data_exclusao_sco'] !== null) { throw new FormException(['operacao' => 'Saldo de custódia excluído. Regularize o cadastro.']); }
+        return $record;
+    }
+
+    private function stockMovement(array $reservation, int $actor, string $type, string $origin, string $destination, int $quantity, string $note): void
+    {
+        (new ConsumivelMovModel($this->db))->insert(['consumivel_mco' => $reservation['consumivel_rco'], 'reserva_mco' => $reservation['id_rco'], 'ordem_servico_mco' => $reservation['ordem_servico_rco'], 'eletricista_mco' => $reservation['eletricista_rco'], 'usuario_mco' => $actor, 'tipo_mco' => $type, 'origem_mco' => $origin, 'destino_mco' => $destination, 'quantidade_mco' => Quantidade::decimal($quantity), 'observacao_mco' => $note]);
+    }
+
     private function actor(int $id): void
     {
-        $managers = $this->db->query("SELECT id_usu FROM tbl_usuario WHERE papel_usu = 'gestor' AND ativo_usu = 1 AND data_exclusao_usu IS NULL ORDER BY id_usu FOR UPDATE")->getResultArray();
-        if (!in_array($id, array_map('intval', array_column($managers, 'id_usu')), true)) { throw new FormException(['operacao' => 'Seu acesso de Gestor não está mais ativo.']); }
+        $this->operationalActor($id, ['gestor']);
     }
 
     private function material(int $id): array
