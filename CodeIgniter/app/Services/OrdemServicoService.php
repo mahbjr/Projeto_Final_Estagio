@@ -94,10 +94,24 @@ final class OrdemServicoService extends WriteService
             if (!in_array($order['status_oss'], ['aberta', 'atribuida'], true)) {
                 throw new FormException(['operacao' => 'Só é possível cancelar antes do início do atendimento.']);
             }
-            // Meter integration follows in the next review; never invent a physical return.
-            foreach (['tbl_medidor_reserva' => ['ordem_servico_rme', 'data_exclusao_rme'], 'tbl_os_medidor' => ['ordem_servico_osm', 'data_exclusao_osm'], 'tbl_estoque_mov' => ['ordem_servico_emv', 'data_exclusao_emv']] as $table => [$fk, $deleted]) {
-                if ($this->db->table($table)->where($fk, $id)->where($deleted, null)->countAllResults()) {
-                    throw new FormException(['operacao' => 'Esta OS possui materiais vinculados. Regularize reservas e devoluções antes de cancelar.']);
+            // Installation/removal reconciliation belongs to the field stage. Preserve its guard.
+            if ($this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $id)->where('data_exclusao_osm', null)->countAllResults()
+                || $this->db->table('tbl_estoque_mov')->where('ordem_servico_emv', $id)->where('data_exclusao_emv', null)->where("NOT EXISTS (SELECT 1 FROM tbl_medidor_reserva WHERE medidor_rme = medidor_emv AND ordem_servico_rme = ordem_servico_emv AND data_exclusao_rme IS NULL)", null, false)->countAllResults()) {
+                throw new FormException(['operacao' => 'Esta OS possui aplicação ou retirada pendente de conciliação.']);
+            }
+            $releasedMeters = [];
+            $meterReservations = $this->db->query("SELECT * FROM tbl_medidor_reserva WHERE ordem_servico_rme = ? AND data_exclusao_rme IS NULL AND status_rme IN ('reservada','entregue','devolucao_pendente') ORDER BY medidor_rme FOR UPDATE", [$id])->getResultArray();
+            foreach ($meterReservations as $reservation) {
+                $meter = $this->db->query('SELECT * FROM tbl_medidor WHERE id_med = ? AND data_exclusao_med IS NULL FOR UPDATE', [$reservation['medidor_rme']])->getRowArray();
+                if (!$meter || !MedidorService::consistent($meter)) { throw new FormException(['operacao' => 'Reserva de medidor incompatível. Regularize antes de cancelar.']); }
+                if ($reservation['status_rme'] === 'reservada') {
+                    if ($meter['status_med'] !== 'reservado') { throw new FormException(['operacao' => 'Medidor reservado fora do depósito.']); }
+                    (new \App\Models\MedidorModel($this->db))->update($meter['id_med'], ['status_med' => 'disponivel']);
+                    (new \App\Models\MedidorReservaModel($this->db))->update($reservation['id_rme'], ['status_rme' => 'liberada']);
+                    $releasedMeters[] = (int) $reservation['id_rme'];
+                } else {
+                    if (!in_array($meter['status_med'], ['em_transito', 'defeito'], true) || $meter['localizacao_med'] !== 'viatura' || (int) $meter['eletricista_posse_med'] !== (int) $reservation['eletricista_rme']) { throw new FormException(['operacao' => 'Custódia do medidor incompatível.']); }
+                    (new \App\Models\MedidorReservaModel($this->db))->update($reservation['id_rme'], ['status_rme' => 'devolucao_pendente']);
                 }
             }
             $released = [];
@@ -114,7 +128,7 @@ final class OrdemServicoService extends WriteService
             }
             // Delivered rows and custody balances remain intact, even when the OS is cancelled.
             (new OrdemServicoModel($this->db))->update($id, ['status_oss' => 'cancelada', 'data_fechamento_oss' => date('Y-m-d H:i:s')]);
-            $this->history($id, $actorId, 'cancelamento', $order['status_oss'], 'cancelada', $reason, $released ? ['reservas_consumiveis_liberadas' => $released] : [], $order['eletricista_oss'] === null ? null : (int) $order['eletricista_oss']);
+            $this->history($id, $actorId, 'cancelamento', $order['status_oss'], 'cancelada', $reason, array_filter(['reservas_consumiveis_liberadas' => $released, 'reservas_medidores_liberadas' => $releasedMeters]), $order['eletricista_oss'] === null ? null : (int) $order['eletricista_oss']);
         });
     }
 

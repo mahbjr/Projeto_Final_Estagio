@@ -17,7 +17,7 @@ function user_initials(string $name): string
 
 function meter_label(string $value): string
 {
-    return ['disponivel' => 'Disponível', 'em_transito' => 'Em trânsito', 'instalado' => 'Instalado', 'defeito' => 'Defeito', 'deposito' => 'Depósito', 'viatura' => 'Viatura', 'cliente' => 'Cliente', 'galpao' => 'Galpão', 'eletricista' => 'Eletricista', 'fornecedor' => 'Fornecedor', 'descarte' => 'Descarte', 'entrada' => 'Entrada', 'transferencia' => 'Transferência', 'baixa_saida' => 'Baixa'][$value] ?? $value;
+    return ['reservado' => 'Reservado', 'perdido' => 'Perdido', 'baixado' => 'Baixado', 'disponivel' => 'Disponível', 'em_transito' => 'Em trânsito', 'instalado' => 'Instalado', 'defeito' => 'Defeito', 'deposito' => 'Depósito', 'viatura' => 'Viatura', 'cliente' => 'Cliente', 'galpao' => 'Galpão', 'eletricista' => 'Eletricista', 'fornecedor' => 'Fornecedor', 'descarte' => 'Descarte', 'entrada' => 'Entrada', 'transferencia' => 'Transferência', 'baixa_saida' => 'Baixa'][$value] ?? $value;
 }
 
 function os_label(string $value): string

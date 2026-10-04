@@ -157,4 +157,13 @@ Eletricista responde os modelos ativos de início na própria OS atribuída. Res
 
 Gestor confirma entrega física integral das reservas de consumíveis após aprovação/liberação de todos os modelos de início ativos. Modelo alterado exige novas respostas. A entrega transfere saldo do depósito para custódia e registra movimento com OS/reserva/ator; não inicia automaticamente atendimento. Gestor recebe devolução parcial/integral, inclusive após cancelamento, debitando a custódia e conciliando a reserva quando não restar material. Repetição não duplica entrega/crédito; pendências impedem desativação/exclusão do responsável. Operador consulta os dados, sem realizar entregas ou liberar bloqueios.
 
-Consumo, operações de medidores, execução/fechamento e fotos permanecem nos próximos pontos de revisão. Detalhes e validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3A aprovada/commitada em `ec26890`; etapa 3B aguarda revisão antes do próximo commit.
+Consumo, operações de medidores, execução/fechamento e fotos permanecem nos próximos pontos de revisão. Detalhes e validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3B aprovada/commitada em `4931f49`.
+
+
+## Medidores da OS — etapa 3C
+
+Gestor reserva medidor disponível para nova ligação atribuída e confirma entrega física após aprovação/liberação dos checklists de início. Cancelamento libera equipamento ainda no depósito; entregue permanece em posse com devolução pendente. Gestor recebe fisicamente em bom estado ou defeito, inclusive após cancelamento, sem crédito repetido. Equipamento devolvido pode ser reservado novamente; histórico permanece preservado.
+
+Eletricista registra perda/roubo/dano do equipamento em sua posse na própria OS. Gestor registra ocorrências e baixa com justificativa; Operador consulta. Defeito em campo mantém posse até recebimento. Perda mantém último responsável/local e bloqueia sua desativação/exclusão; baixa administrativa encerra custódia ativa, preservando dados históricos e impedindo reativação. Ocorrências e movimentos físicos têm auditorias distintas.
+
+Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência administrativa sem reserva ativa. Sem alteração de banco/dependências: exige esquema operacional atual. Aplicação/retirada, consumo, início/fechamento, fotos e relatório continuam pendentes. Validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 3C aguarda revisão.

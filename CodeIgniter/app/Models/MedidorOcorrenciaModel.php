@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class MedidorOcorrenciaModel extends Model
 {
+    public function withActors(): self
+    {
+        return $this->select('tbl_medidor_ocorrencia.*, numero_med, nome_completo_usu AS autor_nome')
+            ->join('tbl_medidor', 'medidor_ome = id_med')->join('tbl_usuario', 'usuario_ome = id_usu');
+    }
     protected $table = 'tbl_medidor_ocorrencia';
     protected $primaryKey = 'id_ome';
     protected $returnType = 'array';

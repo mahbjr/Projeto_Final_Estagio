@@ -6,6 +6,11 @@ use CodeIgniter\Model;
 
 class MedidorReservaModel extends Model
 {
+    public function forOrder(int $id): array
+    {
+        return $this->select('tbl_medidor_reserva.*, numero_med, status_med, localizacao_med, eletricista_posse_med')
+            ->join('tbl_medidor', 'medidor_rme = id_med')->where('ordem_servico_rme', $id)->orderBy('id_rme')->findAll();
+    }
     protected $table = 'tbl_medidor_reserva';
     protected $primaryKey = 'id_rme';
     protected $returnType = 'array';

@@ -127,6 +127,30 @@ final class OrdensServicoController extends ApplicationController
         } catch (FormException $e) { return $this->details($record, $e->errors, 422, $input); }
     }
 
+    public function reserveMeter(int $id) { return $this->meterAction($id, 'reserve'); }
+    public function deliverMeter(int $id, int $reservation) { return $this->meterAction($id, 'deliver', $reservation); }
+    public function receiveMeter(int $id, int $reservation) { return $this->meterAction($id, 'receive', $reservation); }
+    public function meterOccurrence(int $id, int $meter) { return $this->meterAction($id, 'occurrence', $meter); }
+
+    private function meterAction(int $id, string $action, ?int $resource = null)
+    {
+        $record = $this->record($id);
+        $user = service('auth')->user();
+        if ($user['papel_usu'] === 'eletricista' && (int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
+        $input = $this->safeInput(['medidor', 'condicao_medidor', 'tipo_ocorrencia', 'justificativa_medidor']);
+        $input['recurso_medidor'] = $resource;
+        $service = new \App\Services\MedidorOsService();
+        try {
+            match ($action) {
+                'reserve' => $service->reserve($id, $input['medidor'], (int) $user['id_usu']),
+                'deliver' => $service->deliver($id, $resource, (int) $user['id_usu']),
+                'receive' => $service->receive($id, $resource, $input['condicao_medidor'], (int) $user['id_usu']),
+                'occurrence' => $service->occurrence($resource, $input['tipo_ocorrencia'], $input['justificativa_medidor'], (int) $user['id_usu'], $id),
+            };
+            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Operação do medidor registrada.');
+        } catch (FormException $e) { return $this->details($record, $e->errors, 422, $input); }
+    }
+
     private function save(?int $id = null)
     {
         $input = $this->safeInput(OrdemServicoService::FIELDS);
@@ -160,8 +184,14 @@ final class OrdensServicoController extends ApplicationController
         $reservations = (new \App\Models\ConsumivelReservaModel())->withMaterials()->where('ordem_servico_rco', $record['id_oss'])->orderBy('id_rco')->findAll();
         $beginningTemplates = (new \App\Models\ChecklistModel())->beginning($record['tipo_oss']);
         $evaluations = (new \App\Models\ChecklistAvaliacaoModel())->evidence((int) $record['id_oss']);
+        $meterReservations = (new \App\Models\MedidorReservaModel())->forOrder((int) $record['id_oss']);
+        $isManager = service('auth')->user()['papel_usu'] === 'gestor';
+        foreach ($meterReservations as &$reservation) {
+            $canShowOccurrence = in_array($reservation['status_rme'], ['entregue','devolucao_pendente','perdida'], true) && ($isManager || (service('auth')->user()['papel_usu'] === 'eletricista' && in_array($record['status_oss'], ['atribuida','em_atendimento'], true) && (int) $reservation['eletricista_posse_med'] === (int) service('auth')->user()['id_ele']));
+            $reservation['occurrenceChoices'] = $canShowOccurrence ? \App\Services\MedidorOsService::occurrenceChoices($reservation, $isManager) : [];
+        }
         $latestBeginning = [];
         foreach ($evaluations as $evaluation) { if ($evaluation['etapa_cav'] === 'inicio' && !isset($latestBeginning[$evaluation['checklist_cav']])) { $latestBeginning[$evaluation['checklist_cav']] = (int) $evaluation['id_cav']; } }
-        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
+        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'meterReservations' => $meterReservations, 'availableMeters' => (new MedidorModel())->where('status_med', 'disponivel')->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null)->orderBy('numero_med')->findAll(), 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
     }
 }

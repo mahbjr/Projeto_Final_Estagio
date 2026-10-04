@@ -31,6 +31,16 @@ class MedidoresController extends ApplicationController
     public function returnToDepot(int $id) { return $this->operate($id, 'returnToDepot'); }
     public function delete(int $id) { return $this->operate($id, 'delete'); }
 
+    public function occurrence(int $id)
+    {
+        $this->record($id);
+        $input = $this->safeInput(['tipo_ocorrencia', 'justificativa_medidor']);
+        try {
+            (new \App\Services\MedidorOsService())->occurrence($id, $input['tipo_ocorrencia'], $input['justificativa_medidor'], (int) service('auth')->user()['id_usu']);
+            return redirect()->to(site_url('medidores/' . $id))->setStatusCode(303)->with('success', 'Ocorrência registrada. Último local e responsável preservados.');
+        } catch (FormException $e) { return $this->detail($id, $e->errors, 422, $input); }
+    }
+
     private function save(?int $id = null)
     {
         $existing = $id ? $this->record($id) : [];
@@ -68,15 +78,15 @@ class MedidoresController extends ApplicationController
         return $record;
     }
 
-    private function detail(int $id, array $errors = [], int $status = 200)
+    private function detail(int $id, array $errors = [], int $status = 200, array $input = [])
     {
         $model = new MedidorModel();
         $record = $this->record($id);
-        return $this->page('medidores/show', ['title' => 'Consultar medidor', 'active' => 'medidores', 'record' => $record, 'history' => $model->history($id), 'destinations' => $model->destinations(), 'consistent' => MedidorService::consistent($record), 'errors' => $errors], $status);
+        return $this->page('medidores/show', ['title' => 'Consultar medidor', 'active' => 'medidores', 'record' => $record, 'history' => $model->history($id), 'destinations' => $model->destinations(), 'occurrenceChoices' => \App\Services\MedidorOsService::occurrenceChoices($record, true), 'consistent' => MedidorService::consistent($record), 'errors' => $errors, 'input' => $input, 'occurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('medidor_ome', $id)->orderBy('id_ome', 'DESC')->findAll(), 'linked' => (new \App\Models\MedidorReservaModel())->where('medidor_rme', $id)->whereIn('status_rme', ['reservada','entregue','devolucao_pendente','perdida'])->orderBy('id_rme', 'DESC')->first()], $status);
     }
 
     private function form(array $record, array $errors = [], int $status = 200)
     {
-        return $this->page('medidores/form', ['title' => isset($record['id_med']) ? 'Editar medidor' : 'Novo medidor', 'active' => 'medidores', 'record' => $record, 'errors' => $errors, 'depot' => isset($record['id_med']) && MedidorService::consistent($record) && $record['localizacao_med'] === 'deposito'], $status);
+        return $this->page('medidores/form', ['title' => isset($record['id_med']) ? 'Editar medidor' : 'Novo medidor', 'active' => 'medidores', 'record' => $record, 'errors' => $errors, 'depot' => isset($record['id_med']) && MedidorService::consistent($record) && $record['localizacao_med'] === 'deposito' && in_array($record['status_med'], ['disponivel', 'defeito'], true)], $status);
     }
 }

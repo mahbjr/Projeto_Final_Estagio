@@ -47,3 +47,9 @@ $routes->post('checklists/(:num)/itens', 'ChecklistsController::createItem/$1', 
 $routes->get('checklists/(:num)/itens/(:num)/editar', 'ChecklistsController::editItem/$1/$2', ['as' => 'checklists.item.edit']);
 $routes->post('checklists/(:num)/itens/(:num)/atualizar', 'ChecklistsController::updateItem/$1/$2', ['as' => 'checklists.item.update']);
 $routes->post('checklists/(:num)/itens/(:num)/excluir', 'ChecklistsController::deleteItem/$1/$2', ['as' => 'checklists.item.delete']);
+
+$routes->post('os/(:num)/medidores/reservar', 'OrdensServicoController::reserveMeter/$1', ['as' => 'os.medidores.reserve']);
+$routes->post('os/(:num)/medidores/(:num)/entregar', 'OrdensServicoController::deliverMeter/$1/$2', ['as' => 'os.medidores.deliver']);
+$routes->post('os/(:num)/medidores/(:num)/receber', 'OrdensServicoController::receiveMeter/$1/$2', ['as' => 'os.medidores.receive']);
+$routes->post('os/(:num)/medidores/(:num)/ocorrencia', 'OrdensServicoController::meterOccurrence/$1/$2', ['as' => 'os.medidores.occurrence']);
+$routes->post('medidores/(:num)/ocorrencia', 'MedidoresController::occurrence/$1', ['as' => 'medidores.occurrence']);

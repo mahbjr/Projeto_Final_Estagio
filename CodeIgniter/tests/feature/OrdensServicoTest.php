@@ -142,7 +142,7 @@ final class OrdensServicoTest extends AppTestCase
         $this->assertSame($before,$this->db->table('tbl_os')->get()->getResultArray());
     }
 
-    public function testMaterialLinkedCancellationBlockedWithoutStockChangeAndXssEscaped(): void
+    public function testIncompatibleMeterReservationBlocksCancellationAndXssEscaped(): void
     {
         $this->db->table('tbl_medidor_reserva')->insert(['medidor_rme'=>1,'ordem_servico_rme'=>1,'eletricista_rme'=>1,'usuario_rme'=>1]);
         $this->requestAs(2,'POST','os/1/cancelar',['motivo'=>'Cancelar'])->assertStatus(422);

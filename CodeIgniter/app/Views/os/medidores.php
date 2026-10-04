@@ -1,0 +1,20 @@
+<section class="panel detail-panel mt-4"><h2>Medidores da OS</h2><div class="table-responsive"><table class="table app-table"><thead><tr><th>Série</th><th>Estado</th><th>Localização</th><th>Situação da reserva</th></tr></thead><tbody>
+<?php foreach ($meterReservations as $reservation): ?><tr><td><?= esc($reservation['numero_med']) ?></td><td><?= esc(meter_label($reservation['status_med'])) ?></td><td><?= esc(meter_label($reservation['localizacao_med'])) ?></td><td><?= esc(['reservada'=>'Reservada no depósito','entregue'=>'Entregue','devolucao_pendente'=>'Devolução pendente','aplicada'=>'Aplicada','devolvida'=>'Devolvida','perdida'=>'Perda registrada','liberada'=>'Liberada'][$reservation['status_rme']]) ?></td></tr><?php endforeach ?>
+<?php if (!$meterReservations): ?><tr><td colspan="4">Nenhum medidor vinculado.</td></tr><?php endif ?></tbody></table></div>
+<?php if ($can('os.medidores.reserve') && $orderRecord['status_oss'] === 'atribuida' && $orderRecord['tipo_oss'] === 'nova_ligacao'): ?>
+<h3>Reservar equipamento no depósito</h3><form method="post" data-validate action="<?= site_url('os/' . $orderRecord['id_oss'] . '/medidores/reservar') ?>"><?= csrf_field() ?><div class="row g-3"><?= app_field('medidor', 'Medidor disponível', $input, $errors, ['required'=>true,'choices'=>[''=>'Selecione'] + array_combine(array_column($availableMeters, 'id_med'), array_column($availableMeters,'numero_med'))]) ?></div><button class="btn btn-primary mt-3" type="submit">Reservar medidor</button></form>
+<?php endif ?></section>
+<?php foreach ($meterReservations as $reservation): ?>
+<?php if ($can('os.medidores.deliver') && $orderRecord['status_oss'] === 'atribuida' && $reservation['status_rme'] === 'reservada'): ?>
+<section class="panel form-panel mt-4"><h3>Entregar <?= esc($reservation['numero_med']) ?></h3><p>Confirme a entrega física ao Eletricista após aprovação ou liberação dos checklists de início.</p><form method="post" action="<?= site_url('os/' . $orderRecord['id_oss'] . '/medidores/' . $reservation['id_rme'] . '/entregar') ?>" data-confirm="Confirmar a entrega física deste medidor?"><?= csrf_field() ?><button class="btn btn-primary" type="submit">Confirmar entrega do medidor</button></form></section>
+<?php endif ?>
+<?php if ($can('os.medidores.receive') && in_array($reservation['status_rme'], ['entregue','devolucao_pendente'], true)): ?>
+<?php $prefix = 'receber-medidor-' . $reservation['id_rme']; $fieldError = $errors['condicao_medidor'] ?? null; ?>
+<section class="panel form-panel mt-4"><h3>Receber <?= esc($reservation['numero_med']) ?> no depósito</h3><form method="post" action="<?= site_url('os/' . $orderRecord['id_oss'] . '/medidores/' . $reservation['id_rme'] . '/receber') ?>" data-validate><?= csrf_field() ?><label class="form-label" for="<?= esc($prefix) ?>">Condição de recebimento *</label><select id="<?= esc($prefix) ?>" name="condicao_medidor" class="form-select <?= $fieldError ? 'is-invalid' : '' ?>" required <?= $fieldError ? 'aria-invalid="true" aria-describedby="' . esc($prefix) . '-error"' : '' ?>>
+<?php foreach ([''=>'Selecione','disponivel'=>'Bom estado — disponível','defeito'=>'Defeito'] as $value=>$label): ?><option value="<?= esc($value) ?>" <?= ($input['condicao_medidor'] ?? '') === $value ? 'selected' : '' ?>><?= esc($label) ?></option><?php endforeach ?></select><?php if ($fieldError): ?><div class="invalid-feedback" id="<?= esc($prefix) ?>-error"><?= esc($fieldError) ?></div><?php endif ?><button class="btn btn-primary mt-3" type="submit">Confirmar recebimento do medidor</button></form></section>
+<?php endif ?>
+<?php if ($can('os.medidores.occurrence') && $reservation['occurrenceChoices']): ?>
+<?= view('medidores/occurrence-form', ['meterRecord'=>$reservation,'occurrenceChoices'=>$reservation['occurrenceChoices'], 'occurrenceAction'=>site_url('os/' . $orderRecord['id_oss'] . '/medidores/' . $reservation['medidor_rme'] . '/ocorrencia'),'occurrencePrefix'=>'os-medidor-'.$reservation['id_rme'],'input'=>$input,'errors'=>$errors]) ?>
+<?php endif ?>
+<?php endforeach ?>
+<?= view('medidores/occurrences', ['meterOccurrences'=>$meterOccurrences]) ?>
