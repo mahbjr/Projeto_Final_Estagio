@@ -63,3 +63,7 @@ $routes->post('os/(:num)/medidores/(:num)/retirar', 'OrdensServicoController::wi
 
 $routes->post('os/(:num)/checklists/(:num)/responder-fechamento', 'OrdensServicoController::answerClosing/$1/$2', ['as' => 'os.checklist.closing']);
 $routes->post('os/(:num)/encerrar', 'OrdensServicoController::closeAttendance/$1', ['as' => 'os.attendance.close']);
+
+$routes->post('os/(:num)/fotos', 'OrdensServicoController::uploadPhoto/$1', ['as'=>'os.photos.upload']);
+$routes->get('os/(:num)/fotos/(:num)', 'OrdensServicoController::photo/$1/$2', ['as'=>'os.photos.show']);
+$routes->post('os/(:num)/fotos/(:num)/remover', 'OrdensServicoController::removePhoto/$1/$2', ['as'=>'os.photos.remove']);

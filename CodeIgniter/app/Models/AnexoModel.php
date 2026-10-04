@@ -6,6 +6,12 @@ use CodeIgniter\Model;
 
 class AnexoModel extends Model
 {
+    public function forOrder(int $id): array
+    {
+        return $this->select('id_anx, ordem_servico_anx, descricao_anx, data_anx, usuario_anx, mime_anx, tamanho_anx, nome_usu AS autor_nome')
+            ->join('tbl_usuario','usuario_anx = id_usu','left')->where('ordem_servico_anx',$id)->where('tipo_anx','foto')->orderBy('id_anx','DESC')->findAll();
+    }
+
     protected $table = 'tbl_anexo';
     protected $primaryKey = 'id_anx';
     protected $returnType = 'array';

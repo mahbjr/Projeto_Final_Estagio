@@ -1,6 +1,6 @@
 # GPM Soluções — serviços de campo B2B
 
-Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e conciliação dos materiais, registrando resultado e dados finais. Relatórios e anexos permanecem para etapas posteriores.
+Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e conciliação dos materiais, registrando resultado e dados finais. Fotos podem ser anexadas durante o atendimento e consultadas com acesso protegido pela OS. Relatório de estoque permanece para a próxima etapa.
 
 ## Executar
 
@@ -182,7 +182,7 @@ Na própria OS em atendimento, Eletricista registra consumo parcial/integral lim
 
 Nova ligação permite aplicação do medidor entregue em bom estado na própria posse, com instalação na UC da OS e auditoria. Retirada exige equipamento instalado na UC e empresa da OS; deixa medidor na viatura até o recebimento físico pelo Gestor. Histórico permanece preservado, enquanto instalação atual deixa de apontar equipamento retirado. Só o retorno físico disponibiliza novamente no depósito. Operações são transacionais e recusam estado inválido, vínculo alheio e repetição de aplicação/retirada.
 
-Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechamento, fotos e relatório continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4B aguarda revisão.
+Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechamento, fotos e relatório continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4B aprovada/commitada em `c99aa9b`.
 
 
 ## Encerramento em campo — etapa 4C
@@ -193,4 +193,23 @@ Antes de encerrar, registre o consumo dos materiais e solicite ao Gestor o receb
 
 Selecione `executado`, `parcial` ou `nao_executado` e informe observações finais (até 2.000 caracteres), justificando o resultado. Nova ligação executada exige medidor aplicado nesta OS e ainda instalado na UC. Corte executado exige confirmação e leitura final não negativa (zero permitido; até três casas decimais com ponto/vírgula). Corte parcial/não executado pode não ter confirmação/leitura. Confirmação e leitura não se aplicam à nova ligação.
 
-Os POST `/os/{id}/checklists/{modelo}/responder-fechamento` e `/os/{id}/encerrar` verificam papel, vínculo, status, CSRF e campos no servidor. Encerramento grava status `encerrada`, horário do servidor, resultado/dados finais e histórico na mesma transação. Não há reabertura nem edição dos dados finais. Galeria/upload e relatório de estoque continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md).
+Os POST `/os/{id}/checklists/{modelo}/responder-fechamento` e `/os/{id}/encerrar` verificam papel, vínculo, status, CSRF e campos no servidor. Encerramento grava status `encerrada`, horário do servidor, resultado/dados finais e histórico na mesma transação. Não há reabertura nem edição dos dados finais. Fotos e galeria estão descritas na etapa 4D abaixo; relatório de estoque permanece pendente. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md).
+
+
+## Fotos do atendimento — etapa 4D
+
+Na própria OS em atendimento, Eletricista envia **uma foto por requisição**, em JPEG, PNG ou WebP, até **10 MiB** e **30 fotos ativas por OS**. Descrição opcional até 255 caracteres. O servidor verifica upload HTTP, tamanho físico, MIME por fileinfo e informações de imagem; nome e MIME enviados pelo navegador não controlam o arquivo salvo. SVG, GIF, documentos e arquivos sem imagem válida são recusados. Após erro, a descrição é preservada e o arquivo deve ser selecionado novamente.
+
+Fotos ficam em `CodeIgniter/writable/uploads/os-fotos/{id_os}/`, com nomes aleatórios e permissões privadas (diretórios 0700/arquivos 0600 no ambiente validado). `Config\Fotos::$directory` permite escolher outro diretório privado pelo servidor; armazenamento sob `public/` é recusado. Mantenha PHP **fileinfo** habilitado e permissão de escrita para o usuário do PHP. Não disponibilize `writable/` pelo webserver. Nenhuma regra de .gitignore foi alterada.
+
+A galeria usa originais com exibição responsiva e carregamento lazy, sem gerar miniaturas. O GET `/os/{id}/fotos/{foto}` verifica papel/vínculo/ID aninhado e anexo ativo antes de servir MIME permitido, nome de download seguro, nosniff e no-store. Gestor/Operador consultam todas as OS autorizadas; Eletricista consulta somente suas OS. Fotos continuam disponíveis após encerramento/cancelamento pelo mesmo controle de acesso.
+
+Antes da finalização, Gestor remove logicamente fotos com motivo; Eletricista remove apenas as que enviou na própria OS em atendimento. Operador consulta. A remoção preserva arquivo, autor original e histórico com ator/motivo, libera uma vaga do limite e impede acesso pela URL anterior. OS encerrada/cancelada não aceita upload nem remoção. Os POST de upload/remover usam CSRF. Inserção/anexo/histórico são transacionais; falha após mover o arquivo compensa removendo apenas o arquivo novo. Faça backup conjunto do banco e do diretório privado, incluindo anexos removidos logicamente.
+
+Configure o PHP do ambiente para permitir 10 MiB por arquivo e um POST maior que o arquivo, por exemplo `upload_max_filesize = 10M` e `post_max_size = 12M`. Para o servidor local, a partir de CodeIgniter:
+
+```bash
+php -d upload_max_filesize=10M -d post_max_size=12M spark serve --host 127.0.0.1 --port 8080
+```
+
+Limites menores do PHP recusam o upload antes da validação de conteúdo; um POST acima do limite global pode ser recusado por CSRF por perder seus campos. Não repita a ação presumindo sucesso: confirme o anexo na galeria. Não há alteração de schema/migração/seeds/dependências nesta etapa; usar o esquema operacional atual. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Relatório de estoque é o próximo ponto de revisão.

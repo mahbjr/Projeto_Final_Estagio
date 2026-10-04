@@ -195,6 +195,44 @@ final class OrdensServicoController extends ApplicationController
         } catch (FormException $e) { return $this->details($record, $e->errors, 422, $input); }
     }
 
+    public function uploadPhoto(int $id) { return $this->photoAction($id); }
+    public function removePhoto(int $id, int $photo) { return $this->photoAction($id, $photo); }
+
+    private function photoAction(int $id, ?int $photo = null)
+    {
+        $record = $this->record($id);
+        $user = service('auth')->user();
+        if ($user['papel_usu'] === 'eletricista' && (int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
+        $input = $this->safeInput(['descricao_foto','motivo_foto']);
+        $input['foto_remocao'] = $photo;
+        try {
+            $service = new \App\Services\FotoService();
+            if ($photo === null) {
+                $file = $this->request->getFile('foto');
+                $service->upload($id, $file, $this->request->getPost('descricao_foto') ?? '', (int) $user['id_usu']);
+            } else {
+                $attachment = (new \App\Models\AnexoModel())->where('ordem_servico_anx',$id)->where('tipo_anx','foto')->find($photo);
+                if (!$attachment) { throw PageNotFoundException::forPageNotFound(); }
+                if ($user['papel_usu'] === 'eletricista' && $record['status_oss'] === 'em_atendimento' && !\App\Services\FotoService::canRemove($record,$user,$attachment)) {
+                    return $this->response->setStatusCode(403)->setBody(view('errors/access',['title'=>'Acesso não permitido','message'=>'Você não pode remover esta foto.']));
+                }
+                $service->remove($id,$photo,$this->request->getPost('motivo_foto'),(int) $user['id_usu']);
+            }
+            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', $photo === null ? 'Foto anexada à OS.' : 'Foto removida da consulta. Histórico preservado.');
+        } catch (FormException $e) { return $this->details($this->record($id),$e->errors,422,$input); }
+    }
+
+    public function photo(int $id, int $photo)
+    {
+        $record = $this->record($id);
+        $user = service('auth')->user();
+        if ($user['papel_usu'] === 'eletricista' && (int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
+        $attachment = (new \App\Models\AnexoModel())->where('ordem_servico_anx',$id)->where('tipo_anx','foto')->find($photo);
+        if (!$attachment) { throw PageNotFoundException::forPageNotFound(); }
+        $path = (new \App\Services\FotoService())->path($attachment);
+        return $this->response->download($path,null)->setFileName('os-' . $id . '-foto-' . $photo . '.' . pathinfo($path,PATHINFO_EXTENSION))->inline()->setContentType($attachment['mime_anx'],'')->setHeader('X-Content-Type-Options','nosniff')->setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    }
+
     private function save(?int $id = null)
     {
         $input = $this->safeInput(OrdemServicoService::FIELDS);
@@ -236,6 +274,8 @@ final class OrdensServicoController extends ApplicationController
         }
         $latestBeginning = [];
         foreach ($evaluations as $evaluation) { if ($evaluation['etapa_cav'] === 'inicio' && !isset($latestBeginning[$evaluation['checklist_cav']])) { $latestBeginning[$evaluation['checklist_cav']] = (int) $evaluation['id_cav']; } }
-        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'availableMeters' => (new MedidorModel())->where('status_med', 'disponivel')->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null)->orderBy('numero_med')->findAll(), 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
+        $photos = (new \App\Models\AnexoModel())->forOrder((int) $record['id_oss']);
+        foreach ($photos as &$photo) { $photo['canRemove'] = \App\Services\FotoService::canRemove($record,service('auth')->user(),$photo); }
+        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'availableMeters' => (new MedidorModel())->where('status_med', 'disponivel')->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null)->orderBy('numero_med')->findAll(), 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'photos' => $photos, 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
     }
 }
