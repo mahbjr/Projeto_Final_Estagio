@@ -59,4 +59,30 @@ abstract class WriteService
     {
         throw PageNotFoundException::forPageNotFound('Cadastro não encontrado.');
     }
+
+    protected function operationalActor(int $id, array $roles): array
+    {
+        $this->db->query("SELECT id_usu FROM tbl_usuario WHERE papel_usu = 'gestor' AND ativo_usu = 1 AND data_exclusao_usu IS NULL ORDER BY id_usu FOR UPDATE");
+        $actor = $this->db->query('SELECT * FROM tbl_usuario WHERE id_usu = ? FOR UPDATE', [$id])->getRowArray();
+        if (!$actor || !$actor['ativo_usu'] || $actor['data_exclusao_usu'] || !in_array($actor['papel_usu'], $roles, true)) {
+            throw new FormException(['operacao' => 'Seu acesso não permite esta operação.']);
+        }
+        if ($actor['papel_usu'] === 'eletricista') {
+            $tech = $this->db->query('SELECT * FROM tbl_eletricista WHERE usuario_ele = ? AND data_exclusao_ele IS NULL FOR UPDATE', [$id])->getRowArray();
+            if (!$tech || trim($tech['matricula_ele']) === '') { throw new FormException(['operacao' => 'Cadastro técnico inválido.']); }
+            $actor['id_ele'] = (int) $tech['id_ele'];
+        }
+        return $actor;
+    }
+
+    protected function operationalOrder(int $id, array $actor, array $statuses): array
+    {
+        $order = $this->db->query('SELECT * FROM tbl_os WHERE id_oss = ? AND data_exclusao_oss IS NULL FOR UPDATE', [$id])->getRowArray();
+        if (!$order) { $this->notFound(); }
+        if ($actor['papel_usu'] === 'eletricista' && (int) $order['eletricista_oss'] !== $actor['id_ele']) {
+            throw new FormException(['operacao' => 'Esta OS não está atribuída a você.']);
+        }
+        if (!in_array($order['status_oss'], $statuses, true)) { throw new FormException(['operacao' => 'O status da OS não permite esta operação.']); }
+        return $order;
+    }
 }

@@ -10,7 +10,9 @@ class MedidorService extends WriteService
     public static function consistent(array $m): bool
     {
         return match ($m['status_med']) {
-            'disponivel', 'defeito' => $m['localizacao_med'] === 'deposito' && $m['eletricista_posse_med'] === null,
+            'disponivel', 'reservado' => $m['localizacao_med'] === 'deposito' && $m['eletricista_posse_med'] === null,
+            'defeito' => ($m['localizacao_med'] === 'deposito' && $m['eletricista_posse_med'] === null) || ($m['localizacao_med'] === 'viatura' && (int) $m['eletricista_posse_med'] > 0),
+            'perdido', 'baixado' => in_array($m['localizacao_med'], ['deposito', 'cliente'], true) ? $m['eletricista_posse_med'] === null : ($m['localizacao_med'] === 'viatura' && (int) $m['eletricista_posse_med'] > 0),
             'em_transito' => $m['localizacao_med'] === 'viatura' && (int) $m['eletricista_posse_med'] > 0,
             'instalado' => $m['localizacao_med'] === 'cliente' && $m['eletricista_posse_med'] === null,
             default => false,
@@ -39,7 +41,7 @@ class MedidorService extends WriteService
             } elseif (isset($input['status_med']) && $input['status_med'] !== $existing['status_med']) {
                 $this->assertState($existing);
                 $this->assertNoPending($id);
-                if ($existing['localizacao_med'] !== 'deposito' || !in_array($input['status_med'], ['disponivel', 'defeito'], true)) { throw new FormException(['status_med' => 'Somente disponível/defeito no depósito.']); }
+                if ($existing['localizacao_med'] !== 'deposito' || !in_array($existing['status_med'], ['disponivel', 'defeito'], true) || !in_array($input['status_med'], ['disponivel', 'defeito'], true)) { throw new FormException(['status_med' => 'Somente disponível/defeito no depósito.']); }
                 $data['status_med'] = $input['status_med'];
             }
             $model = new MedidorModel($this->db);
@@ -82,7 +84,8 @@ class MedidorService extends WriteService
             $m = $this->locked($id);
             $this->assertState($m);
             $this->assertNoPending($id);
-            if ($m['status_med'] !== 'em_transito') { throw new FormException(['operacao' => 'O medidor não está em trânsito na viatura.']); }
+            if (!in_array($m['status_med'], ['em_transito', 'defeito'], true) || $m['localizacao_med'] !== 'viatura') { throw new FormException(['operacao' => 'O medidor não está em trânsito na viatura.']); }
+            if ($m['status_med'] === 'defeito' && $condition !== 'defeito') { throw new FormException(['condicao' => 'Receba como defeito o equipamento danificado.']); }
             (new MedidorModel($this->db))->update($id, ['status_med' => $condition, 'localizacao_med' => 'deposito', 'eletricista_posse_med' => null]);
             $this->movement($id, $actorId, 'transferencia', 'eletricista', 'galpao', (int) $m['eletricista_posse_med'], 'Devolução: ' . $condition);
         });
@@ -95,7 +98,7 @@ class MedidorService extends WriteService
             $m = $this->locked($id);
             $this->assertState($m);
             $this->assertNoPending($id);
-            if ($m['localizacao_med'] !== 'deposito') { throw new FormException(['operacao' => 'Devolva o medidor ao depósito antes de excluir.']); }
+            if ($m['localizacao_med'] !== 'deposito' || !in_array($m['status_med'], ['disponivel', 'defeito'], true)) { throw new FormException(['operacao' => 'Devolva o medidor ao depósito antes de excluir.']); }
             (new MedidorModel($this->db))->delete($id);
             $this->movement($id, $actorId, 'baixa_saida', 'galpao', 'descarte', null, 'Baixa administrativa');
         });
@@ -108,29 +111,36 @@ class MedidorService extends WriteService
         if (!in_array($actorId, array_map('intval', array_column($managers, 'id_usu')), true)) { throw new FormException(['operacao' => 'Seu acesso de Gestor não está mais ativo.']); }
     }
 
-    private function locked(int $id): array
+    protected function locked(int $id): array
     {
         $m = $this->db->query('SELECT * FROM tbl_medidor WHERE id_med = ? AND data_exclusao_med IS NULL FOR UPDATE', [$id])->getRowArray();
         if (!$m) { $this->notFound(); }
         return $m;
     }
 
-    private function assertState(array $m): void
+    protected function assertState(array $m): void
     {
         if (!self::consistent($m)) { throw new FormException(['operacao' => 'Estado legado incompatível. Regularize o cadastro antes de movimentar.']); }
     }
 
-    private function assertNoPending(int $id): void
+    protected function assertNoPending(int $id): void
     {
+        if ($this->db->table('tbl_medidor_reserva')->where('medidor_rme', $id)->where('data_exclusao_rme', null)->whereIn('status_rme', ['reservada', 'entregue', 'devolucao_pendente'])->countAllResults()) {
+            throw new FormException(['operacao' => 'O medidor possui reserva ou devolução vinculada a uma OS. Movimente pela OS.']);
+        }
         foreach (['tbl_os_medidor' => ['medidor_osm', 'ordem_servico_osm', 'data_exclusao_osm'], 'tbl_estoque_mov' => ['medidor_emv', 'ordem_servico_emv', 'data_exclusao_emv']] as $table => [$meter, $order, $deleted]) {
-            if ($this->db->table($table)->join('tbl_os', "$order = id_oss")->where($meter, $id)->where($deleted, null)->where('data_exclusao_oss', null)->whereIn('status_oss', StatusOS::PENDENTES)->countAllResults()) {
+            $pending = $this->db->table($table)->join('tbl_os', "$order = id_oss")->where($meter, $id)->where($deleted, null)->where('data_exclusao_oss', null)->whereIn('status_oss', StatusOS::PENDENTES);
+            // A completed physical return ends custody even while its OS remains open.
+            // Column names come exclusively from the fixed table mapping above.
+            $pending->where("NOT EXISTS (SELECT 1 FROM tbl_medidor_reserva WHERE medidor_rme = $meter AND ordem_servico_rme = $order AND data_exclusao_rme IS NULL AND status_rme IN ('devolvida','liberada'))", null, false);
+            if ($pending->countAllResults()) {
                 throw new FormException(['operacao' => 'O medidor está vinculado a uma OS pendente.']);
             }
         }
     }
 
-    protected function movement(int $id, int $actor, string $type, string $origin, string $destination, ?int $electrician, string $description, string $reason = 'ajuste'): void
+    protected function movement(int $id, int $actor, string $type, string $origin, string $destination, ?int $electrician, string $description, string $reason = 'ajuste', ?int $order = null): void
     {
-        $this->db->table('tbl_estoque_mov')->insert(['medidor_emv' => $id, 'eletricista_emv' => $electrician, 'tipo_emv' => $type, 'motivo_emv' => $reason, 'origem_emv' => $origin, 'destino_emv' => $destination, 'quantidade_emv' => 1, 'observacao_emv' => $description . ' — usuário #' . $actor, 'data_emv' => date('Y-m-d H:i:s')]);
+        $this->db->table('tbl_estoque_mov')->insert(['medidor_emv' => $id, 'ordem_servico_emv' => $order, 'usuario_emv' => $actor, 'eletricista_emv' => $electrician, 'tipo_emv' => $type, 'motivo_emv' => $reason, 'origem_emv' => $origin, 'destino_emv' => $destination, 'quantidade_emv' => 1, 'observacao_emv' => $description . ' — usuário #' . $actor, 'data_emv' => date('Y-m-d H:i:s')]);
     }
 }

@@ -118,8 +118,12 @@ class FuncionarioService extends WriteService
         if ($this->pendingOrders('eletricista_oss', $technicalId)) {
             throw new FormException(['operacao' => 'O eletricista possui OS pendentes. Reatribua, conclua ou cancele os atendimentos primeiro.']);
         }
-        if ($this->db->table('tbl_medidor')->where('eletricista_posse_med', $technicalId)->where('data_exclusao_med', null)->countAllResults() > 0) {
+        if ($this->db->table('tbl_medidor')->where('eletricista_posse_med', $technicalId)->where('data_exclusao_med', null)->where('status_med !=', 'baixado')->countAllResults() > 0) {
             throw new FormException(['operacao' => 'O eletricista possui medidores em posse. Regularize a devolução antes de continuar.']);
+        }
+        if ($this->db->table('tbl_consumivel_saldo')->where('eletricista_sco', $technicalId)->where('quantidade_sco >', 0)->where('data_exclusao_sco', null)->countAllResults()
+            || $this->db->table('tbl_consumivel_reserva')->where('eletricista_rco', $technicalId)->where('status_rco', 'entregue')->where('data_exclusao_rco', null)->countAllResults()) {
+            throw new FormException(['operacao' => 'O eletricista possui consumíveis ou devoluções pendentes. Regularize os materiais antes de continuar.']);
         }
     }
 }

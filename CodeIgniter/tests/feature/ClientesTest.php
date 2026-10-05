@@ -61,7 +61,7 @@ final class ClientesTest extends AppTestCase
 
     public static function statuses(): array
     {
-        return [['aberta', true], ['em_andamento', true], ['concluida', false], ['cancelada', false]];
+        return [['aberta', true], ['atribuida', true], ['em_atendimento', true], ['encerrada', false], ['cancelada', false]];
     }
 
     #[DataProvider('statuses')]

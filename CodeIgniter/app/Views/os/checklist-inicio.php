@@ -1,0 +1,1 @@
+<?= view('os/checklist', ['orderRecord'=>$orderRecord, 'stage'=>'inicio', 'stageLabel'=>'início', 'templates'=>$beginningTemplates, 'evaluations'=>$evaluations, 'latestBeginning'=>$latestBeginning, 'input'=>$input, 'errors'=>$errors]) ?>

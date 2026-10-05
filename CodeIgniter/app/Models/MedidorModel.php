@@ -5,6 +5,32 @@ use CodeIgniter\Model;
 
 class MedidorModel extends Model
 {
+    public function stockReport(array $filters): self
+    {
+        $this->select('tbl_medidor.*, nome_completo_usu AS detentor_nome, matricula_ele, ordem_servico_rme, unidade_consumidora_ins')
+            ->join('tbl_eletricista', 'eletricista_posse_med = id_ele', 'left')
+            ->join('tbl_usuario', 'usuario_ele = id_usu', 'left')
+            // Generated unique key includes only active, non-deleted reservations.
+            ->join('tbl_medidor_reserva', 'medidor_ativo_rme = id_med', 'left')
+            ->join('tbl_instalacao_atual', 'medidor_ins = id_med', 'left');
+        if ($filters['q'] !== '') {
+            $this->groupStart()->like('numero_med', $filters['q'])->orLike('modelo_med', $filters['q'])->orLike('fabricante_med', $filters['q'])->groupEnd();
+        }
+        foreach (['status_med', 'localizacao_med'] as $field) {
+            if ($filters[$field] !== '') { $this->where($field, $filters[$field]); }
+        }
+        if ($filters['detentor'] === 'deposito') { $this->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null); }
+        elseif ($filters['detentor'] !== 'todos') { $this->where('eletricista_posse_med', $filters['detentor']); }
+        return $this->orderBy('id_med', 'DESC');
+    }
+
+    public function reportOwners(): array
+    {
+        // Historical custody remains visible even if the account is inactive/deleted.
+        return $this->db->table('tbl_eletricista')->select('id_ele, nome_completo_usu, matricula_ele')
+            ->join('tbl_usuario', 'usuario_ele = id_usu')->orderBy('nome_completo_usu')->orderBy('id_ele')->get()->getResultArray();
+    }
+
     protected $table = 'tbl_medidor';
     protected $primaryKey = 'id_med';
     protected $returnType = 'array';

@@ -1,18 +1,24 @@
 <?php
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use Tests\Support\AppTestCase;
 use Tests\Support\Database\Seeds\ExampleSeeder;
 use Tests\Support\Models\ExampleModel;
 
 /**
  * @internal
  */
-final class ExampleDatabaseTest extends CIUnitTestCase
+final class ExampleDatabaseTest extends AppTestCase
 {
-    use DatabaseTestTrait;
-
-    protected $seed = ExampleSeeder::class;
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Rebuild only this disposable fixture. CI4's regress(0) also rolls back App history.
+        require_once TESTPATH . '_support/Database/Migrations/2020-02-22-222222_example_migration.php';
+        $forge = \Config\Database::forge('tests');
+        $forge->dropTable('factories', true);
+        (new \Tests\Support\Database\Migrations\ExampleMigration($forge))->up();
+        (new ExampleSeeder(config('Database'), $this->db))->run();
+    }
 
     public function testModelFindAll(): void
     {
