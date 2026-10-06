@@ -1,13 +1,4 @@
-<section class="panel mb-4" aria-label="Filtros dos indicadores"><div class="panel-toolbar">
-<?php if ($errors): ?><div class="alert alert-danger" role="alert">Revise os filtros. Os indicadores não foram consultados.</div><?php endif ?>
-<form method="get" action="<?= site_url('inicio') ?>" class="row g-3">
-<?= app_field('data_inicio', 'Data inicial de abertura', $filters, $errors, ['type' => 'date', 'required' => true]) ?>
-<?= app_field('data_fim', 'Data final de abertura', $filters, $errors, ['type' => 'date', 'required' => true]) ?>
-<?= app_field('status_oss', 'Status', $filters, $errors, ['choices' => ['' => 'Todos'] + array_combine(\App\Domain\StatusOS::TODOS, array_map('os_label', \App\Domain\StatusOS::TODOS))]) ?>
-<?= app_field('eletricista', 'Eletricista', $filters, $errors, ['choices' => $owners, 'disabled' => $personal]) ?>
-<?= app_field('cliente', 'Empresa cliente', $filters, $errors, ['choices' => $clients]) ?>
-<div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary">Filtrar</button><a class="btn btn-outline-secondary" href="<?= site_url('inicio') ?>">Limpar filtros</a></div>
-</form></div></section>
+<?= $this->include('components/indicadores_filters') ?>
 <?php if ($metrics !== null): ?>
 <section class="panel p-4 mb-4" aria-label="Total de ordens"><h2>Total de OS no período</h2><strong class="fs-2"><?= (int) $metrics['total'] ?></strong><?php if (!$metrics['total']): ?><p class="mb-0">Nenhuma OS encontrada para os filtros selecionados.</p><?php endif ?></section>
 <div class="row g-3 mb-4" aria-label="Ordens por status">

@@ -18,6 +18,6 @@ class Home extends ApplicationController
             return $this->response->setStatusCode(403)->setBody(view('errors/access', ['title' => 'Acesso não permitido', 'message' => 'Você não pode consultar indicadores de outros profissionais ou clientes.']));
         }
         $metrics = $context['errors'] ? null : $service->dashboard($context);
-        return $this->page('home', $context + ['metrics' => $metrics, 'title' => $context['personal'] ? 'Minha visão geral' : 'Visão geral', 'active' => 'inicio'], $context['errors'] ? 422 : 200);
+        return $this->page('home', $context + ['metrics' => $metrics, 'filterPath' => 'inicio', 'title' => $context['personal'] ? 'Minha visão geral' : 'Visão geral', 'active' => 'inicio'], $context['errors'] ? 422 : 200);
     }
 }

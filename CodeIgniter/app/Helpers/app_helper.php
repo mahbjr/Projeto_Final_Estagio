@@ -27,3 +27,11 @@ function os_label(string $value): string
         'baixa' => 'Baixa', 'normal' => 'Normal', 'alta' => 'Alta', 'urgente' => 'Urgente',
         'inicio' => 'Início', 'fechamento' => 'Fechamento', 'executado' => 'Executado', 'parcial' => 'Parcial', 'nao_executado' => 'Não executado'][$value] ?? $value;
 }
+
+
+function attendance_duration(int|string|null $seconds): string
+{
+    if ($seconds === null) { return 'Sem dados'; }
+    $seconds = (int) $seconds;
+    return sprintf('%dh %02dmin %02ds', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
+}

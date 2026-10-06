@@ -66,9 +66,19 @@ final class IndicadoresService
 
     public function dashboard(array $context): array
     {
+        return $this->model->dashboard($this->queryFilters($context), $context['owner']);
+    }
+
+    public function report(array $context, int $page): array
+    {
+        return $this->model->attendanceReport($this->queryFilters($context), $context['owner'], $page);
+    }
+
+    private function queryFilters(array $context): array
+    {
         if ($context['errors']) { throw new FormException($context['errors']); }
         $filters = $context['filters'];
         $filters['fim_exclusivo'] = (new DateTimeImmutable($filters['data_fim'], new DateTimeZone('America/Fortaleza')))->modify('+1 day')->format('Y-m-d 00:00:00');
-        return $this->model->dashboard($filters, $context['owner']);
+        return $filters;
     }
 }

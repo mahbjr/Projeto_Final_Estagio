@@ -69,4 +69,51 @@ final class IndicadoresModel extends Model
             ->orderBy('total', 'DESC')->orderBy('eletricista_oss')->get()->getResultArray();
         return ['total' => $total, 'states' => $states, 'types' => $types, 'owners' => $owners];
     }
+
+    private const DURATION = "CASE WHEN status_oss = 'encerrada' AND inicio_atendimento_oss IS NOT NULL AND data_fechamento_oss IS NOT NULL AND data_fechamento_oss >= inicio_atendimento_oss THEN TIMESTAMPDIFF(SECOND, inicio_atendimento_oss, data_fechamento_oss) ELSE NULL END";
+
+    private function attendanceQuery(array $filters, ?int $owner): BaseBuilder
+    {
+        $movements = $this->db->table('tbl_os_medidor')
+            ->select("ordem_servico_osm, SUM(tipo_osm = 'instalado') AS aplicados, SUM(tipo_osm = 'retirado') AS retirados", false)
+            ->where('data_exclusao_osm', null)->groupBy('ordem_servico_osm')->getCompiledSelect();
+        return $this->filtered($filters, $owner)
+            ->join('(' . $movements . ') movimentos', 'movimentos.ordem_servico_osm = id_oss', 'left', false)
+            ->join('tbl_cliente', 'cliente_oss = id_cli', 'left')
+            ->join('tbl_eletricista', 'eletricista_oss = id_ele', 'left')
+            ->join('tbl_usuario', 'usuario_ele = id_usu', 'left');
+    }
+
+    private function attendanceAggregates(): string
+    {
+        return "COUNT(*) AS total, SUM(status_oss = 'encerrada') AS atendidas, COUNT(" . self::DURATION . ") AS amostras, ROUND(AVG(" . self::DURATION . "), 0) AS media_segundos, COALESCE(SUM(movimentos.aplicados), 0) AS aplicados, COALESCE(SUM(movimentos.retirados), 0) AS retirados";
+    }
+
+    private function normalizeSummary(array $row): array
+    {
+        foreach (['total', 'atendidas', 'amostras', 'aplicados', 'retirados'] as $field) { $row[$field] = (int) $row[$field]; }
+        $row['media_segundos'] = $row['media_segundos'] === null ? null : (int) $row['media_segundos'];
+        $row['fora_media'] = $row['atendidas'] - $row['amostras'];
+        return $row;
+    }
+
+    public function attendanceReport(array $filters, ?int $owner, int $page): array
+    {
+        $summary = $this->normalizeSummary($this->attendanceQuery($filters, $owner)
+            ->select($this->attendanceAggregates(), false)->get()->getRowArray());
+        $owners = $this->attendanceQuery($filters, $owner)
+            ->select('eletricista_oss, nome_completo_usu, nome_usu, matricula_ele')
+            ->select($this->attendanceAggregates(), false)
+            ->groupBy(['eletricista_oss', 'nome_completo_usu', 'nome_usu', 'matricula_ele'])
+            ->orderBy('total', 'DESC')->orderBy('eletricista_oss')->get()->getResultArray();
+        $owners = array_map(fn(array $row): array => $this->normalizeSummary($row), $owners);
+        $page = min($page, max(1, (int) ceil($summary['total'] / 15)));
+        $rows = $this->attendanceQuery($filters, $owner)
+            ->select('tbl_os.*, nome_cli, nome_completo_usu, nome_usu, matricula_ele')
+            ->select(self::DURATION . ' AS duracao_segundos, COALESCE(movimentos.aplicados, 0) AS aplicados, COALESCE(movimentos.retirados, 0) AS retirados', false)
+            ->orderBy('data_abertura_oss', 'DESC')->orderBy('id_oss', 'DESC')->limit(15, ($page - 1) * 15)
+            ->get()->getResultArray();
+        return ['summary' => $summary, 'ownersSummary' => $owners, 'rows' => $rows, 'page' => $page];
+    }
+
 }
