@@ -226,3 +226,25 @@ Na aba Consumíveis, filtre nome e detentor (Todos, Depósito ou eletricista). C
 Há 15 registros por página, contagem total dos resultados filtrados e filtros preservados na paginação. Parâmetros não escalares/enums/detentores inválidos são normalizados para os valores padrão; busca tem limite de 100 caracteres. Página deve ser inteiro positivo de até nove dígitos, caso contrário usa a primeira. Busca usa Query Builder, e conteúdo exibido é escapado. A consulta não é uma fotografia transacional: escritas concorrentes podem alterar resultados entre requisições/páginas. Reservas, entregas, aplicação/retirada e devoluções continuam sujeitas às regras transacionais dos Services existentes.
 
 Sem alterações de banco/schema/diagrama/migração/seeds/dependências ou configuração `.env`/`.gitignore`. Requer o esquema operacional atual. Esta entrega conclui o relatório de estoque do plano; dashboards e relatórios de produtividade gerais da especificação não estão incluídos. Validação e revisão em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md).
+
+
+## Dashboard operacional — primeira etapa
+
+`/inicio` apresenta total de OS e distribuição por status, tipo e eletricista, incluindo Não atribuída. Gestor/Operador têm visão global; Eletricista tem Minha visão geral, apenas com suas OS e empresas vinculadas. Filtros GET: `data_inicio`, `data_fim`, `status_oss`, `eletricista`, `cliente`. Período inicialmente do primeiro dia do mês até hoje, pela abertura da OS no fuso America/Fortaleza; data final inclui o dia inteiro. Filtro de eletricista aceita ID ou `sem_atribuicao` para a visão global.
+
+Filtros inválidos retornam 422 e não apresentam indicadores; tentativa do Eletricista de consultar outro profissional/empresa retorna 403. Contagens excluem OS removidas logicamente, preservam referências históricas a empresas/profissionais inativos ou excluídos e incluem estados sem registros com zero real. Empresas sem OS podem ser selecionadas na visão global, retornando resultado vazio. As consultas não representam fotografia transacional entre requisições. Rotas continuam somente leitura e sem cache, sem novos campos, migrations ou dependências.
+
+Dashboard aprovado e commitado em `2205d25`. O relatório por eletricista está descrito na segunda etapa abaixo. Evidências em docs/EntregaFluxoOperacional1.md.
+
+
+## Relatório por eletricista — segunda etapa
+
+Acesse `/relatorios/eletricistas` pelo menu Relatórios ou pelo dashboard. Gestor/Operador consultam todas as OS; Eletricista acessa Meu relatório de atendimentos, apenas com OS próprias e opções vinculadas. Os filtros `data_inicio`, `data_fim`, `status_oss`, `eletricista`, `cliente` têm a mesma validação e escopo do dashboard. O link entre telas preserva filtros; início padrão é mês atual até hoje, pela abertura da OS em America/Fortaleza, incluindo todo o último dia. Página deve ser inteiro positivo com até nove dígitos: inválida retorna 422; página além do final usa a última disponível.
+
+Resumo global e por profissional mostram OS selecionadas, atendidas, tempo médio, amostras válidas/encerradas fora da média e aplicações/retiradas. Atendidas são todas as encerradas, incluindo executado/parcial/nao_executado. Duração é fechamento menos início, em segundos, somente em OS encerradas com ambos os horários e fechamento igual ou posterior ao início. Zero é duração válida. Horários ausentes/invertidos ficam fora da média e sua quantidade é informada. Sem amostras válidas, aparece Sem dados. Média calculada diretamente sobre todas as durações válidas, arredondada ao segundo mais próximo, sem média de médias; apresentação em horas/minutos/segundos, inclusive acima de 24 horas. É tempo corrido, incluindo esperas, não horas efetivas de trabalho.
+
+Medidores contam operações históricas não excluídas de instalação/retirada associadas às OS selecionadas pela abertura, atribuídas ao profissional da OS. Reutilização do mesmo equipamento, retirada posterior ou datas de fechamento/operações fora do período não apagam essas contagens. Não são equipamentos distintos nem saldo atual. Operações são agregadas por OS antes do join, evitando multiplicação das ordens ou durações.
+
+Listagem de 15 OS por página, abertura e ID decrescentes, com UC, empresa, eletricista, tipo, status/resultado, horários, duração, operações e link autorizado para detalhe. Resumos consideram todas as OS filtradas e independem da página. OS/operações excluídas não entram; nomes históricos de empresas/profissionais inativos/excluídos são preservados. Dados escapados, rotas somente GET e sem cache, permissões/vínculo no servidor, filtros inválidos 422 ou acesso fora do escopo 403. Estado vazio apresenta zero real e média Sem dados. Tabelas têm rolagem interna com foco visível e GET funciona sem JavaScript.
+
+Sem mudanças de schema/migrations/seeds/.env/.gitignore/dependências ou banco original/demo. Não inclui exportação, comparação de desempenho ou fotografia transacional entre páginas/requisições. Validações e revisão em docs/EntregaFluxoOperacional1.md.

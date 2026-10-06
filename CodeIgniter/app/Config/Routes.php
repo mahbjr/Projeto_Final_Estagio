@@ -9,6 +9,7 @@ $routes->post('login', 'AuthController::authenticate', ['as' => 'login.submit'])
 $routes->post('logout', 'AuthController::logout', ['as' => 'logout']);
 $routes->get('/', 'Home::index', ['as' => 'entrada']);
 $routes->get('inicio', 'Home::dashboard', ['as' => 'inicio']);
+$routes->get('relatorios/eletricistas', 'RelatoriosController::electricians', ['as' => 'relatorios.eletricistas']);
 $routes->get('relatorios/estoque', 'RelatoriosController::stock', ['as' => 'relatorios.estoque']);
 
 foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController', 'consumiveis' => 'ConsumiveisController'] as $resource => $controller) {

@@ -8,6 +8,29 @@ use App\Models\MedidorModel;
 
 class RelatoriosController extends ApplicationController
 {
+    public function electricians()
+    {
+        $service = new \App\Services\IndicadoresService();
+        try {
+            $context = $service->context(service('auth')->user(), $this->request->getGet());
+        } catch (\App\Exceptions\IndicadoresAccessException $e) {
+            return $this->response->setStatusCode(403)->setBody(view('errors/access', ['title' => 'Acesso não permitido', 'message' => 'Você não pode consultar indicadores de outros profissionais ou clientes.']));
+        }
+        $page = $this->request->getGet('page') ?? '1';
+        if (!is_string($page) || !preg_match('/^[1-9][0-9]{0,8}$/D', $page)) {
+            $context['errors']['page'] = 'Informe uma página válida.';
+            $page = '1';
+        }
+        $report = $context['errors'] ? null : $service->report($context, (int) $page);
+        $pager = service('pager');
+        if ($report !== null) { $pager->store('default', $report['page'], 15, $report['summary']['total']); }
+        return $this->page('relatorios/eletricistas', $context + [
+            'report' => $report, 'pager' => $pager, 'filterPath' => 'relatorios/eletricistas',
+            'title' => $context['personal'] ? 'Meu relatório de atendimentos' : 'Relatório por eletricista',
+            'active' => 'relatorios/eletricistas',
+        ], $context['errors'] ? 422 : 200);
+    }
+
     public function stock()
     {
         $filters = [];
