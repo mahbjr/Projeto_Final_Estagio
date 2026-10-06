@@ -226,3 +226,12 @@ Na aba Consumíveis, filtre nome e detentor (Todos, Depósito ou eletricista). C
 Há 15 registros por página, contagem total dos resultados filtrados e filtros preservados na paginação. Parâmetros não escalares/enums/detentores inválidos são normalizados para os valores padrão; busca tem limite de 100 caracteres. Página deve ser inteiro positivo de até nove dígitos, caso contrário usa a primeira. Busca usa Query Builder, e conteúdo exibido é escapado. A consulta não é uma fotografia transacional: escritas concorrentes podem alterar resultados entre requisições/páginas. Reservas, entregas, aplicação/retirada e devoluções continuam sujeitas às regras transacionais dos Services existentes.
 
 Sem alterações de banco/schema/diagrama/migração/seeds/dependências ou configuração `.env`/`.gitignore`. Requer o esquema operacional atual. Esta entrega conclui o relatório de estoque do plano; dashboards e relatórios de produtividade gerais da especificação não estão incluídos. Validação e revisão em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md).
+
+
+## Dashboard operacional — primeira etapa
+
+`/inicio` apresenta total de OS e distribuição por status, tipo e eletricista, incluindo Não atribuída. Gestor/Operador têm visão global; Eletricista tem Minha visão geral, apenas com suas OS e empresas vinculadas. Filtros GET: `data_inicio`, `data_fim`, `status_oss`, `eletricista`, `cliente`. Período inicialmente do primeiro dia do mês até hoje, pela abertura da OS no fuso America/Fortaleza; data final inclui o dia inteiro. Filtro de eletricista aceita ID ou `sem_atribuicao` para a visão global.
+
+Filtros inválidos retornam 422 e não apresentam indicadores; tentativa do Eletricista de consultar outro profissional/empresa retorna 403. Contagens excluem OS removidas logicamente, preservam referências históricas a empresas/profissionais inativos ou excluídos e incluem estados sem registros com zero real. Empresas sem OS podem ser selecionadas na visão global, retornando resultado vazio. As consultas não representam fotografia transacional entre requisições. Rotas continuam somente leitura e sem cache, sem novos campos, migrations ou dependências.
+
+Esta etapa entrega somente o dashboard. Relatório de produtividade por eletricista, duração média e contagens de aplicações/retiradas serão a segunda etapa, após revisão do dashboard. Evidências em docs/EntregaFluxoOperacional1.md; nenhum link para relatório ainda não entregue é publicado.
