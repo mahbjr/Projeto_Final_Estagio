@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/app') ?>
 <?= $this->section('content') ?>
-<div class="page-heading"><div><a class="back-link" href="<?= site_url('medidores') ?>">Estoque</a><h1><?= esc($record['numero_med']) ?></h1><p>Dados e movimentações do equipamento.</p></div><?php if ($can('medidores.edit')): ?><a class="btn btn-primary" href="<?= site_url('medidores/' . $record['id_med'] . '/editar') ?>"><?= heroicon('pencil-square', 'outline', 'icon') ?> Editar</a><?php endif ?></div>
+<div class="page-heading"><div><a class="back-link" href="<?= site_url('medidores') ?>"><?= heroicon('arrow-left', 'outline', 'icon') ?> Estoque</a><h1><?= esc($record['numero_med']) ?></h1><p>Dados e movimentações do equipamento.</p></div><?php if ($can('medidores.edit')): ?><a class="btn btn-primary" href="<?= site_url('medidores/' . $record['id_med'] . '/editar') ?>"><?= heroicon('pencil-square', 'outline', 'icon') ?> Editar</a><?php endif ?></div>
 <?= $this->include('components/errors') ?>
 <?php if (!$consistent): ?><div class="alert alert-warning" role="alert">Estado legado incompatível. Operações de estado bloqueadas até regularização.</div><?php endif ?>
 <section class="panel detail-panel"><dl class="detail-grid">

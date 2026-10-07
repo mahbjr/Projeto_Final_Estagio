@@ -1,6 +1,6 @@
 <?= $this->extend('layouts/app') ?>
 <?= $this->section('content') ?>
-<div class="page-heading"><div><a class="back-link" href="<?= site_url('medidores') ?>">Estoque</a><h1><?= esc($title) ?></h1><p>Campos com * são obrigatórios. Novos medidores entram disponíveis no depósito.</p></div></div>
+<div class="page-heading"><div><a class="back-link" href="<?= site_url('medidores') ?>"><?= heroicon('arrow-left', 'outline', 'icon') ?> Estoque</a><h1><?= esc($title) ?></h1><p>Campos com * são obrigatórios. Novos medidores entram disponíveis no depósito.</p></div></div>
 <?= $this->include('components/errors') ?>
 <form class="panel form-panel" method="post" data-validate action="<?= site_url(isset($record['id_med']) ? 'medidores/' . $record['id_med'] . '/atualizar' : 'medidores') ?>">
 <?= csrf_field() ?><div class="row g-3">
