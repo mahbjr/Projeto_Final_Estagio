@@ -54,6 +54,28 @@ abstract class AppTestCase extends CIUnitTestCase
         return $this->requestAs($userId, $method, $path, $data, $csrf, $lastActivity);
     }
 
+    /** Historical administrative reservation fixture, not a current application action. */
+    protected function legacyMeterReservation(int $order, int $meter): int
+    {
+        $row = $this->db->table('tbl_os')->where('id_oss', $order)->get()->getRowArray();
+        $this->db->table('tbl_medidor_reserva')->insert(['ordem_servico_rme'=>$order,'medidor_rme'=>$meter,'eletricista_rme'=>$row['eletricista_oss'],'usuario_rme'=>1]);
+        $id = (int) $this->db->insertID();
+        $this->db->table('tbl_medidor')->where('id_med',$meter)->update(['status_med'=>'reservado','localizacao_med'=>'deposito','eletricista_posse_med'=>null]);
+        return $id;
+    }
+
+    protected function pickupLegacyReservation(int $order, int $reservation, int $actor = 3): void
+    {
+        $row = $this->db->table('tbl_medidor_reserva')->where('ordem_servico_rme',$order)->where('id_rme',$reservation)->get()->getRowArray();
+        (new \App\Services\MedidorCustodiaService($this->db))->pickup((int)$row['medidor_rme'],$actor);
+    }
+
+    protected function returnLegacyReservation(int $order, int $reservation, string $condition, int $actor = 3): void
+    {
+        $row = $this->db->table('tbl_medidor_reserva')->where('ordem_servico_rme',$order)->where('id_rme',$reservation)->get()->getRowArray();
+        (new \App\Services\MedidorCustodiaService($this->db))->returnMeter((int)$row['medidor_rme'],$condition,$actor);
+    }
+
     protected function clientInput(array $overrides = []): array
     {
         return $overrides + [

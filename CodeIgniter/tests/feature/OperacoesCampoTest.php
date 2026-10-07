@@ -17,7 +17,7 @@ final class OperacoesCampoTest extends AppTestCase
         $this->db->table('tbl_checklist_item')->insert(['id_chi'=>1,'checklist_chi'=>1,'pergunta_chi'=>'Seguro?','nivel_chi'=>'bloqueante','obrigatorio_chi'=>1]);
         (new ChecklistInicioService($this->db))->answer(1,1,['1'=>'1'],[],3);
         $s=new ConsumivelService($this->db); $s->reserve(1,'2','5.125',1); $s->deliver(1,1,1);
-        $m=new MedidorOsService($this->db); $m->reserve(1,'1',1); $m->deliver(1,1,1);
+        $m=new MedidorOsService($this->db); $this->legacyMeterReservation(1,1); $this->pickupLegacyReservation(1,1);
         (new AtendimentoService($this->db))->start(1,3);
     }
     private function meter(int $id=1): array { return $this->db->table('tbl_medidor')->where('id_med',$id)->get()->getRowArray(); }
@@ -74,7 +74,8 @@ final class OperacoesCampoTest extends AppTestCase
         $this->assertSame('baixa_saida',$move['tipo_emv']); $this->assertSame('1',(string)$move['quantidade_emv']); $this->assertSame('3',(string)$move['usuario_emv']);
         $this->requestAs(3,'POST','os/1/medidores/1/aplicar')->assertStatus(422);
         $this->assertSame(1,$this->db->table('tbl_os_medidor')->where('ordem_servico_osm',1)->where('tipo_osm','instalado')->countAllResults());
-        $this->requestAs(1,'POST','os/1/medidores/1/receber',['condicao_medidor'=>'disponivel'])->assertStatus(422);
+        $this->requestAs(1,'POST','os/1/medidores/1/receber',['condicao_medidor'=>'disponivel'])->assertStatus(403);
+        $this->requestAs(3,'POST','meus-medidores/1/devolver',['condicao'=>'disponivel'])->assertStatus(403);
     }
     public function testWithdrawalThenPhysicalReturnPreservesHistoryAndAllowsNewReservation(): void
     {
@@ -87,10 +88,10 @@ final class OperacoesCampoTest extends AppTestCase
         $r=(int)$this->db->table('tbl_medidor_reserva')->where('medidor_rme',1)->orderBy('id_rme','DESC')->get()->getRow()->id_rme;
         $this->requestAs(3,'POST','os/1/medidores/1/retirar')->assertStatus(404);
         $this->requestAs(3,'POST',"os/1/medidores/$r/aplicar")->assertStatus(422);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(303);
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'disponivel'])->assertStatus(303);
         $this->assertSame('disponivel',$this->meter()['status_med']); $this->assertNull($this->meter()['eletricista_posse_med']);
         $this->db->table('tbl_os')->where('id_oss',2)->update(['status_oss'=>'atribuida','tipo_oss'=>'nova_ligacao']);
-        (new MedidorOsService($this->db))->reserve(2,'1',1);
+        $this->legacyMeterReservation(2,1);
         $this->assertSame('reservado',$this->meter()['status_med']);
         $this->assertSame(2,$this->db->table('tbl_os_medidor')->where('ordem_servico_osm',1)->countAllResults());
     }

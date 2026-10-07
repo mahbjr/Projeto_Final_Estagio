@@ -85,10 +85,10 @@ final class OrdensServicoController extends ApplicationController
         $record = $this->record($id);
         $user = service('auth')->user();
         if ((int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
-        $input = $this->safeInput($action === 'close' ? \App\Services\AtendimentoService::FINAL_FIELDS : ['observacao_atendimento']);
+        $input = $this->safeInput($action === 'close' ? \App\Services\AtendimentoService::FINAL_FIELDS : ($action === 'start' ? ['medidor'] : ['observacao_atendimento']));
         try {
             $service = new \App\Services\AtendimentoService();
-            if ($action === 'start') { $service->start($id, (int) $user['id_usu']); }
+            if ($action === 'start') { $service->start($id, (int) $user['id_usu'], $this->request->getPost('medidor')); }
             elseif ($action === 'close') {
                 $final = [];
                 foreach (\App\Services\AtendimentoService::FINAL_FIELDS as $field) { $final[$field] = $this->request->getPost($field) ?? ''; }
@@ -276,6 +276,6 @@ final class OrdensServicoController extends ApplicationController
         foreach ($evaluations as $evaluation) { if ($evaluation['etapa_cav'] === 'inicio' && !isset($latestBeginning[$evaluation['checklist_cav']])) { $latestBeginning[$evaluation['checklist_cav']] = (int) $evaluation['id_cav']; } }
         $photos = (new \App\Models\AnexoModel())->forOrder((int) $record['id_oss']);
         foreach ($photos as &$photo) { $photo['canRemove'] = \App\Services\FotoService::canRemove($record,service('auth')->user(),$photo); }
-        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'availableMeters' => (new MedidorModel())->where('status_med', 'disponivel')->where('localizacao_med', 'deposito')->where('eletricista_posse_med', null)->orderBy('numero_med')->findAll(), 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'photos' => $photos, 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
+        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'ownMeters' => service('auth')->user()['papel_usu'] === 'eletricista' ? (new MedidorModel())->eligibleForOrder((int) service('auth')->user()['id_ele'], (int) $record['id_oss']) : [], 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'photos' => $photos, 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
     }
 }

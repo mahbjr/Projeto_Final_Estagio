@@ -72,3 +72,7 @@ $routes->post('os/(:num)/encerrar', 'OrdensServicoController::closeAttendance/$1
 $routes->post('os/(:num)/fotos', 'OrdensServicoController::uploadPhoto/$1', ['as'=>'os.photos.upload']);
 $routes->get('os/(:num)/fotos/(:num)', 'OrdensServicoController::photo/$1/$2', ['as'=>'os.photos.show']);
 $routes->post('os/(:num)/fotos/(:num)/remover', 'OrdensServicoController::removePhoto/$1/$2', ['as'=>'os.photos.remove']);
+
+$routes->get('meus-medidores', 'MeusMedidoresController::index', ['as' => 'meus-medidores.index']);
+$routes->post('meus-medidores/(:num)/retirar', 'MeusMedidoresController::pickup/$1', ['as' => 'meus-medidores.pickup']);
+$routes->post('meus-medidores/(:num)/devolver', 'MeusMedidoresController::returnMeter/$1', ['as' => 'meus-medidores.return']);

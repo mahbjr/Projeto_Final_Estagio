@@ -30,3 +30,6 @@
 .checklist-items-table td:nth-child(2) { min-width: 18rem; }
 
 .checklist-items-region:focus-visible { outline: 3px solid #e55b60; outline-offset: -3px; }
+
+.custody-table { min-width: 40rem; }
+.custody-table td:last-child { min-width: 15rem; }

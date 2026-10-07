@@ -56,39 +56,12 @@ class MedidorService extends WriteService
 
     public function send(int $id, mixed $destination, int $actorId): void
     {
-        $this->validate(['destino' => $destination], ['destino' => 'required|is_natural_no_zero']);
-        $this->transaction(function () use ($id, $destination, $actorId) {
-            $this->lockActor($actorId);
-            // Same lock order as employee changes: managers, account, technical record, meter.
-            $technical = $this->db->table('tbl_eletricista')->where('id_ele', $destination)->get()->getRowArray();
-            if (!$technical) { throw new FormException(['destino' => 'Eletricista inválido.']); }
-            $account = $this->db->query('SELECT * FROM tbl_usuario WHERE id_usu = ? FOR UPDATE', [$technical['usuario_ele']])->getRowArray();
-            $technical = $this->db->query('SELECT * FROM tbl_eletricista WHERE id_ele = ? FOR UPDATE', [$destination])->getRowArray();
-            if (!$account || !$account['ativo_usu'] || $account['data_exclusao_usu'] || $account['papel_usu'] !== 'eletricista' || $technical['data_exclusao_ele'] || trim($technical['matricula_ele']) === '' || $technical['usuario_ele'] != $account['id_usu']) {
-                throw new FormException(['destino' => 'Selecione um Eletricista ativo com cadastro técnico válido.']);
-            }
-            $m = $this->locked($id);
-            $this->assertState($m);
-            $this->assertNoPending($id);
-            if ($m['status_med'] !== 'disponivel') { throw new FormException(['operacao' => 'O medidor não está disponível no depósito.']); }
-            (new MedidorModel($this->db))->update($id, ['status_med' => 'em_transito', 'localizacao_med' => 'viatura', 'eletricista_posse_med' => (int) $destination]);
-            $this->movement($id, $actorId, 'transferencia', 'galpao', 'eletricista', (int) $destination, 'Envio à viatura');
-        });
+        throw new FormException(['operacao' => 'Transferência administrativa desativada. O Eletricista registra retirada e devolução em Meus medidores.']);
     }
 
     public function returnToDepot(int $id, mixed $condition, int $actorId): void
     {
-        $this->validate(['condicao' => $condition], ['condicao' => 'required|in_list[disponivel,defeito]']);
-        $this->transaction(function () use ($id, $condition, $actorId) {
-            $this->lockActor($actorId);
-            $m = $this->locked($id);
-            $this->assertState($m);
-            $this->assertNoPending($id);
-            if (!in_array($m['status_med'], ['em_transito', 'defeito'], true) || $m['localizacao_med'] !== 'viatura') { throw new FormException(['operacao' => 'O medidor não está em trânsito na viatura.']); }
-            if ($m['status_med'] === 'defeito' && $condition !== 'defeito') { throw new FormException(['condicao' => 'Receba como defeito o equipamento danificado.']); }
-            (new MedidorModel($this->db))->update($id, ['status_med' => $condition, 'localizacao_med' => 'deposito', 'eletricista_posse_med' => null]);
-            $this->movement($id, $actorId, 'transferencia', 'eletricista', 'galpao', (int) $m['eletricista_posse_med'], 'Devolução: ' . $condition);
-        });
+        throw new FormException(['operacao' => 'Transferência administrativa desativada. O Eletricista registra retirada e devolução em Meus medidores.']);
     }
 
     public function delete(int $id, int $actorId, mixed $password = null): void

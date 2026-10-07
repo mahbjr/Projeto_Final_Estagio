@@ -40,7 +40,7 @@ final class ConfirmationFilter implements FilterInterface
             'title' => 'Confirmar operação', 'active' => '', 'profilePage' => false, 'user' => $user,
             'can' => static fn (string $name): bool => PermissionPolicy::allows($name, $user['papel_usu']),
             'confirmationMessage' => $message, 'confirmationPayload' => $payload,
-            'confirmationAction' => site_url($path), 'confirmationReturn' => site_url($matches[0] ?? 'inicio'),
+            'confirmationAction' => site_url($path), 'confirmationReturn' => site_url(str_starts_with($path, 'meus-medidores/') ? 'meus-medidores' : ($matches[0] ?? 'inicio')),
             'confirmationPassword' => $needsPassword,
         ]));
     }

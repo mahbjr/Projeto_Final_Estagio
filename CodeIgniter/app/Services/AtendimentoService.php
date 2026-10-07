@@ -9,21 +9,22 @@ use App\Models\OsHistoricoModel;
 
 final class AtendimentoService extends WriteService
 {
-    public function start(int $orderId, int $actorId): void
+    public function start(int $orderId, int $actorId, mixed $meterId = null): void
     {
-        $this->transaction(function () use ($orderId, $actorId) {
+        $this->transaction(function () use ($orderId, $actorId, $meterId) {
             $actor = $this->operationalActor($actorId, ['eletricista']);
             $order = $this->operationalOrder($orderId, $actor, ['atribuida']);
             ChecklistInicioService::assertApproved($this->db, $order);
+            (new MedidorCustodiaService($this->db))->bindForStart($orderId, $meterId, $actorId);
             $reservations = $this->db->query("SELECT * FROM tbl_medidor_reserva WHERE ordem_servico_rme = ? AND data_exclusao_rme IS NULL AND status_rme IN ('reservada','entregue','devolucao_pendente') ORDER BY medidor_rme FOR UPDATE", [$orderId])->getResultArray();
             foreach ($reservations as $reservation) {
                 $meter = $this->db->query('SELECT * FROM tbl_medidor WHERE id_med = ? AND data_exclusao_med IS NULL FOR UPDATE', [$reservation['medidor_rme']])->getRowArray();
                 if ($reservation['status_rme'] !== 'entregue' || (int) $reservation['eletricista_rme'] !== $actor['id_ele'] || !$meter || !MedidorService::consistent($meter) || $meter['status_med'] !== 'em_transito' || (int) $meter['eletricista_posse_med'] !== $actor['id_ele']) {
-                    throw new FormException(['operacao' => 'O medidor reservado precisa estar entregue, em bom estado e em sua posse antes do início.']);
+                    throw new FormException(['operacao' => 'O medidor vinculado precisa estar em bom estado e em sua posse antes do início.']);
                 }
             }
             if ($order['tipo_oss'] === 'nova_ligacao' && count($reservations) !== 1) {
-                throw new FormException(['operacao' => 'Nova ligação exige um medidor entregue para esta OS.']);
+                throw new FormException(['operacao' => 'Nova ligação exige um medidor em sua posse vinculado a esta OS.']);
             }
             if ($this->db->table('tbl_consumivel_reserva')->where('ordem_servico_rco', $orderId)->where('data_exclusao_rco', null)->where('status_rco', 'reservada')->countAllResults()) {
                 throw new FormException(['operacao' => 'Aguarde a entrega dos consumíveis reservados antes do início.']);
@@ -103,7 +104,7 @@ final class AtendimentoService extends WriteService
         $meters = $this->db->query('SELECT r.*, m.status_med, m.localizacao_med FROM tbl_medidor_reserva r JOIN tbl_medidor m ON m.id_med = r.medidor_rme WHERE r.ordem_servico_rme = ? AND r.data_exclusao_rme IS NULL ORDER BY r.medidor_rme, r.id_rme FOR UPDATE', [$id])->getResultArray();
         foreach ($meters as $reservation) {
             if (in_array($reservation['status_rme'], ['reservada', 'entregue', 'devolucao_pendente'], true) || ($reservation['status_rme'] === 'perdida' && $reservation['status_med'] !== 'baixado')) {
-                throw new FormException(['operacao' => 'Solicite ao Gestor o recebimento dos medidores não aplicados/retirados, inclusive defeituosos na viatura, e a baixa administrativa dos perdidos.']);
+                throw new FormException(['operacao' => 'Registre a devolução dos medidores não aplicados/retirados em Meus medidores, inclusive defeituosos. Para perdidos, solicite a baixa administrativa ao Gestor.']);
             }
         }
         // Legacy evidence without a reservation must not silently bypass reconciliation.

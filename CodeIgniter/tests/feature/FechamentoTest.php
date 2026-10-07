@@ -30,7 +30,7 @@ final class FechamentoTest extends AppTestCase
         $this->db->table('tbl_checklist')->insert(['id_chk'=>2,'nome_chk'=>'Início','tipo_os_chk'=>'nova_ligacao','etapa_chk'=>'inicio','ativo_chk'=>1,'usuario_chk'=>1]);
         $this->db->table('tbl_checklist_item')->insert(['id_chi'=>2,'checklist_chi'=>2,'pergunta_chi'=>'Seguro?','nivel_chi'=>'bloqueante','obrigatorio_chi'=>1]);
         (new ChecklistInicioService($this->db))->answer(1,2,['2'=>'1'],[],3);
-        $m=new MedidorOsService($this->db); $m->reserve(1,'1',1); $m->deliver(1,1,1);
+        $m=new MedidorOsService($this->db); $this->legacyMeterReservation(1,1); $this->pickupLegacyReservation(1,1);
         (new AtendimentoService($this->db))->start(1,3);
         $this->approve();
     }
@@ -129,7 +129,7 @@ final class FechamentoTest extends AppTestCase
         $this->newConnection(); $m=new MedidorOsService($this->db); $m->apply(1,1,3); $m->withdraw(1,1,3);
         $data=array_replace($this->finalData(),['corte_confirmado_oss'=>'0','leitura_final_oss'=>'','resultado_oss'=>'parcial']);
         $this->requestAs(3,'POST','os/1/encerrar',$data)->assertStatus(422);
-        $m->receive(1,2,'disponivel',1);
+        $this->returnLegacyReservation(1,2,'disponivel');
         $this->requestAs(3,'POST','os/1/encerrar',array_replace($data,['resultado_oss'=>'executado']))->assertStatus(422);
         $this->close($data); $this->assertSame('parcial',$this->order()['resultado_oss']);
         $this->assertSame(2,$this->db->table('tbl_os_medidor')->where('ordem_servico_osm',1)->countAllResults());
@@ -152,7 +152,7 @@ final class FechamentoTest extends AppTestCase
         $this->newConnection(); $m=new MedidorOsService($this->db); $m->occurrence(1,'dano','Defeito em campo',3,1);
         $data=array_replace($this->finalData(),['resultado_oss'=>'nao_executado','corte_confirmado_oss'=>'0','leitura_final_oss'=>'']);
         $this->requestAs(3,'POST','os/1/encerrar',$data)->assertStatus(422);
-        $m->receive(1,1,'defeito',1); $this->close($data);
+        $this->returnLegacyReservation(1,1,'defeito'); $this->close($data);
         $this->assertSame('defeito',$this->db->table('tbl_medidor')->where('id_med',1)->get()->getRow()->status_med);
         $this->db->table('tbl_os')->where('id_oss',1)->update(['status_oss'=>'em_atendimento','data_fechamento_oss'=>null]);
         $this->db->table('tbl_medidor')->where('id_med',2)->update(['status_med'=>'em_transito','localizacao_med'=>'viatura','eletricista_posse_med'=>1]);
@@ -181,7 +181,7 @@ final class FechamentoTest extends AppTestCase
         $this->db->table('tbl_os_medidor')->insert(['ordem_servico_osm'=>1,'medidor_osm'=>3,'tipo_osm'=>'retirado']);
         $this->requestAs(3,'POST','os/1/encerrar',$this->finalData())->assertStatus(422);
         $this->db->table('tbl_medidor_reserva')->insert(['id_rme'=>1,'medidor_rme'=>3,'ordem_servico_rme'=>1,'eletricista_rme'=>1,'usuario_rme'=>1,'status_rme'=>'entregue']);
-        (new MedidorOsService($this->db))->receive(1,1,'disponivel',1);
+        $this->returnLegacyReservation(1,1,'disponivel');
         $this->close();
         $this->assertSame(1,$this->db->table('tbl_os_medidor')->where('ordem_servico_osm',1)->countAllResults());
     }

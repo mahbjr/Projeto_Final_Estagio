@@ -75,7 +75,7 @@ final class RelatorioEstoqueTest extends AppTestCase
         $this->assertSame('20.375', $row['disponivel_sco']);
         $this->opening(); $s->deliver(1, 1, 1);
         $meters = new MedidorOsService($this->db);
-        $meters->reserve(1, '1', 1); $meters->deliver(1, 1, 1);
+        $this->legacyMeterReservation(1,1); $this->pickupLegacyReservation(1,1);
         (new AtendimentoService($this->db))->start(1, 3);
         $s->consume(1, 1, '2.125', 'Aplicação de fita', 3);
         $s->receive(1, 1, '1.000', 'Sobra recebida', 1);
@@ -108,7 +108,7 @@ final class RelatorioEstoqueTest extends AppTestCase
     public function testMeterCurrentReservationAndInstallationWithoutHistoricalDuplication(): void
     {
         $this->opening(); $s = new MedidorOsService($this->db);
-        $s->reserve(1, '1', 1); $s->deliver(1, 1, 1);
+        $this->legacyMeterReservation(1,1); $this->pickupLegacyReservation(1,1);
         (new AtendimentoService($this->db))->start(1, 3);
         $s->apply(1, 1, 3);
         $all = array_column($this->meters(), null, 'id_med');
@@ -120,7 +120,7 @@ final class RelatorioEstoqueTest extends AppTestCase
         $this->assertSame('1', (string) $all[1]['ordem_servico_rme']);
         $this->assertSame('em_transito', $all[1]['status_med']);
         $r = (int) $this->db->table('tbl_medidor_reserva')->orderBy('id_rme', 'DESC')->get()->getRow()->id_rme;
-        $s->receive(1, $r, 'disponivel', 1);
+        $this->returnLegacyReservation(1,$r,'disponivel');
         $all = array_column($this->meters(), null, 'id_med');
         $this->assertCount(6, $all); $this->assertNull($all[1]['ordem_servico_rme']);
         $this->assertSame('disponivel', $all[1]['status_med']);

@@ -162,16 +162,16 @@ Consumo, operações de medidores, execução/fechamento e fotos permanecem nos 
 
 ## Medidores da OS — etapa 3C
 
-Gestor reserva medidor disponível para nova ligação atribuída e confirma entrega física após aprovação/liberação dos checklists de início. Cancelamento libera equipamento ainda no depósito; entregue permanece em posse com devolução pendente. Gestor recebe fisicamente em bom estado ou defeito, inclusive após cancelamento, sem crédito repetido. Equipamento devolvido pode ser reservado novamente; histórico permanece preservado.
+O fluxo administrativo original desta etapa foi substituído pela retirada/devolução direta descrita ao final deste documento. Eletricista registra a retirada no depósito e escolhe um medidor da própria posse ao iniciar nova ligação. Cancelamento libera reserva ainda no depósito; equipamento em posse permanece pendente até devolução pelo responsável. O histórico anterior é preservado.
 
-Eletricista registra perda/roubo/dano do equipamento em sua posse na própria OS. Gestor registra ocorrências e baixa com justificativa; Operador consulta. Defeito em campo mantém posse até recebimento. Perda mantém último responsável/local e bloqueia sua desativação/exclusão; baixa administrativa encerra custódia ativa, preservando dados históricos e impedindo reativação. Ocorrências e movimentos físicos têm auditorias distintas.
+Eletricista registra perda/roubo/dano do equipamento em sua posse na própria OS. Gestor registra ocorrências e baixa com justificativa; Operador consulta. Defeito em campo mantém posse até devolução direta. Perda mantém último responsável/local e bloqueia sua desativação/exclusão; baixa administrativa encerra custódia ativa, preservando dados históricos e impedindo reativação. Ocorrências e movimentos físicos têm auditorias distintas.
 
 Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência administrativa sem reserva ativa. Sem alteração de banco/dependências: exige esquema operacional atual. Aplicação/retirada, consumo, início/fechamento, fotos e relatório continuam pendentes. Validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 3C aprovada/commitada em `9da5491`.
 
 
 ## Atendimento em campo — etapa 4A
 
-Eletricista inicia a própria OS atribuída após checklist de início aprovado/liberado e entrega dos materiais reservados. Nova ligação exige medidor entregue em bom estado e em sua posse. O início registra status em_atendimento e horário do servidor; repetir não altera horário. Durante atendimento, acrescenta observações de até 2.000 caracteres pelo celular, preservadas no histórico com autoria. Gestor/Operador consultam, sem executar essas ações em nome do Eletricista.
+Eletricista inicia a própria OS atribuída após checklist de início aprovado/liberado e entrega dos materiais reservados. Nova ligação exige selecionar um medidor elegível em bom estado da própria posse; o início vincula sua custódia à OS. O início registra status em_atendimento e horário do servidor; repetir não altera horário. Durante atendimento, acrescenta observações de até 2.000 caracteres pelo celular, preservadas no histórico com autoria. Gestor/Operador consultam, sem executar essas ações em nome do Eletricista.
 
 Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Consumo, aplicação/retirada, fechamento, fotos e relatório ainda pendentes. Evidências e limites em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4A aprovada/commitada em `2551f04`.
 
@@ -180,7 +180,7 @@ Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Consumo, ap
 
 Na própria OS em atendimento, Eletricista registra consumo parcial/integral limitado à reserva entregue e ao saldo em custódia. Quantidades seguem precisão do material, com ponto/vírgula e cálculo exato; depósito não é debitado novamente. Consumo e devolução conciliam reserva quando zerar pendência.
 
-Nova ligação permite aplicação do medidor entregue em bom estado na própria posse, com instalação na UC da OS e auditoria. Retirada exige equipamento instalado na UC e empresa da OS; deixa medidor na viatura até o recebimento físico pelo Gestor. Histórico permanece preservado, enquanto instalação atual deixa de apontar equipamento retirado. Só o retorno físico disponibiliza novamente no depósito. Operações são transacionais e recusam estado inválido, vínculo alheio e repetição de aplicação/retirada.
+Nova ligação permite aplicação do medidor entregue em bom estado na própria posse, com instalação na UC da OS e auditoria. Retirada exige equipamento instalado na UC e empresa da OS; deixa medidor na viatura até a devolução direta registrada pelo Eletricista. Histórico permanece preservado, enquanto instalação atual deixa de apontar equipamento retirado. Só o retorno físico disponibiliza novamente no depósito. Operações são transacionais e recusam estado inválido, vínculo alheio e repetição de aplicação/retirada.
 
 Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechamento, fotos e relatório continuam pendentes. Evidências em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4B aprovada/commitada em `c99aa9b`.
 
@@ -189,7 +189,7 @@ Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechame
 
 Gestor configura e ativa modelos de checklist de **fechamento** para cada tipo de OS em `/checklists`. Eletricista responde todos os modelos ativos na própria OS em atendimento; itens informativos não bloqueiam. Item bloqueante reprovado exige nova avaliação corrigida, sem liberação do Gestor. Alteração de perguntas exige nova resposta.
 
-Antes de encerrar, registre o consumo dos materiais e solicite ao Gestor o recebimento físico das sobras e dos medidores não aplicados/retirados, inclusive defeituosos na viatura. Perdas exigem baixa administrativa. Outras OS e equipamentos avulsos em custódia não são conciliados automaticamente.
+Antes de encerrar, registre o consumo dos materiais, solicite ao Gestor o recebimento físico das sobras de consumíveis e registre em Meus medidores a devolução dos equipamentos não aplicados/retirados, inclusive defeituosos na viatura. Perdas exigem baixa administrativa. Outras OS e equipamentos avulsos em custódia não são conciliados automaticamente.
 
 Selecione `executado`, `parcial` ou `nao_executado` e informe observações finais (até 2.000 caracteres), justificando o resultado. Nova ligação executada exige medidor aplicado nesta OS e ainda instalado na UC. Corte executado exige confirmação e leitura final não negativa (zero permitido; até três casas decimais com ponto/vírgula). Corte parcial/não executado pode não ter confirmação/leitura. Confirmação e leitura não se aplicam à nova ligação.
 
@@ -256,7 +256,7 @@ Os três papéis podem abrir o menu da conta no cabeçalho e escolher **Editar p
 
 Alterar o identificador exige um e-mail válido e único; identificadores legados inalterados são preservados. Troca de e-mail ou senha exige a senha atual e regenera a sessão. Nova senha vazia mantém a existente, respeitando mínimo de oito caracteres e máximo de 72 bytes. POST `/perfil/atualizar` usa autorização e CSRF; dados administrativos enviados manualmente são rejeitados. Erros não repopulam senhas. **Sair do sistema** continua sendo POST no menu da conta.
 
-Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras entregues no commit `328ac23`. Ordenação de checklist está descrita abaixo; retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
+Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras entregues no commit `328ac23`. Ordenação de checklist entregue no commit `b62b11d`. Retirada direta de medidores está descrita abaixo, aguardando revisão para commit; cards do Eletricista permanecem na próxima etapa.
 
 
 ## Confirmações e exclusões protegidas
@@ -288,3 +288,14 @@ A migration `2026-10-07-000001_NormalizeChecklistOrder` é somente de dados: org
 Antes de executar em dados existentes, suspenda as escritas, faça backup completo (incluindo histórico de migrations) e valide primeiro uma cópia isolada com nome terminado em `_tests`. Confira conexão/grupo e `php spark migrate:status -g tests`: somente esta migration deve estar pendente; não execute uma sequência de migrations desconhecida. Com esse pré-requisito confirmado, use `php spark migrate -g tests -n App` na cópia, a partir de `CodeIgniter/`, e confira a sequência, IDs, respostas e registros excluídos. A execução no banco original requer autorização específica e conexão conferida; não use scripts de recriação, refresh ou limpeza.
 
 Falhas de DML nesta migration possuem rollback transacional. A ordem anterior não fica armazenada: `down()` recusa inventá-la e exige recuperação pelo backup. Não use `migrate:rollback` para tentar restaurar posições. O runner do CodeIgniter registra a execução na tabela de migrations; eventual criação dessa tabela envolve DDL MySQL, que não tem o mesmo rollback dos dados. Em falha, verifique dados e histórico antes de repetir, mantenha escritas suspensas e use o backup para recuperar a situação anterior quando necessário.
+
+
+## Correções — retirada e devolução direta de medidores
+
+Eletricista acessa **Meus medidores** em `/meus-medidores`, retira fisicamente no galpão e registra a retirada. Medidor disponível no depósito, sem pendência, passa para `em_transito`, na viatura e em sua posse. A devolução registra condição disponível ou defeito, retorna ao depósito e limpa a posse; equipamento defeituoso não pode ser declarado disponível. As listas têm busca e paginação independente de 15 registros, com rolagem interna no celular.
+
+POST `/meus-medidores/{id}/retirar` e `/meus-medidores/{id}/devolver` exigem conta Eletricista ativa, autorização, vínculo e CSRF. Confirmação visual tem alternativa em página sem JavaScript. Cada operação física grava movimento de quantidade 1, ator, responsável, horário e OS quando vinculada, na mesma transação; locks impedem dupla retirada/devolução. Eletricista continua sem acesso ao CRUD administrativo. Gestor mantém cadastro/baixa; Gestor e Operador consultam estoque/histórico. Ações antigas de envio, reserva, entrega e recebimento administrativo de medidores são negadas por política (403); os Services também recusam chamadas diretas. Consumíveis mantêm seu fluxo atual.
+
+Ao iniciar nova ligação, escolha medidor elegível da própria posse após aprovação do checklist inicial. O início cria a custódia na reserva existente com estado `entregue`, cujo nome físico foi preservado; não há entrega administrativa nem segundo movimento físico. Reservas antigas podem ser retiradas pelo responsável da OS, após checklist aprovado; equipamentos já entregues conservam posse/histórico. Devolução de equipamento vinculado concilia a reserva e permite o fechamento quando os demais requisitos forem cumpridos. Aplicação, retirada em campo, cancelamento, ocorrências e baixa mantêm suas regras. Pendências históricas sem reserva conciliada não são corrigidas automaticamente.
+
+Sem alteração de esquema, migrations, seeds, dependências ou banco original/demo. Dashboard e relatórios do Eletricista permanecem até a próxima etapa de cards. Evidências de validação desta correção estão em [EntregaCadastrosBase.md](docs/EntregaCadastrosBase.md).

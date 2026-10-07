@@ -14,13 +14,13 @@ final class MedidorOsTest extends AppTestCase
         (new ChecklistInicioService($this->db))->answer(1,1,['1'=>'1'],[],3);
     }
     private function meter(int $id=1): array { return $this->db->table('tbl_medidor')->where('id_med',$id)->get()->getRowArray(); }
-    private function reserve(): int { (new MedidorOsService($this->db))->reserve(1,'1',1); return (int)$this->db->table('tbl_medidor_reserva')->get()->getRow()->id_rme; }
-    private function deliver(): int { $id=$this->reserve(); (new MedidorOsService($this->db))->deliver(1,$id,1); return $id; }
+    private function reserve(): int { $this->legacyMeterReservation(1,1); return (int)$this->db->table('tbl_medidor_reserva')->get()->getRow()->id_rme; }
+    private function deliver(): int { $id=$this->reserve(); $this->pickupLegacyReservation(1,$id); return $id; }
     private function reservation(int $id): array { return $this->db->table('tbl_medidor_reserva')->where('id_rme',$id)->get()->getRowArray(); }
     public function testRolesCsrfSessionAndVerb(): void
     {
         $before=$this->meter();
-        foreach (['os/1/medidores/reservar'=>[1],'os/1/medidores/1/entregar'=>[1],'os/1/medidores/1/receber'=>[1],'os/1/medidores/1/ocorrencia'=>[1,3],'medidores/1/ocorrencia'=>[1]] as $path=>$allowed) {
+        foreach (['os/1/medidores/reservar'=>[],'os/1/medidores/1/entregar'=>[],'os/1/medidores/1/receber'=>[],'os/1/medidores/1/ocorrencia'=>[1,3],'medidores/1/ocorrencia'=>[1]] as $path=>$allowed) {
             foreach ([null,1,2,3] as $actor) {
                 $response=$this->requestWithDeletionPassword($actor,'POST',$path);
                 if ($actor===null) { $response->assertRedirectTo(site_url('login')); }
@@ -36,19 +36,19 @@ final class MedidorOsTest extends AppTestCase
     }
     public function testExclusiveReservationCancellationAndAudit(): void
     {
-        $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>'1','usuario_rme'=>'4'])->assertStatus(303);
+        $this->legacyMeterReservation(1,1);
         $this->assertSame('reservado',$this->meter()['status_med']);
         $this->assertSame('deposito',$this->meter()['localizacao_med']);
         $this->assertNull($this->meter()['eletricista_posse_med']);
         $this->assertSame('1',(string)$this->reservation(1)['usuario_rme']);
-        foreach (['1','2'] as $meter) { $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>$meter])->assertStatus(422); }
+        foreach (['1','2'] as $meter) { $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>$meter])->assertStatus(403); }
         $this->db->table('tbl_os')->where('id_oss',3)->update(['status_oss'=>'atribuida','tipo_oss'=>'nova_ligacao','eletricista_oss'=>2]);
-        $this->requestAs(1,'POST','os/3/medidores/reservar',['medidor'=>'1'])->assertStatus(422);
+        $this->requestAs(1,'POST','os/3/medidores/reservar',['medidor'=>'1'])->assertStatus(403);
         $this->requestAs(2,'POST','os/1/cancelar',['motivo'=>'Cancelada'])->assertStatus(303);
         $this->assertSame('disponivel',$this->meter()['status_med']);
         $this->assertSame('liberada',$this->reservation(1)['status_rme']);
         $this->assertSame(0,$this->db->table('tbl_estoque_mov')->where('ordem_servico_emv',1)->countAllResults());
-        $this->requestAs(1,'POST','os/3/medidores/reservar',['medidor'=>'1'])->assertStatus(303);
+        $this->legacyMeterReservation(3,1);
         $this->assertSame('liberada',$this->reservation(1)['status_rme']);
         $this->assertSame(2,$this->db->table('tbl_medidor_reserva')->countAllResults());
     }
@@ -56,25 +56,25 @@ final class MedidorOsTest extends AppTestCase
     {
         $r=$this->reserve();
         (new ChecklistInicioService($this->db))->answer(1,1,['1'=>'0'],[],3);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/entregar")->assertStatus(422);
+        $this->requestAs(3,'POST',"meus-medidores/1/retirar")->assertStatus(422);
         $id=$this->db->table('tbl_checklist_avaliacao')->orderBy('id_cav','DESC')->get()->getRow()->id_cav;
         $this->requestAs(1,'POST',"os/1/avaliacoes/$id/liberar-inicio",['justificativa'=>'Verificado pelo gestor'])->assertStatus(303);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/entregar",['eletricista_rme'=>'2'])->assertStatus(303);
+        $this->requestAs(3,'POST',"meus-medidores/1/retirar",['eletricista_rme'=>'2'])->assertStatus(303);
         $this->assertSame('em_transito',$this->meter()['status_med']);
         $this->assertSame('1',(string)$this->meter()['eletricista_posse_med']);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/entregar")->assertStatus(422);
+        $this->requestAs(3,'POST',"meus-medidores/1/retirar")->assertStatus(422);
         $this->requestAs(2,'GET','os/1')->assertStatus(200);
         $this->requestAs(2,'POST','os/1/cancelar',['motivo'=>'Cancelada'])->assertStatus(303);
         $this->assertSame('devolucao_pendente',$this->reservation($r)['status_rme']);
         $this->assertSame('em_transito',$this->meter()['status_med']);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(303);
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'disponivel'])->assertStatus(303);
         $this->assertSame('devolvida',$this->reservation($r)['status_rme']);
         $this->assertSame('disponivel',$this->meter()['status_med']);
         $this->assertNull($this->meter()['eletricista_posse_med']);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(422);
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'disponivel'])->assertStatus(403);
         $movements=$this->db->table('tbl_estoque_mov')->where('ordem_servico_emv',1)->get()->getResultArray();
         $this->assertCount(2,$movements);
-        foreach ($movements as $movement) { $this->assertSame('1',(string)$movement['usuario_emv']); $this->assertSame('1',(string)$movement['quantidade_emv']); }
+        foreach ($movements as $movement) { $this->assertSame('3',(string)$movement['usuario_emv']); $this->assertSame('1',(string)$movement['quantidade_emv']); }
     }
     public function testDamageRequiresPhysicalReceivingBeforeDown(): void
     {
@@ -83,8 +83,8 @@ final class MedidorOsTest extends AppTestCase
         $this->assertSame('defeito',$this->meter()['status_med']);
         $this->assertSame('viatura',$this->meter()['localizacao_med']);
         $this->requestAs(1,'POST','os/1/medidores/1/ocorrencia',['tipo_ocorrencia'=>'baixa','justificativa_medidor'=>'Sem conserto'])->assertStatus(422);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(422);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'defeito'])->assertStatus(303);
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'disponivel'])->assertStatus(422);
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'defeito'])->assertStatus(303);
         $this->requestAs(1,'POST','medidores/1/ocorrencia',['tipo_ocorrencia'=>'baixa','justificativa_medidor'=>'Sem conserto'])->assertStatus(303);
         $this->assertSame('baixado',$this->meter()['status_med']);
         $this->assertNull($this->meter()['data_exclusao_med']);
@@ -114,10 +114,10 @@ final class MedidorOsTest extends AppTestCase
     }
     public function testBoundariesValidationAndEscaping(): void
     {
-        foreach (['0','abc'] as $id) { $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>$id])->assertStatus(422); }
-        $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>'999'])->assertStatus(404);
+        foreach (['0','abc'] as $id) { $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>$id])->assertStatus(403); }
+        $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>'999'])->assertStatus(403);
         $r=$this->deliver();
-        $this->requestAs(1,'POST',"os/2/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(404);
+        $this->requestAs(3,'POST','meus-medidores/999/devolver',['condicao'=>'disponivel'])->assertStatus(404);
         $this->requestAs(3,'POST','os/1/medidores/2/ocorrencia',['tipo_ocorrencia'=>'dano','justificativa_medidor'=>'Dano'])->assertStatus(404);
         foreach ([['tipo_ocorrencia'=>'reparo'],['justificativa_medidor'=>''],['justificativa_medidor'=>str_repeat('a',1001)],['tipo_ocorrencia'=>['dano']]] as $input) { $this->requestAs(3,'POST','os/1/medidores/1/ocorrencia',$input+['tipo_ocorrencia'=>'dano','justificativa_medidor'=>'Dano'])->assertStatus(422); }
         $this->requestAs(3,'POST','os/1/medidores/1/ocorrencia',['tipo_ocorrencia'=>'perda','justificativa_medidor'=>'<script>alert(1)</script>'])->assertStatus(303);
@@ -127,7 +127,7 @@ final class MedidorOsTest extends AppTestCase
     public function testAuditFailuresRollbackStateReservationAndMovements(): void
     {
         $this->db->query("ALTER TABLE tbl_os_historico ADD CONSTRAINT test_meter_history CHECK (evento_osh <> 'reserva_medidor')");
-        $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>'1'])->assertStatus(422);
+        $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>'1'])->assertStatus(403);
         $this->assertSame('disponivel',$this->meter()['status_med']);
         $this->assertSame(0,$this->db->table('tbl_medidor_reserva')->countAllResults());
         $this->db->query('ALTER TABLE tbl_os_historico DROP CHECK test_meter_history');
@@ -137,12 +137,12 @@ final class MedidorOsTest extends AppTestCase
         $this->assertSame('reservado',$this->meter()['status_med']);
         $this->assertSame('reservada',$this->reservation($r)['status_rme']);
         $this->db->query('ALTER TABLE tbl_os_historico DROP CHECK test_meter_history');
-        $this->db->query("ALTER TABLE tbl_estoque_mov ADD CONSTRAINT test_meter_movement CHECK (observacao_emv NOT LIKE 'Entrega física da reserva%')");
-        $this->requestAs(1,'POST',"os/1/medidores/$r/entregar")->assertStatus(422);
+        $this->db->query("ALTER TABLE tbl_estoque_mov ADD CONSTRAINT test_meter_movement CHECK (observacao_emv NOT LIKE 'Retirada direta%')");
+        $this->requestAs(3,'POST',"meus-medidores/1/retirar")->assertStatus(422);
         $this->assertSame('reservado',$this->meter()['status_med']);
         $this->assertSame('reservada',$this->reservation($r)['status_rme']);
         $this->db->query('ALTER TABLE tbl_estoque_mov DROP CHECK test_meter_movement');
-        (new MedidorOsService($this->db))->deliver(1,$r,1);
+        $this->pickupLegacyReservation(1,$r);
         $this->db->query("ALTER TABLE tbl_os_historico ADD CONSTRAINT test_meter_history CHECK (evento_osh <> 'ocorrencia_medidor')");
         $this->requestAs(3,'POST','os/1/medidores/1/ocorrencia',['tipo_ocorrencia'=>'perda','justificativa_medidor'=>'Perda'])->assertStatus(422);
         $this->assertSame('em_transito',$this->meter()['status_med']);
@@ -158,14 +158,14 @@ final class MedidorOsTest extends AppTestCase
     public function testReceivingFailureRollsBackAndReturnedMeterCanBeReservedAgain(): void
     {
         $r=$this->deliver();
-        $this->db->query("ALTER TABLE tbl_estoque_mov ADD CONSTRAINT test_meter_return CHECK (observacao_emv NOT LIKE 'Recebimento físico:%')");
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(422);
+        $this->db->query("ALTER TABLE tbl_estoque_mov ADD CONSTRAINT test_meter_return CHECK (observacao_emv NOT LIKE 'Devolução direta:%')");
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'disponivel'])->assertStatus(422);
         $this->assertSame('em_transito',$this->meter()['status_med']);
         $this->assertSame('entregue',$this->reservation($r)['status_rme']);
         $this->assertSame(1,$this->db->table('tbl_estoque_mov')->where('ordem_servico_emv',1)->countAllResults());
         $this->db->query('ALTER TABLE tbl_estoque_mov DROP CHECK test_meter_return');
-        $this->requestAs(1,'POST',"os/1/medidores/$r/receber",['condicao_medidor'=>'disponivel'])->assertStatus(303);
-        $this->requestAs(1,'POST','os/1/medidores/reservar',['medidor'=>'1'])->assertStatus(303);
+        $this->requestAs(3,'POST',"meus-medidores/1/devolver",['condicao'=>'disponivel'])->assertStatus(303);
+        $this->legacyMeterReservation(1,1);
         $this->assertSame('devolvida',$this->reservation($r)['status_rme']);
         $this->assertSame(2,$this->db->table('tbl_medidor_reserva')->countAllResults());
     }
@@ -176,7 +176,7 @@ final class MedidorOsTest extends AppTestCase
         $this->requestWithDeletionPassword(1,'POST','medidores/1/excluir')->assertStatus(422);
         $this->requestAs(1,'POST','os/1/medidores/1/ocorrencia',['tipo_ocorrencia'=>'perda','justificativa_medidor'=>'Perda'])->assertStatus(422);
         $this->db->table('tbl_usuario')->where('id_usu',3)->update(['ativo_usu'=>0]);
-        $this->requestAs(1,'POST',"os/1/medidores/$r/entregar")->assertStatus(422);
+        $this->requestAs(3,'POST',"meus-medidores/1/retirar")->assertRedirectTo(site_url('login'));
         $this->assertSame('reservado',$this->meter()['status_med']);
         $this->assertSame('reservada',$this->reservation($r)['status_rme']);
         $this->expectException(\App\Exceptions\FormException::class);
