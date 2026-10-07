@@ -80,3 +80,29 @@ document.querySelectorAll('form[data-validate]').forEach((form) => {
         }
     });
 });
+
+const accountMenu = document.querySelector('.account-menu');
+const profileDialog = document.getElementById('profile-dialog');
+document.addEventListener('click', event => {
+    if (accountMenu && !accountMenu.contains(event.target)) accountMenu.open = false;
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && accountMenu?.open) {
+        accountMenu.open = false;
+        accountMenu.querySelector('summary').focus();
+    }
+});
+document.querySelector('[data-profile-open]')?.addEventListener('click', event => {
+    if (!profileDialog || typeof profileDialog.showModal !== 'function') return;
+    event.preventDefault();
+    accountMenu.open = false;
+    profileDialog.showModal();
+    profileDialog.querySelector('input:not([type=hidden])')?.focus();
+});
+profileDialog?.querySelectorAll('[data-profile-close]').forEach(button => {
+    button.addEventListener('click', () => profileDialog.close());
+});
+profileDialog?.addEventListener('close', () => {
+    profileDialog.querySelectorAll('input[type=password]').forEach(input => { input.value = ''; });
+    accountMenu.querySelector('summary').focus();
+});

@@ -248,3 +248,12 @@ Medidores contam operações históricas não excluídas de instalação/retirad
 Listagem de 15 OS por página, abertura e ID decrescentes, com UC, empresa, eletricista, tipo, status/resultado, horários, duração, operações e link autorizado para detalhe. Resumos consideram todas as OS filtradas e independem da página. OS/operações excluídas não entram; nomes históricos de empresas/profissionais inativos/excluídos são preservados. Dados escapados, rotas somente GET e sem cache, permissões/vínculo no servidor, filtros inválidos 422 ou acesso fora do escopo 403. Estado vazio apresenta zero real e média Sem dados. Tabelas têm rolagem interna com foco visível e GET funciona sem JavaScript.
 
 Sem mudanças de schema/migrations/seeds/.env/.gitignore/dependências ou banco original/demo. Não inclui exportação, comparação de desempenho ou fotografia transacional entre páginas/requisições. Validações e revisão em docs/EntregaFluxoOperacional1.md.
+
+
+## Perfil da própria conta
+
+Os três papéis podem abrir o menu da conta no cabeçalho e escolher **Editar perfil**. Com JavaScript, o formulário abre em modal; sem JavaScript, fica disponível em `/perfil`. Permite alterar nome completo, telefone e identificador de acesso, além da senha. CPF, cargo, matrícula, papel e situação permanecem administrativos.
+
+Alterar o identificador exige um e-mail válido e único; identificadores legados inalterados são preservados. Troca de e-mail ou senha exige a senha atual e regenera a sessão. Nova senha vazia mantém a existente, respeitando mínimo de oito caracteres e máximo de 72 bytes. POST `/perfil/atualizar` usa autorização e CSRF; dados administrativos enviados manualmente são rejeitados. Erros não repopulam senhas. **Sair do sistema** continua sendo POST no menu da conta.
+
+Esta é a primeira etapa das correções em `bugfix/perfil-medidores-atendimento`. Confirmações de exclusão, máscaras, ordenação de checklist, retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.

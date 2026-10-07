@@ -27,13 +27,25 @@
     <div class="account">
         <span class="avatar" aria-hidden="true"><?= esc(user_initials($user['display_name'])) ?></span>
         <span class="account-copy"><strong><?= esc($user['display_name']) ?></strong><small><?= esc(role_label($user['papel_usu'])) ?></small></span>
-        <form action="<?= site_url('logout') ?>" method="post"><?= csrf_field() ?><button class="icon-button" type="submit" aria-label="Sair do sistema" title="Sair"><?= heroicon('arrow-right-on-rectangle', 'outline', 'icon') ?></button></form>
+        <details class="account-menu">
+            <summary class="icon-button" aria-label="Abrir menu da conta" title="Minha conta"><?= heroicon('chevron-down', 'outline', 'icon') ?></summary>
+            <div class="account-dropdown">
+                <a href="<?= site_url('perfil') ?>" data-profile-open><?= heroicon('user-circle', 'outline', 'icon') ?> Editar perfil</a>
+                <form action="<?= site_url('logout') ?>" method="post"><?= csrf_field() ?><button type="submit"><?= heroicon('arrow-right-on-rectangle', 'outline', 'icon') ?> Sair do sistema</button></form>
+            </div>
+        </details>
     </div>
 </header>
 <main class="app-main" id="conteudo">
     <?php if ($success = session()->getFlashdata('success')): ?><div class="alert alert-success" role="status"><?= esc($success) ?></div><?php endif ?>
     <?= $this->renderSection('content') ?>
 </main>
+<?php if (empty($profilePage)): ?>
+<dialog class="profile-dialog" id="profile-dialog" aria-labelledby="profile-dialog-title">
+    <div class="profile-dialog-heading"><div><h2 id="profile-dialog-title">Editar perfil</h2><p>Seus dados pessoais e de acesso.</p></div><button class="btn btn-outline-secondary" type="button" aria-label="Fechar edição de perfil" data-profile-close><?= heroicon('x-mark', 'outline', 'icon') ?></button></div>
+    <?= view('components/profile_form', ['record' => $user, 'errors' => [], 'profilePrefix' => 'perfil-modal']) ?>
+</dialog>
+<?php endif ?>
 <footer class="app-footer">GPM Soluções · Serviços de campo</footer>
 </body>
 </html>
