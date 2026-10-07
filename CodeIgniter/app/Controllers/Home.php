@@ -9,18 +9,13 @@ class Home extends ApplicationController
         return redirect()->to(site_url('inicio'));
     }
 
-    public function dashboard()
+    public function welcome()
     {
-        if (service('auth')->user()['papel_usu'] === 'eletricista') {
+        $user = service('auth')->user();
+        if ($user['papel_usu'] === 'eletricista') {
             return redirect()->to(site_url('os'));
         }
-        $service = new \App\Services\IndicadoresService();
-        try {
-            $context = $service->context(service('auth')->user(), $this->request->getGet());
-        } catch (\App\Exceptions\IndicadoresAccessException $e) {
-            return $this->response->setStatusCode(403)->setBody(view('errors/access', ['title' => 'Acesso não permitido', 'message' => 'Você não pode consultar indicadores de outros profissionais ou clientes.']));
-        }
-        $metrics = $context['errors'] ? null : $service->dashboard($context);
-        return $this->page('home', $context + ['metrics' => $metrics, 'filterPath' => 'inicio', 'title' => $context['personal'] ? 'Minha visão geral' : 'Visão geral', 'active' => 'inicio'], $context['errors'] ? 422 : 200);
+        $context = (new \App\Services\InicioService())->context($user, $this->request->getGet());
+        return $this->page('home', $context + ['title' => 'Bem-vindo', 'active' => 'inicio'], $context['errors'] ? 422 : 200);
     }
 }

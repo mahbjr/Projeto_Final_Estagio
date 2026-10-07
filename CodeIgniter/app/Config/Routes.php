@@ -10,7 +10,7 @@ $routes->get('perfil', 'PerfilController::index', ['as' => 'perfil.show']);
 $routes->post('perfil/atualizar', 'PerfilController::update', ['as' => 'perfil.update']);
 $routes->post('logout', 'AuthController::logout', ['as' => 'logout']);
 $routes->get('/', 'Home::index', ['as' => 'entrada']);
-$routes->get('inicio', 'Home::dashboard', ['as' => 'inicio']);
+$routes->get('inicio', 'Home::welcome', ['as' => 'inicio']);
 $routes->get('relatorios/eletricistas', 'RelatoriosController::electricians', ['as' => 'relatorios.eletricistas']);
 $routes->get('relatorios/estoque', 'RelatoriosController::stock', ['as' => 'relatorios.estoque']);
 

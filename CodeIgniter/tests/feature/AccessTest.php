@@ -68,8 +68,10 @@ final class AccessTest extends AppTestCase
     public function testMenusFollowTheSamePolicy(): void
     {
         $operator = $this->requestAs(2, 'GET', 'inicio');
-        $operator->assertSee('Empresas clientes');
-        $operator->assertDontSee('Acessar equipe');
+        $operator->assertSee('Gerenciar clientes');
+        $operator->assertDontSee('Gerenciar equipe');
+        $operator->assertDontSee('Gerenciar checklists');
+        $operator->assertDontSee('Cadastrar medidor');
         $this->requestAs(3, 'GET', 'inicio')->assertRedirectTo(site_url('os'));
         $electrician = $this->requestAs(3, 'GET', 'os');
         $electrician->assertSee('Meus atendimentos');

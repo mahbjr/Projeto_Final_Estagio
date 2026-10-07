@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Domain\StatusOS;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 
@@ -50,24 +49,6 @@ final class IndicadoresModel extends Model
         if ($filters['eletricista'] === 'sem_atribuicao') { $query->where('eletricista_oss', null); }
         elseif ($filters['eletricista'] !== '') { $query->where('eletricista_oss', $filters['eletricista']); }
         return $query;
-    }
-
-    public function dashboard(array $filters, ?int $owner): array
-    {
-        $states = array_fill_keys(StatusOS::TODOS, 0);
-        $types = array_fill_keys(['corte', 'nova_ligacao'], 0);
-        $total = 0;
-        foreach ($this->filtered($filters, $owner)->select('status_oss, tipo_oss, COUNT(*) AS total', false)
-            ->groupBy(['status_oss', 'tipo_oss'])->get()->getResultArray() as $row) {
-            $count = (int) $row['total'];
-            $states[$row['status_oss']] += $count; $types[$row['tipo_oss']] += $count; $total += $count;
-        }
-        $owners = $this->filtered($filters, $owner)
-            ->select('eletricista_oss, nome_completo_usu, nome_usu, matricula_ele, COUNT(*) AS total', false)
-            ->join('tbl_eletricista', 'eletricista_oss = id_ele', 'left')->join('tbl_usuario', 'usuario_ele = id_usu', 'left')
-            ->groupBy(['eletricista_oss', 'nome_completo_usu', 'nome_usu', 'matricula_ele'])
-            ->orderBy('total', 'DESC')->orderBy('eletricista_oss')->get()->getResultArray();
-        return ['total' => $total, 'states' => $states, 'types' => $types, 'owners' => $owners];
     }
 
     private const DURATION = "CASE WHEN status_oss = 'encerrada' AND inicio_atendimento_oss IS NOT NULL AND data_fechamento_oss IS NOT NULL AND data_fechamento_oss >= inicio_atendimento_oss THEN TIMESTAMPDIFF(SECOND, inicio_atendimento_oss, data_fechamento_oss) ELSE NULL END";
