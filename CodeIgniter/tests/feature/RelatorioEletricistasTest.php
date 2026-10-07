@@ -124,4 +124,61 @@ final class RelatorioEletricistasTest extends AppTestCase
         $this->assertStringContainsString('&lt;script&gt;nome&lt;/script&gt;',$r->getBody());$this->assertStringNotContainsString('<script>nome</script>',$r->getBody());
         $this->assertStringContainsString('&lt;script&gt;empresa&lt;/script&gt;',$r->getBody());
     }
+
+    public function testChartDistributionsUseAllOrdersAndOnlyClosedResults(): void
+    {
+        $this->close(1, '2026-10-06 08:00:00', '2026-10-06 09:00:00', 'executado');
+        $this->close(2, '2026-10-06 08:00:00', '2026-10-06 10:00:00', 'parcial');
+        $this->close(3, null, null, 'nao_executado');
+        $this->copyOrder(['resultado_oss' => null, 'eletricista_oss' => null]);
+        $this->copyOrder(['status_oss' => 'cancelada', 'resultado_oss' => 'executado']);
+        $this->copyOrder(['status_oss' => 'aberta', 'resultado_oss' => null]);
+        $this->copyOrder(['status_oss' => 'atribuida', 'resultado_oss' => null]);
+        $this->copyOrder(['status_oss' => 'em_atendimento', 'resultado_oss' => null]);
+        $report = $this->report();
+        $this->assertSame(['aberta'=>1, 'atribuida'=>1, 'em_atendimento'=>1, 'encerrada'=>4, 'cancelada'=>1], $report['states']);
+        $this->assertSame(['executado'=>1, 'parcial'=>1, 'nao_executado'=>1, 'sem_resultado'=>1], $report['results']);
+        $this->assertSame($report['summary']['total'], array_sum($report['states']));
+        $this->assertSame($report['summary']['atendidas'], array_sum($report['results']));
+        $filtered = $this->report(['status_oss'=>'cancelada']);
+        $this->assertSame(1, $filtered['states']['cancelada']);
+        $this->assertSame(0, array_sum($filtered['results']));
+    }
+
+    public function testChartsIgnoreDeletedOrdersAndDoNotMultiplyMeterOperationsOrPages(): void
+    {
+        for ($i=0; $i<20; $i++) { $this->copyOrder(['unidade_consumidora_oss'=>'CHART-'.$i]); }
+        foreach (['instalado','retirado','instalado'] as $type) {
+            $this->db->table('tbl_os_medidor')->insert(['ordem_servico_osm'=>1,'medidor_osm'=>1,'tipo_osm'=>$type]);
+        }
+        $first = $this->report(); $second = $this->report([], 2);
+        $this->assertSame(23, array_sum($first['states']));
+        $this->assertSame($first['states'], $second['states']);
+        $this->assertSame($first['results'], $second['results']);
+        $this->assertSame($first['ownersSummary'], $second['ownersSummary']);
+        $this->db->table('tbl_os')->where('id_oss',1)->update(['data_exclusao_oss'=>'2026-10-07 12:00:00']);
+        $this->assertSame(22, array_sum($this->report()['states']));
+        $empty = $this->report(['data_inicio'=>'2020-01-01','data_fim'=>'2020-01-31']);
+        $this->assertSame(0, array_sum($empty['states']));
+        $this->assertSame(0, array_sum($empty['results']));
+    }
+
+    public function testChartPayloadIsEscapedAndInvalidFiltersDoNotExposeData(): void
+    {
+        $name = '</script><script>alert(1)</script>';
+        $this->db->table('tbl_usuario')->where('id_usu',3)->update(['nome_completo_usu'=>$name]);
+        $r = $this->requestAs(2,'GET','relatorios/eletricistas?data_inicio=2026-01-01&data_fim=2026-12-31');
+        $r->assertStatus(200);
+        $r->assertSee('Volume por eletricista');
+        $this->assertStringNotContainsString($name, $r->getBody());
+        $dom = new \DOMDocument(); @$dom->loadHTML($r->getBody());
+        $json = json_decode($dom->getElementById('report-chart-data')->textContent, true, 512, JSON_THROW_ON_ERROR);
+        $this->assertSame(3, array_sum($json['states']['values']));
+        $this->assertSame(3, array_sum($json['owners']['selected']));
+        $this->assertStringContainsString($name, implode(' ', $json['owners']['labels']));
+        $r = $this->requestAs(2,'GET','relatorios/eletricistas?data_inicio=impossivel');
+        $r->assertStatus(422);
+        $this->assertStringNotContainsString('id="report-chart-data"', $r->getBody());
+        $this->requestAs(3,'GET','relatorios/eletricistas')->assertStatus(403);
+    }
 }
