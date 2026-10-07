@@ -34,7 +34,6 @@
 <?= view('os/atendimento', ['orderRecord' => $record, 'input' => $input, 'errors' => $errors]) ?>
 <?= view('os/checklist-inicio', ['orderRecord' => $record, 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'input' => $input, 'errors' => $errors]) ?>
 <?= view('os/medidores-campo', ['orderRecord'=>$record,'meterReservations'=>$meterReservations,'currentInstallations'=>$currentInstallations,'meterOperations'=>$meterOperations]) ?>
-<?= view('os/consumiveis', ['orderRecord' => $record, 'reservations' => $reservations, 'materials' => $materials, 'input' => $input, 'errors' => $errors]) ?>
 <?php if ($can('os.photos.upload')): ?><?= view('os/fotos', ['orderRecord'=>$record,'photos'=>$photos,'input'=>$input,'errors'=>$errors]) ?><?php endif ?>
 <?= view('os/fechamento', ['orderRecord'=>$record, 'closingTemplates'=>$closingTemplates, 'evaluations'=>$evaluations, 'latestBeginning'=>$latestBeginning, 'input'=>$input, 'errors'=>$errors]) ?>
 </div><aside class="os-detail-aside" aria-label="Medidores, histórico e fotos">

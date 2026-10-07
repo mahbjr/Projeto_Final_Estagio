@@ -1,6 +1,6 @@
 # GPM Soluções — serviços de campo B2B
 
-Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque com reservas, entregas e devoluções. Eletricista inicia atendimento e registra observações, consumo e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e conciliação dos materiais, registrando resultado e dados finais. Fotos podem ser anexadas durante o atendimento e consultadas com acesso protegido pela OS. Gestor e Operador consultam o relatório de estoque atual, com medidores e saldos de consumíveis por detentor.
+Aplicação CodeIgniter 4.7.4 / PHP 8.3 / MySQL 8 para empresas contratantes de serviços elétricos. Entregues autenticação, permissões, funcionários, empresas, gestão de OS/checklists e estoque de medidores com retirada e devolução. Eletricista inicia atendimento e registra observações e aplicação/retirada de medidores na própria OS. Eletricista encerra a própria OS após checklist final aprovado e regularização dos medidores, registrando resultado e dados finais. Fotos podem ser anexadas durante o atendimento e consultadas com acesso protegido pela OS. Gestor e Operador consultam o relatório de estoque atual, com medidores por detentor.
 
 ## Executar
 
@@ -111,7 +111,7 @@ Veja [entrega dos cadastros base](docs/EntregaCadastrosBase.md) para evidências
 
 Implementada a fundação de dados, ainda sem telas ou operações de OS: estados `aberta`, `atribuida`, `em_atendimento`, `encerrada`, `cancelada`; resultado separado `executado`, `parcial`, `nao_executado`. Os três estados não finais bloqueiam inativação/exclusão dos envolvidos. Domínio de medidores inclui reserva, perda e baixa, mantendo localização e posse independentes.
 
-Estruturas para reservas exclusivas de medidores, instalação atual, consumíveis com saldos decimais, reservas e movimentos, checklists com itens bloqueantes/informativos, avaliações/respostas, ocorrências e autoria em FK. CHECKs protegem saldos e impedem liberação do checklist de fechamento. O início admite liberação justificada pelo Gestor nas próximas etapas.
+Estruturas para reservas exclusivas de medidores, instalação atual, checklists com itens bloqueantes/informativos, avaliações/respostas, ocorrências e autoria em FK. CHECKs impedem liberação do checklist de fechamento. O início admite liberação justificada pelo Gestor nas próximas etapas.
 
 Esta entrega é greenfield: migração recusa OS existentes e dados operacionais legados, sem conversão ou limpeza automática. Inicializar banco separado vazio, suspender escritas e fazer backup antes de DDL. Não aplicar código com estados novos contra esquema operacional antigo. Recuperação de DDL parcial exige restauração, pois MySQL não oferece rollback transacional para toda a migração.
 
@@ -135,29 +135,15 @@ Eletricista consulta somente suas OS em `/os` e `/os/{id}`. Consultas manuais a 
 
 Gestor configura modelos em `/checklists`: cria inativo, adiciona perguntas (resposta esperada Sim/Não, obrigatoriedade, nível bloqueante/informativo, ordem) e ativa quando houver pelo menos uma pergunta. Perguntas são removidas logicamente. Avaliações/respostas anteriores preservam seu texto e evidências; modelos já utilizados não mudam tipo/etapa. Não há versionamento de modelos nem avaliação de checklist pela interface nesta etapa.
 
-Na etapa 2, cancelamento com materiais vinculados era bloqueado; a etapa 3A libera reservas de consumíveis ainda no depósito, conforme descrito abaixo. Vínculos operacionais de medidores continuam bloqueados até a integração seguinte. Os botões de iniciar, concluir, movimentar materiais e anexar fotos não são exibidos antecipadamente.
-
 Todas as alterações usam POST, CSRF e política central de permissões. As operações de OS e histórico compartilham transação e a proteção já usada na alteração de responsáveis/clientes. Novas rotas: GET `/os`, `/os/nova`, `/os/{id}`, `/os/{id}/editar`; POST `/os`, `/os/{id}/atualizar`, `/os/{id}/atribuir`, `/os/{id}/cancelar`. A configuração de modelos/perguntas usa GET/POST explícitos sob `/checklists`.
 
-
-## Consumíveis e reservas — etapa 3A
-
-Gestor cadastra materiais em `/consumiveis` com unidade e precisão de 0 a 3 casas decimais, registra entradas com quantidade/referência e reserva pela consulta de uma OS atribuída. Operador consulta catálogo, saldos por detentor e histórico. Eletricista vê os materiais apenas nas próprias OS. Entradas têm ator, horário, origem/destino; reserva é auditada no histórico da OS e não movimenta quantidade física.
-
-Quantidades usam ponto ou vírgula decimal, sem separador de milhar; cálculo exato em milésimos e validação no servidor impedem arredondamento e saldo negativo. Reserva exige disponibilidade e não pode se repetir enquanto ativa para o mesmo material/OS. Unidade e precisão não mudam após movimentação, reserva ou saldo positivo. Exclusão lógica exige todos os saldos zerados e nenhuma reserva ativa.
-
-Cancelamento libera somente reservas de consumíveis não entregues. Custódia e conciliações pendentes não são apagadas nem creditadas ficticiamente ao depósito e bloqueiam desativação/exclusão do responsável. Checklist de início, entrega e devolução foram ampliados na etapa 3B, descrita abaixo; consumo e operações de medidores seguem nos próximos pontos de revisão. O estoque completo ainda não está entregue. Não há mudança de banco/dependências para este recorte; exige a fundação operacional atual.
-
-Validação e limites: [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3A aprovada e commitada em `ec26890`, na branch local `feature/checklist-estoque`, baseada no commit aprovado da etapa 2 (`baa2208`). Os próximos recortes seguem nessa branch.
 
 
 ## Checklist de início e custódia — etapa 3B
 
-Eletricista responde os modelos ativos de início na própria OS atribuída. Respostas obrigatórias ausentes recusam o formulário; item bloqueante reprovado/sem resposta impede entrega. Gestor pode liberar somente a avaliação atual de início com justificativa. Informativos não bloqueiam; fechamento nunca aceita liberação. Correções preservam as avaliações/respostas/liberações anteriores, consultáveis na OS.
+Eletricista responde os modelos ativos de início na própria OS atribuída. Respostas obrigatórias ausentes recusam o formulário; item bloqueante reprovado/sem resposta impede o início do atendimento. Gestor pode liberar somente a avaliação atual de início com justificativa. Informativos não bloqueiam; fechamento nunca aceita liberação. Correções preservam as avaliações/respostas/liberações anteriores, consultáveis na OS.
 
-Gestor confirma entrega física integral das reservas de consumíveis após aprovação/liberação de todos os modelos de início ativos. Modelo alterado exige novas respostas. A entrega transfere saldo do depósito para custódia e registra movimento com OS/reserva/ator; não inicia automaticamente atendimento. Gestor recebe devolução parcial/integral, inclusive após cancelamento, debitando a custódia e conciliando a reserva quando não restar material. Repetição não duplica entrega/crédito; pendências impedem desativação/exclusão do responsável. Operador consulta os dados, sem realizar entregas ou liberar bloqueios.
-
-Consumo, operações de medidores, execução/fechamento e fotos permanecem nos próximos pontos de revisão. Detalhes e validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3B aprovada/commitada em `4931f49`.
+Operações de medidores, execução/fechamento e fotos permanecem nos próximos pontos de revisão. Detalhes e validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md). Etapa 3B aprovada/commitada em `4931f49`.
 
 
 ## Medidores da OS — etapa 3C
@@ -166,19 +152,17 @@ O fluxo administrativo original desta etapa foi substituído pela retirada/devol
 
 Eletricista registra perda/roubo/dano do equipamento em sua posse na própria OS. Gestor registra ocorrências e baixa com justificativa; Operador consulta. Defeito em campo mantém posse até devolução direta. Perda mantém último responsável/local e bloqueia sua desativação/exclusão; baixa administrativa encerra custódia ativa, preservando dados históricos e impedindo reativação. Ocorrências e movimentos físicos têm auditorias distintas.
 
-Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência administrativa sem reserva ativa. Sem alteração de banco/dependências: exige esquema operacional atual. Aplicação/retirada, consumo, início/fechamento, fotos e relatório continuam pendentes. Validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 3C aprovada/commitada em `9da5491`.
+Usar `/os/{id}` para equipamento vinculado e `/medidores/{id}` para ocorrência administrativa sem reserva ativa. Sem alteração de banco/dependências: exige esquema operacional atual. Aplicação/retirada, início/fechamento, fotos e relatório continuam pendentes. Validação em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 3C aprovada/commitada em `9da5491`.
 
 
 ## Atendimento em campo — etapa 4A
 
-Eletricista inicia a própria OS atribuída após checklist de início aprovado/liberado e entrega dos materiais reservados. Nova ligação exige selecionar um medidor elegível em bom estado da própria posse; o início vincula sua custódia à OS. O início registra status em_atendimento e horário do servidor; repetir não altera horário. Durante atendimento, acrescenta observações de até 2.000 caracteres pelo celular, preservadas no histórico com autoria. Gestor/Operador consultam, sem executar essas ações em nome do Eletricista.
+Eletricista inicia a própria OS atribuída após checklist de início aprovado/liberado. Nova ligação exige selecionar um medidor elegível em bom estado da própria posse; o início vincula sua custódia à OS. O início registra status em_atendimento e horário do servidor; repetir não altera horário. Durante atendimento, acrescenta observações de até 2.000 caracteres pelo celular, preservadas no histórico com autoria. Gestor/Operador consultam, sem executar essas ações em nome do Eletricista.
 
-Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Consumo, aplicação/retirada, fechamento, fotos e relatório ainda pendentes. Evidências e limites em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4A aprovada/commitada em `2551f04`.
+Acesse `/os` e o detalhe da OS. Sem mudança de banco/dependências. Aplicação/retirada, fechamento, fotos e relatório ainda pendentes. Evidências e limites em [EntregaFluxoOperacional.md](docs/EntregaFluxoOperacional.md); etapa 4A aprovada/commitada em `2551f04`.
 
 
 ## Operações de campo — etapa 4B
-
-Na própria OS em atendimento, Eletricista registra consumo parcial/integral limitado à reserva entregue e ao saldo em custódia. Quantidades seguem precisão do material, com ponto/vírgula e cálculo exato; depósito não é debitado novamente. Consumo e devolução conciliam reserva quando zerar pendência.
 
 Nova ligação permite aplicação do medidor entregue em bom estado na própria posse, com instalação na UC da OS e auditoria. Retirada exige equipamento instalado na UC e empresa da OS; deixa medidor na viatura até a devolução direta registrada pelo Eletricista. Histórico permanece preservado, enquanto instalação atual deixa de apontar equipamento retirado. Só o retorno físico disponibiliza novamente no depósito. Operações são transacionais e recusam estado inválido, vínculo alheio e repetição de aplicação/retirada.
 
@@ -189,7 +173,7 @@ Usar o detalhe da OS em `/os/{id}`. Sem mudança de banco/dependências. Fechame
 
 Gestor configura e ativa modelos de checklist de **fechamento** para cada tipo de OS em `/checklists`. Eletricista responde todos os modelos ativos na própria OS em atendimento; itens informativos não bloqueiam. Item bloqueante reprovado exige nova avaliação corrigida, sem liberação do Gestor. Alteração de perguntas exige nova resposta.
 
-Antes de encerrar, registre o consumo dos materiais, solicite ao Gestor o recebimento físico das sobras de consumíveis e registre em Meus medidores a devolução dos equipamentos não aplicados/retirados, inclusive defeituosos na viatura. Perdas exigem baixa administrativa. Outras OS e equipamentos avulsos em custódia não são conciliados automaticamente.
+Antes de encerrar, registre em Meus medidores a devolução dos equipamentos não aplicados/retirados, inclusive defeituosos na viatura. Perdas exigem baixa administrativa. Outras OS e equipamentos avulsos em custódia não são conciliados automaticamente.
 
 Selecione `executado`, `parcial` ou `nao_executado` e informe observações finais (até 2.000 caracteres), justificando o resultado. Nova ligação executada exige medidor aplicado nesta OS e ainda instalado na UC. Corte executado exige confirmação e leitura final não negativa (zero permitido; até três casas decimais com ponto/vírgula). Corte parcial/não executado pode não ter confirmação/leitura. Confirmação e leitura não se aplicam à nova ligação.
 
@@ -217,11 +201,9 @@ Limites menores do PHP recusam o upload antes da validação de conteúdo; um PO
 
 ## Relatório de estoque atual — etapa 5
 
-Gestor e Operador acessam `/relatorios/estoque`, pelos links **Relatório de estoque** nas telas Estoque e Consumíveis. Eletricista não acessa o relatório global. A rota é somente GET, autenticada, protegida pela política central e sem cache; não altera estoque. O relatório consulta os dados atuais a cada requisição, sem fotografia histórica, exportação ou agregação de quantidades de materiais/unidades diferentes.
+Gestor e Operador acessam `/relatorios/estoque`, pelos links **Relatório de estoque** na tela Estoque. Eletricista não acessa o relatório global. A rota é somente GET, autenticada, protegida pela política central e sem cache; não altera estoque. O relatório consulta os dados atuais a cada requisição, sem fotografia histórica, exportação ou agregação de quantidades de materiais/unidades diferentes.
 
 Na aba Medidores, filtre série/modelo/fabricante, estado, localização e detentor/último responsável. Cada equipamento não excluído aparece uma vez, com reserva ativa e UC da instalação atual, quando existentes. Históricos de reservas/aplicações/retiradas não duplicam linhas. Perdidos/baixados ficam explícitos e preservam último local/responsável para auditoria; não representam equipamentos físicos disponíveis, e baixado não representa posse ativa. Os links abrem a OS da reserva ativa e o histórico do medidor.
-
-Na aba Consumíveis, filtre nome e detentor (Todos, Depósito ou eletricista). Cada linha corresponde a material e saldo atual de um detentor, com unidade, físico, reservado e disponível (`físico − reservado`, em DECIMAL exato). Contas inativas/excluídas não ocultam a custódia histórica. No filtro Depósito, materiais sem saldo ativo aparecem como **Saldo não cadastrado**, distinguindo-os de saldo conhecido zero. Em Todos, são listados os saldos ativos de cada material; material sem nenhum saldo aparece sem saldo cadastrado. Os links abrem o histórico de movimentos e autores. Materiais/saldos logicamente excluídos não entram no relatório.
 
 Há 15 registros por página, contagem total dos resultados filtrados e filtros preservados na paginação. Parâmetros não escalares/enums/detentores inválidos são normalizados para os valores padrão; busca tem limite de 100 caracteres. Página deve ser inteiro positivo de até nove dígitos, caso contrário usa a primeira. Busca usa Query Builder, e conteúdo exibido é escapado. A consulta não é uma fotografia transacional: escritas concorrentes podem alterar resultados entre requisições/páginas. Reservas, entregas, aplicação/retirada e devoluções continuam sujeitas às regras transacionais dos Services existentes.
 
@@ -263,7 +245,7 @@ Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendime
 
 As confirmações de exclusão, atendimento e movimentações de estoque usam modal no estilo do projeto, com Cancelar/Confirmar. Cancelar ou fechar não executa a operação. Validação dos campos precede o modal. Sem JavaScript, o primeiro envio do formulário abre uma página de confirmação sem gravar no banco; o envio final continua nas mesmas rotas POST, com CSRF e nova validação no servidor.
 
-Excluir funcionários, empresas, medidores, consumíveis ou perguntas de checklist exige a **senha atual do Gestor em cada exclusão**. O Service confere conta ativa, papel e senha na transação, inclusive para POST manual, conservando as restrições de próprio acesso, último Gestor, pendências, posse e saldo. A senha não é repopulada, persistida na sessão ou dispensada por confirmação anterior. Remoção de fotos continua exigindo autorização e motivo, sem senha. Início/fechamento de OS, cancelamento e movimentos têm confirmação visual, sem senha de exclusão.
+Excluir funcionários, empresas, medidores ou perguntas de checklist exige a **senha atual do Gestor em cada exclusão**. O Service confere conta ativa, papel e senha na transação, inclusive para POST manual, conservando as restrições de próprio acesso, último Gestor, pendências, posse e saldo. A senha não é repopulada, persistida na sessão ou dispensada por confirmação anterior. Remoção de fotos continua exigindo autorização e motivo, sem senha. Início/fechamento de OS, cancelamento e movimentos têm confirmação visual, sem senha de exclusão.
 
 O campo `_confirmacao` controla a alternativa visual (`pendente`/`confirmada`); não concede permissões. POSTs manuais continuam sujeitos às mesmas regras de negócio e senha, mesmo sem esse campo. A confirmação sem JavaScript usa somente as mensagens e os campos permitidos da rota efetivamente solicitada, sem destino arbitrário ou transporte de senhas do primeiro envio.
 
@@ -294,7 +276,7 @@ Falhas de DML nesta migration possuem rollback transacional. A ordem anterior n�
 
 Eletricista acessa **Meus medidores** em `/meus-medidores`, retira fisicamente no galpão e registra a retirada. Medidor disponível no depósito, sem pendência, passa para `em_transito`, na viatura e em sua posse. A devolução registra condição disponível ou defeito, retorna ao depósito e limpa a posse; equipamento defeituoso não pode ser declarado disponível. As listas têm busca e paginação independente de 15 registros, com rolagem interna no celular.
 
-POST `/meus-medidores/{id}/retirar` e `/meus-medidores/{id}/devolver` exigem conta Eletricista ativa, autorização, vínculo e CSRF. Confirmação visual tem alternativa em página sem JavaScript. Cada operação física grava movimento de quantidade 1, ator, responsável, horário e OS quando vinculada, na mesma transação; locks impedem dupla retirada/devolução. Eletricista continua sem acesso ao CRUD administrativo. Gestor mantém cadastro/baixa; Gestor e Operador consultam estoque/histórico. Ações antigas de envio, reserva, entrega e recebimento administrativo de medidores são negadas por política (403); os Services também recusam chamadas diretas. Consumíveis mantêm seu fluxo atual.
+POST `/meus-medidores/{id}/retirar` e `/meus-medidores/{id}/devolver` exigem conta Eletricista ativa, autorização, vínculo e CSRF. Confirmação visual tem alternativa em página sem JavaScript. Cada operação física grava movimento de quantidade 1, ator, responsável, horário e OS quando vinculada, na mesma transação; locks impedem dupla retirada/devolução. Eletricista continua sem acesso ao CRUD administrativo. Gestor mantém cadastro/baixa; Gestor e Operador consultam estoque/histórico. Ações antigas de envio, reserva, entrega e recebimento administrativo de medidores são negadas por política (403); os Services também recusam chamadas diretas.
 
 Ao iniciar nova ligação, escolha medidor elegível da própria posse após aprovação do checklist inicial. O início cria a custódia na reserva existente com estado `entregue`, cujo nome físico foi preservado; não há entrega administrativa nem segundo movimento físico. Reservas antigas podem ser retiradas pelo responsável da OS, após checklist aprovado; equipamentos já entregues conservam posse/histórico. Devolução de equipamento vinculado concilia a reserva e permite o fechamento quando os demais requisitos forem cumpridos. Aplicação, retirada em campo, cancelamento, ocorrências e baixa mantêm suas regras. Pendências históricas sem reserva conciliada não são corrigidas automaticamente.
 
@@ -319,7 +301,7 @@ Listagens de clientes, equipe, OS e medidores, Meus atendimentos/Meus medidores,
 
 Listagem administrativa baseada em `designs/TelaOS.html`: cliente/UC agrupados, tipo/prioridade, eletricista, abertura/agendamento, badges por status e links para detalhe. Mantidos filtros existentes no menu Filtro, paginação e dados reais. Os cards do Eletricista permanecem em Meus atendimentos.
 
-Detalhe baseado em `designs/TelaEditarOS.html`, que representa a consulta/gestão da OS: cards de dados do cliente e do serviço na coluna principal, medidores/ocorrências/histórico/fotos na lateral, com uma coluna no celular. Histórico apresenta evento, autor, data, transição, observação e dados da alteração. Fotos e upload do Eletricista ficam na coluna principal antes do fechamento. Atribuição, cancelamento com motivo/confirmação, checklists, materiais, atendimento e fechamento mantêm permissões e regras existentes. Não foram adicionadas impressão/exportação ou ações administrativas de medidores apenas por aparecerem no protótipo.
+Detalhe baseado em `designs/TelaEditarOS.html`, que representa a consulta/gestão da OS: cards de dados do cliente e do serviço na coluna principal, medidores/ocorrências/histórico/fotos na lateral, com uma coluna no celular. Histórico apresenta evento, autor, data, transição, observação e dados da alteração. Fotos e upload do Eletricista ficam na coluna principal antes do fechamento. Atribuição, cancelamento com motivo/confirmação, checklists, medidores, atendimento e fechamento mantêm permissões e regras existentes. Não foram adicionadas impressão/exportação ou ações administrativas de medidores apenas por aparecerem no protótipo.
 
 Cadastro/edição harmonizados com os cards. Descrição e observações têm a mesma fonte dos demais campos, áreas compactas de três linhas, lado a lado no desktop e empilhadas no celular. No detalhe, usam a mesma hierarquia de labels/conteúdo. Textos longos e quebras de linha são preservados e escapados. Datas da OS usam apresentação brasileira; auditoria mantém segundos e horários armazenados não mudam.
 
@@ -329,3 +311,12 @@ Cadastro/edição harmonizados com os cards. Descrição e observações têm a 
 Após aplicar o medidor, a OS mostra a instalação registrada e orienta a continuar o atendimento. A retirada desse equipamento fica recolhida em **Retirada excepcional do medidor**, com justificativa obrigatória de até 1000 caracteres e confirmação visual. O servidor exige a justificativa também em POST manual e chamadas ao Service, registrando-a no histórico na mesma transação. Retirada de equipamento instalado por outra OS mantém o fluxo anterior. Não é possível reaplicar o equipamento retirado nesta mesma OS; o resultado do fechamento continua sujeito às regras existentes. Sem JavaScript, a página de confirmação preserva a justificativa.
 
 Validação desta correção: 35 testes/440 assertions de operações de campo, fechamento e relatório de estoque passaram sequencialmente no MySQL dedicado `gpm_os_etapa1_tests`. Sintaxe PHP e `git diff --check` passaram; conferência visual no navegador ainda pendente. Commit autorizado pelo usuário; sem push ou integração.
+
+
+## Escopo do estoque
+
+O estoque e o atendimento trabalham somente com medidores. O módulo de consumíveis foi removido da aplicação, das permissões, rotas, relatórios, scripts de criação e seeds. Instalações novas não criam suas tabelas. Bancos já existentes não são migrados ou limpos automaticamente; tabelas antigas permanecem preservadas e não são consultadas pela aplicação.
+
+Validação da remoção: 209 testes/1.467 assertions passaram em 2min45,1s, sequencialmente no MySQL novo `gpm_sem_consumiveis_tests`, com `vendor/bin/phpunit --no-coverage --bootstrap /tmp/gpm-sem-consumiveis-bootstrap.php --filter '/(OperacoesCampoTest|AtendimentoTest|FechamentoTest|ChecklistEntregaTest|RelatorioEstoqueTest|ConfirmacoesTest|MedidorCustodiaTest|OperationalSchemaTest|EstoqueSomenteMedidoresTest|OrdensServicoTest|AccessTest|UsuariosTest)/' tests`, a partir de `CodeIgniter/`. Cobertura inclui criação/migração greenfield sem tabelas removidas, rotas antigas 404 sem escrita, política sem permissões antigas, OS e estoque sem dependência de consumíveis, checklist, medidores, fechamento, exclusões protegidas, visitantes/papéis/sessão/CSRF e rollback. A primeira execução de 79 testes encontrou somente uma expectativa antiga que exigia entrega antes do atendimento; corrigida antes da regressão final. Suíte integral não executada.
+
+Firefox isolado passou em 320/390/1280/1440 px para Gestor/Operador/Eletricista: OS e relatório autorizado, ausência de links do módulo removido e overflow da página, labels, logo, filtros GET com e sem JavaScript, foco/rolagem interna por teclado e ausência de erros em app.js. Configuração temporária de conexão/automação precisou de ajuste antes dessa execução final. Sintaxe de todos os arquivos PHP em app/tests, `php spark routes` e `git diff --check` passaram. Nenhuma migração ou limpeza em original/demo; somente bancos dedicados `_tests` usados. Alterações locais de README e checklist preservadas; `.gitignore` intocado. Regras locais de AGENTS.md atualizadas. Diagramas, requisitos e documentação operacional referenciados não estão disponíveis no diretório docs e não foram recriados. Commit da remoção autorizado explicitamente pelo usuário. Sem push ou integração.

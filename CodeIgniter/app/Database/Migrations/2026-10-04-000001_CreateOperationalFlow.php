@@ -12,7 +12,6 @@ use RuntimeException;
 final class CreateOperationalFlow extends Migration
 {
     public const TABLES = [
-        'tbl_consumivel', 'tbl_consumivel_saldo', 'tbl_consumivel_reserva', 'tbl_consumivel_mov',
         'tbl_medidor_reserva', 'tbl_instalacao_atual', 'tbl_checklist', 'tbl_checklist_item',
         'tbl_checklist_avaliacao', 'tbl_checklist_resposta', 'tbl_medidor_ocorrencia',
     ];

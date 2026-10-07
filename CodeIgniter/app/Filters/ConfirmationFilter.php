@@ -33,7 +33,7 @@ final class ConfirmationFilter implements FilterInterface
         if ($basePath !== '' && str_starts_with($path, $basePath . '/')) { $path = substr($path, strlen($basePath) + 1); }
         $indexPage = config('App')->indexPage;
         if ($indexPage !== '' && str_starts_with($path, $indexPage . '/')) { $path = substr($path, strlen($indexPage) + 1); }
-        preg_match('~^(usuarios|clientes|medidores|consumiveis|checklists|os)/[0-9]+~', $path, $matches);
+        preg_match('~^(usuarios|clientes|medidores|checklists|os)/[0-9]+~', $path, $matches);
         helper(['app', 'form', 'url', 'heroicon']);
         $user = service('auth')->user();
         return service('response')->setStatusCode(200)->setHeader('Cache-Control', 'no-store, private')->setBody(view('confirmacao/index', [

@@ -14,7 +14,7 @@ $routes->get('inicio', 'Home::dashboard', ['as' => 'inicio']);
 $routes->get('relatorios/eletricistas', 'RelatoriosController::electricians', ['as' => 'relatorios.eletricistas']);
 $routes->get('relatorios/estoque', 'RelatoriosController::stock', ['as' => 'relatorios.estoque']);
 
-foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController', 'consumiveis' => 'ConsumiveisController'] as $resource => $controller) {
+foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController'] as $resource => $controller) {
     $routes->get($resource, $controller . '::index', ['as' => $resource . '.index']);
     $routes->get($resource . '/novo', $controller . '::new', ['as' => $resource . '.new']);
     $routes->post($resource, $controller . '::create', ['as' => $resource . '.create']);
@@ -26,10 +26,6 @@ foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController'
 
 $routes->post('medidores/(:num)/enviar', 'MedidoresController::send/$1', ['as' => 'medidores.send']);
 $routes->post('medidores/(:num)/devolver', 'MedidoresController::returnToDepot/$1', ['as' => 'medidores.return']);
-$routes->post('consumiveis/(:num)/entrada', 'ConsumiveisController::entry/$1', ['as' => 'consumiveis.entry']);
-$routes->post('os/(:num)/consumiveis/reservar', 'OrdensServicoController::reserveConsumable/$1', ['as' => 'os.consumiveis.reserve']);
-$routes->post('os/(:num)/consumiveis/(:num)/entregar', 'OrdensServicoController::deliverConsumable/$1/$2', ['as' => 'os.consumiveis.deliver']);
-$routes->post('os/(:num)/consumiveis/(:num)/receber', 'OrdensServicoController::receiveConsumable/$1/$2', ['as' => 'os.consumiveis.receive']);
 $routes->post('os/(:num)/checklists/(:num)/responder-inicio', 'OrdensServicoController::answerBeginning/$1/$2', ['as' => 'os.checklist.answer']);
 $routes->post('os/(:num)/avaliacoes/(:num)/liberar-inicio', 'OrdensServicoController::releaseBeginning/$1/$2', ['as' => 'os.checklist.release']);
 
@@ -62,7 +58,6 @@ $routes->post('medidores/(:num)/ocorrencia', 'MedidoresController::occurrence/$1
 $routes->post('os/(:num)/iniciar-atendimento', 'OrdensServicoController::startAttendance/$1', ['as' => 'os.attendance.start']);
 $routes->post('os/(:num)/observacoes-atendimento', 'OrdensServicoController::noteAttendance/$1', ['as' => 'os.attendance.note']);
 
-$routes->post('os/(:num)/consumiveis/(:num)/consumir', 'OrdensServicoController::consumeConsumable/$1/$2', ['as' => 'os.consumiveis.consume']);
 $routes->post('os/(:num)/medidores/(:num)/aplicar', 'OrdensServicoController::applyMeter/$1/$2', ['as' => 'os.medidores.apply']);
 $routes->post('os/(:num)/medidores/(:num)/retirar', 'OrdensServicoController::withdrawMeter/$1/$2', ['as' => 'os.medidores.withdraw']);
 

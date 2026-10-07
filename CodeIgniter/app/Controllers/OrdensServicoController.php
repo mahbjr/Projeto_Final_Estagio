@@ -115,16 +115,6 @@ final class OrdensServicoController extends ApplicationController
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
     }
 
-    public function reserveConsumable(int $id)
-    {
-        $this->record($id);
-        $input = $this->safeInput(['consumivel', 'quantidade']);
-        try {
-            (new \App\Services\ConsumivelService())->reserve($id, $input['consumivel'], $input['quantidade'], (int) service('auth')->user()['id_usu']);
-            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Consumível reservado no depósito.');
-        } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
-    }
-
     public function answerBeginning(int $id, int $template) { return $this->answerChecklist($id, $template, false); }
     public function answerClosing(int $id, int $template) { return $this->answerChecklist($id, $template, true); }
 
@@ -147,39 +137,6 @@ final class OrdensServicoController extends ApplicationController
             (new \App\Services\ChecklistInicioService())->release($id, $evaluation, $input['justificativa'], (int) service('auth')->user()['id_usu']);
             return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Bloqueio de início liberado com justificativa.');
         } catch (FormException $e) { return $this->details($record, $e->errors, 422, $input); }
-    }
-
-    public function deliverConsumable(int $id, int $reservation)
-    {
-        $record = $this->record($id);
-        try {
-            (new \App\Services\ConsumivelService())->deliver($id, $reservation, (int) service('auth')->user()['id_usu']);
-            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Entrega física registrada na custódia do Eletricista.');
-        } catch (FormException $e) { return $this->details($record, $e->errors, 422); }
-    }
-
-    public function receiveConsumable(int $id, int $reservation)
-    {
-        $record = $this->record($id);
-        $input = $this->safeInput(['quantidade_devolucao', 'observacao_devolucao']);
-        $input['reserva_devolucao'] = $reservation;
-        try {
-            (new \App\Services\ConsumivelService())->receive($id, $reservation, $input['quantidade_devolucao'], $input['observacao_devolucao'], (int) service('auth')->user()['id_usu']);
-            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Devolução física recebida no depósito.');
-        } catch (FormException $e) { return $this->details($record, $e->errors, 422, $input); }
-    }
-
-    public function consumeConsumable(int $id, int $reservation)
-    {
-        $record = $this->record($id);
-        $user = service('auth')->user();
-        if ((int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
-        $input = $this->safeInput(['quantidade_consumo', 'observacao_consumo']);
-        $input['reserva_consumo'] = $reservation;
-        try {
-            (new \App\Services\ConsumivelService())->consume($id, $reservation, $input['quantidade_consumo'], $input['observacao_consumo'], (int) $user['id_usu']);
-            return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Consumo registrado na custódia do Eletricista.');
-        } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422, $input); }
     }
 
     public function applyMeter(int $id, int $reservation) { return $this->meterAction($id, 'apply', $reservation); }
@@ -278,8 +235,6 @@ final class OrdensServicoController extends ApplicationController
 
     private function details(array $record, array $errors = [], int $status = 200, array $input = [])
     {
-        $materials = (new \App\Models\ConsumivelModel())->depotOverview()->orderBy('nome_con')->findAll();
-        $reservations = (new \App\Models\ConsumivelReservaModel())->withMaterials()->where('ordem_servico_rco', $record['id_oss'])->orderBy('id_rco')->findAll();
         $beginningTemplates = (new \App\Models\ChecklistModel())->beginning($record['tipo_oss']);
         $evaluations = (new \App\Models\ChecklistAvaliacaoModel())->evidence((int) $record['id_oss']);
         $meterReservations = (new \App\Models\MedidorReservaModel())->forOrder((int) $record['id_oss']);
@@ -292,6 +247,6 @@ final class OrdensServicoController extends ApplicationController
         foreach ($evaluations as $evaluation) { if ($evaluation['etapa_cav'] === 'inicio' && !isset($latestBeginning[$evaluation['checklist_cav']])) { $latestBeginning[$evaluation['checklist_cav']] = (int) $evaluation['id_cav']; } }
         $photos = (new \App\Models\AnexoModel())->forOrder((int) $record['id_oss']);
         foreach ($photos as &$photo) { $photo['canRemove'] = \App\Services\FotoService::canRemove($record,service('auth')->user(),$photo); }
-        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'materials' => $materials, 'reservations' => $reservations, 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'ownMeters' => service('auth')->user()['papel_usu'] === 'eletricista' ? (new MedidorModel())->eligibleForOrder((int) service('auth')->user()['id_ele'], (int) $record['id_oss']) : [], 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'photos' => $photos, 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
+        return $this->page('os/show', ['title' => 'OS #' . $record['id_oss'], 'active' => 'os', 'record' => $record, 'history' => (new OrdemServicoModel())->history((int) $record['id_oss']), 'electricians' => (new MedidorModel())->destinations(), 'currentInstallations' => (new \App\Models\InstalacaoAtualModel())->forOrder($record), 'meterOperations' => (new \App\Models\OsMedidorModel())->forOrder((int) $record['id_oss']), 'meterReservations' => $meterReservations, 'ownMeters' => service('auth')->user()['papel_usu'] === 'eletricista' ? (new MedidorModel())->eligibleForOrder((int) service('auth')->user()['id_ele'], (int) $record['id_oss']) : [], 'meterOccurrences' => (new \App\Models\MedidorOcorrenciaModel())->withActors()->where('ordem_servico_ome', $record['id_oss'])->orderBy('id_ome', 'DESC')->findAll(), 'photos' => $photos, 'closingTemplates' => (new \App\Models\ChecklistModel())->forStage($record['tipo_oss'], 'fechamento'), 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'errors' => $errors, 'input' => $input], $status);
     }
 }

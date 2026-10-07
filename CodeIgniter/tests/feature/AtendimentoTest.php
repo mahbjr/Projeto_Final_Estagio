@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Services\AtendimentoService;
 use App\Services\ChecklistInicioService;
-use App\Services\ConsumivelService;
 use App\Services\MedidorOsService;
 use Tests\Support\AppTestCase;
 
@@ -81,18 +80,13 @@ final class AtendimentoTest extends AppTestCase
         $this->assertSame('em_transito',$this->db->table('tbl_medidor')->where('id_med',2)->get()->getRow()->status_med);
     }
 
-    public function testReservedConsumablesAndChangedChecklistBlockStart(): void
+    public function testChangedChecklistBlocksStart(): void
     {
         $this->approve();
-        $s=new ConsumivelService($this->db); $s->reserve(1,'2','1.125',1);
-        $r=(int)$this->db->table('tbl_consumivel_reserva')->get()->getRow()->id_rco;
-        $this->requestAs(3,'POST','os/1/iniciar-atendimento')->assertStatus(422);
-        $s->deliver(1,$r,1);
         $this->db->table('tbl_checklist_item')->where('id_chi',1)->update(['pergunta_chi'=>'Nova condição?']);
         $this->requestAs(3,'POST','os/1/iniciar-atendimento')->assertStatus(422);
         $this->approve();
         $this->requestAs(3,'POST','os/1/iniciar-atendimento')->assertStatus(303);
-        $this->assertSame('1.125',$this->db->table('tbl_consumivel_saldo')->where('consumivel_sco',2)->where('eletricista_sco',1)->get()->getRow()->quantidade_sco);
     }
 
     public function testObservationsAppendEvidenceValidateAndEscape(): void

@@ -112,11 +112,12 @@ final class MedidorCustodiaTest extends AppTestCase
             $this->requestAs(3,'POST','os/1/iniciar-atendimento',['medidor'=>$id])->assertStatus(422);
         }
         $this->assertSame(0,$this->db->table('tbl_medidor_reserva')->countAllResults());
-        $this->db->table('tbl_consumivel_reserva')->insert(['ordem_servico_rco'=>1,'consumivel_rco'=>1,'eletricista_rco'=>1,'usuario_rco'=>1,'quantidade_rco'=>'1.000','status_rco'=>'reservada']);
+        $this->db->query("ALTER TABLE tbl_os_historico ADD CONSTRAINT fail_start_binding CHECK (evento_osh <> 'inicio_atendimento')");
         $this->requestAs(3,'POST','os/1/iniciar-atendimento',['medidor'=>'3'])->assertStatus(422);
         $this->assertSame(0,$this->db->table('tbl_medidor_reserva')->countAllResults());
         $this->assertSame(0,$this->db->table('tbl_os_historico')->where('evento_osh','custodia_medidor')->countAllResults());
         $this->assertSame('atribuida',$this->db->table('tbl_os')->where('id_oss',1)->get()->getRow()->status_oss);
+        $this->db->query('ALTER TABLE tbl_os_historico DROP CHECK fail_start_binding');
     }
 
     public function testReturnLinkedMeterSettlesReservationAndAllowsPartialClose(): void

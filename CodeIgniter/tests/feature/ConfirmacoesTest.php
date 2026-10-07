@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Exceptions\FormException;
 use App\Services\ChecklistService;
 use App\Services\ClienteService;
-use App\Services\ConsumivelService;
 use App\Services\FuncionarioService;
 use App\Services\MedidorService;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -18,7 +17,6 @@ final class ConfirmacoesTest extends AppTestCase
         parent::setUp();
         $this->db->table('tbl_usuario')->insert(['id_usu' => 90, 'nome_usu' => 'excluir@teste.example', 'senha_usu' => password_hash('senha123', PASSWORD_DEFAULT), 'papel_usu' => 'operador', 'ativo_usu' => 1]);
         $this->db->table('tbl_medidor')->insert(['id_med' => 90, 'numero_med' => 'EXCLUIR-TESTE', 'modelo_med' => 'Modelo teste', 'fabricante_med' => 'Fabricante teste', 'status_med' => 'disponivel', 'localizacao_med' => 'deposito']);
-        $this->db->table('tbl_consumivel')->insert(['id_con' => 90, 'nome_con' => 'Material sem saldo', 'unidade_con' => 'un', 'precisao_con' => 0]);
         $this->db->table('tbl_checklist')->insert(['id_chk' => 90, 'nome_chk' => 'Modelo de teste', 'tipo_os_chk' => 'corte', 'etapa_chk' => 'inicio', 'usuario_chk' => 1, 'ativo_chk' => 0]);
         $this->db->table('tbl_checklist_item')->insert(['id_chi' => 90, 'checklist_chi' => 90, 'pergunta_chi' => 'Pergunta?', 'nivel_chi' => 'informativo', 'ordem_chi' => 1]);
         $this->clearPendingWork();
@@ -27,7 +25,7 @@ final class ConfirmacoesTest extends AppTestCase
     private function snapshot(): array
     {
         $rows = [];
-        foreach (['tbl_usuario', 'tbl_eletricista', 'tbl_cliente', 'tbl_medidor', 'tbl_estoque_mov', 'tbl_consumivel', 'tbl_checklist_item'] as $table) {
+        foreach (['tbl_usuario', 'tbl_eletricista', 'tbl_cliente', 'tbl_medidor', 'tbl_estoque_mov', 'tbl_checklist_item'] as $table) {
             $rows[$table] = $this->db->table($table)->get()->getResultArray();
         }
         return $rows;
@@ -39,7 +37,6 @@ final class ConfirmacoesTest extends AppTestCase
             ['usuarios/90/excluir', 'tbl_usuario', 'id_usu', 90, 'data_exclusao_usu'],
             ['clientes/2/excluir', 'tbl_cliente', 'id_cli', 2, 'data_exclusao_cli'],
             ['medidores/90/excluir', 'tbl_medidor', 'id_med', 90, 'data_exclusao_med'],
-            ['consumiveis/90/excluir', 'tbl_consumivel', 'id_con', 90, 'data_exclusao_con'],
             ['checklists/90/itens/90/excluir', 'tbl_checklist_item', 'id_chi', 90, 'data_exclusao_chi'],
         ];
     }
@@ -95,7 +92,6 @@ final class ConfirmacoesTest extends AppTestCase
             fn () => (new FuncionarioService($this->db))->delete(90, 1),
             fn () => (new ClienteService($this->db))->delete(2, 1),
             fn () => (new MedidorService($this->db))->delete(90, 1),
-            fn () => (new ConsumivelService($this->db))->delete(90, 1),
             fn () => (new ChecklistService($this->db))->deleteItem(90, 90, 1),
         ];
         $before = $this->snapshot();

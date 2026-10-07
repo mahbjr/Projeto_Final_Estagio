@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Services\AtendimentoService;
 use App\Services\ChecklistFechamentoService;
 use App\Services\ChecklistInicioService;
-use App\Services\ConsumivelService;
 use App\Services\MedidorOsService;
 use Tests\Support\AppTestCase;
 
@@ -133,19 +132,6 @@ final class FechamentoTest extends AppTestCase
         $this->requestAs(3,'POST','os/1/encerrar',array_replace($data,['resultado_oss'=>'executado']))->assertStatus(422);
         $this->close($data); $this->assertSame('parcial',$this->order()['resultado_oss']);
         $this->assertSame(2,$this->db->table('tbl_os_medidor')->where('ordem_servico_osm',1)->countAllResults());
-    }
-    public function testConsumableLeftoversRequirePhysicalReceptionBeforeClosing(): void
-    {
-        $this->db->table('tbl_os')->where('id_oss',1)->update(['status_oss'=>'atribuida','inicio_atendimento_oss'=>null]);
-        $s=new ConsumivelService($this->db); $s->reserve(1,'2','5.125',1);
-        $this->db->table('tbl_checklist')->insert(['id_chk'=>2,'nome_chk'=>'Início','tipo_os_chk'=>'corte','etapa_chk'=>'inicio','ativo_chk'=>1,'usuario_chk'=>1]);
-        $this->db->table('tbl_checklist_item')->insert(['id_chi'=>2,'checklist_chi'=>2,'pergunta_chi'=>'Seguro?','nivel_chi'=>'bloqueante','obrigatorio_chi'=>1]);
-        (new ChecklistInicioService($this->db))->answer(1,2,['2'=>'1'],[],3); $s->deliver(1,1,1); (new AtendimentoService($this->db))->start(1,3); $this->approve();
-        $this->requestAs(3,'POST','os/1/encerrar',$this->finalData())->assertStatus(422);
-        $s->consume(1,1,'2.125','Aplicado',3);
-        $this->requestAs(3,'POST','os/1/encerrar',$this->finalData())->assertStatus(422);
-        $s->receive(1,1,'3','Sobras recebidas',1); $this->close();
-        $this->assertSame('conciliada',$this->db->table('tbl_consumivel_reserva')->where('id_rco',1)->get()->getRow()->status_rco);
     }
     public function testDamagedVehicleMeterRequiresReturnAndLostRequiresAdministrativeWriteOff(): void
     {
