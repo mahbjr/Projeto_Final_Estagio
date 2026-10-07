@@ -322,3 +322,10 @@ Listagem administrativa baseada em `designs/TelaOS.html`: cliente/UC agrupados, 
 Detalhe baseado em `designs/TelaEditarOS.html`, que representa a consulta/gestão da OS: cards de dados do cliente e do serviço na coluna principal, medidores/ocorrências/histórico/fotos na lateral, com uma coluna no celular. Histórico apresenta evento, autor, data, transição, observação e dados da alteração. Fotos e upload do Eletricista ficam na coluna principal antes do fechamento. Atribuição, cancelamento com motivo/confirmação, checklists, materiais, atendimento e fechamento mantêm permissões e regras existentes. Não foram adicionadas impressão/exportação ou ações administrativas de medidores apenas por aparecerem no protótipo.
 
 Cadastro/edição harmonizados com os cards. Descrição e observações têm a mesma fonte dos demais campos, áreas compactas de três linhas, lado a lado no desktop e empilhadas no celular. No detalhe, usam a mesma hierarquia de labels/conteúdo. Textos longos e quebras de linha são preservados e escapados. Datas da OS usam apresentação brasileira; auditoria mantém segundos e horários armazenados não mudam.
+
+
+## Retirada excepcional após nova ligação
+
+Após aplicar o medidor, a OS mostra a instalação registrada e orienta a continuar o atendimento. A retirada desse equipamento fica recolhida em **Retirada excepcional do medidor**, com justificativa obrigatória de até 1000 caracteres e confirmação visual. O servidor exige a justificativa também em POST manual e chamadas ao Service, registrando-a no histórico na mesma transação. Retirada de equipamento instalado por outra OS mantém o fluxo anterior. Não é possível reaplicar o equipamento retirado nesta mesma OS; o resultado do fechamento continua sujeito às regras existentes. Sem JavaScript, a página de confirmação preserva a justificativa.
+
+Validação desta correção: 35 testes/440 assertions de operações de campo, fechamento e relatório de estoque passaram sequencialmente no MySQL dedicado `gpm_os_etapa1_tests`. Sintaxe PHP e `git diff --check` passaram; conferência visual no navegador ainda pendente. Commit autorizado pelo usuário; sem push ou integração.

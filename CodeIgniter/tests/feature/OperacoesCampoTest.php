@@ -77,10 +77,38 @@ final class OperacoesCampoTest extends AppTestCase
         $this->requestAs(1,'POST','os/1/medidores/1/receber',['condicao_medidor'=>'disponivel'])->assertStatus(403);
         $this->requestAs(3,'POST','meus-medidores/1/devolver',['condicao'=>'disponivel'])->assertStatus(403);
     }
+    public function testExceptionalWithdrawalRequiresReasonInRouteAndService(): void
+    {
+        $service = new MedidorOsService($this->db);
+        $service->apply(1,1,3);
+        $before = $this->meter();
+        $body = $this->requestAs(3,'GET','os/1')->getBody();
+        $this->assertStringContainsString('Instalação registrada com sucesso', html_entity_decode($body));
+        $this->assertStringContainsString('Retirada excepcional do medidor', html_entity_decode($body));
+        foreach ([null, '', '   ', ['forjado'], str_repeat('x',1001)] as $reason) {
+            $response = $this->requestAs(3,'POST','os/1/medidores/1/retirar', ['justificativa_retirada'=>$reason]);
+            $response->assertStatus(422);
+            $this->assertSame($before, $this->meter());
+            $this->assertSame(1,$this->db->table('tbl_instalacao_atual')->where('medidor_ins',1)->countAllResults());
+        }
+        try { $service->withdraw(1,1,3); $this->fail('Service aceitou retirada sem justificativa.'); }
+        catch (\App\Exceptions\FormException $e) { $this->assertArrayHasKey('justificativa_retirada',$e->errors); }
+        $confirmation = $this->requestAs(3,'POST','os/1/medidores/1/retirar', ['_confirmacao'=>'pendente','justificativa_retirada'=>'Defeito na instalação']);
+        $confirmation->assertStatus(200);
+        $this->assertStringContainsString('name="justificativa_retirada"', $confirmation->getBody());
+        $this->assertSame($before, $this->meter());
+        $reason = '<script>defeito</script>';
+        $this->requestAs(3,'POST','os/1/medidores/1/retirar',['justificativa_retirada'=>$reason])->assertStatus(303);
+        $history = $this->db->table('tbl_os_historico')->where('evento_osh','retirada_medidor')->get()->getRowArray();
+        $this->assertSame($reason,json_decode($history['dados_osh'],true)['justificativa']);
+        $body = $this->requestAs(3,'GET','os/1')->getBody();
+        $this->assertStringContainsString('&lt;script&gt;defeito&lt;/script&gt;',$body);
+        $this->assertStringNotContainsString($reason,$body);
+    }
     public function testWithdrawalThenPhysicalReturnPreservesHistoryAndAllowsNewReservation(): void
     {
         (new MedidorOsService($this->db))->apply(1,1,3);
-        $this->requestAs(3,'POST','os/1/medidores/1/retirar')->assertStatus(303);
+        $this->requestAs(3,'POST','os/1/medidores/1/retirar',['justificativa_retirada'=>'Defeito técnico identificado após instalação'])->assertStatus(303);
         $this->assertSame('em_transito',$this->meter()['status_med']); $this->assertSame('viatura',$this->meter()['localizacao_med']); $this->assertSame('1',(string)$this->meter()['eletricista_posse_med']);
         $this->assertSame(0,$this->db->table('tbl_instalacao_atual')->where('medidor_ins',1)->countAllResults());
         $this->assertSame(2,$this->db->table('tbl_os_medidor')->where('ordem_servico_osm',1)->countAllResults());
@@ -160,7 +188,7 @@ final class OperacoesCampoTest extends AppTestCase
         (new MedidorOsService($this->db))->apply(1,1,3);
         foreach ([['tbl_estoque_mov','test_withdraw_move',"observacao_emv NOT LIKE 'Retirada na UC%'"],['tbl_os_historico','test_withdraw_history',"evento_osh <> 'retirada_medidor'"]] as [$table,$name,$condition]) {
             $this->db->query("ALTER TABLE $table ADD CONSTRAINT $name CHECK ($condition)");
-            $this->requestAs(3,'POST','os/1/medidores/1/retirar')->assertStatus(422);
+            $this->requestAs(3,'POST','os/1/medidores/1/retirar',['justificativa_retirada'=>'Defeito técnico'])->assertStatus(422);
             $this->assertSame('instalado',$this->meter()['status_med']);
             $this->assertSame(1,$this->db->table('tbl_instalacao_atual')->where('medidor_ins',1)->countAllResults());
             $this->assertSame(1,$this->db->table('tbl_medidor_reserva')->where('medidor_rme',1)->countAllResults());

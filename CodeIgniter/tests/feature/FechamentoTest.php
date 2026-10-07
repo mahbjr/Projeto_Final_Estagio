@@ -126,7 +126,7 @@ final class FechamentoTest extends AppTestCase
     }
     public function testWithdrawnMeterMustReturnAndCannotRepresentExecutedConnection(): void
     {
-        $this->newConnection(); $m=new MedidorOsService($this->db); $m->apply(1,1,3); $m->withdraw(1,1,3);
+        $this->newConnection(); $m=new MedidorOsService($this->db); $m->apply(1,1,3); $m->withdraw(1,1,3,'Defeito identificado após instalação');
         $data=array_replace($this->finalData(),['corte_confirmado_oss'=>'0','leitura_final_oss'=>'','resultado_oss'=>'parcial']);
         $this->requestAs(3,'POST','os/1/encerrar',$data)->assertStatus(422);
         $this->returnLegacyReservation(1,2,'disponivel');

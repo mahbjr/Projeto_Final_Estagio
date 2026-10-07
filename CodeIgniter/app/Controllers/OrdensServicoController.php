@@ -195,7 +195,7 @@ final class OrdensServicoController extends ApplicationController
         $record = $this->record($id);
         $user = service('auth')->user();
         if ($user['papel_usu'] === 'eletricista' && (int) $record['eletricista_oss'] !== (int) $user['id_ele']) { return $this->show($id); }
-        $input = $this->safeInput(['medidor', 'condicao_medidor', 'tipo_ocorrencia', 'justificativa_medidor']);
+        $input = $this->safeInput(['medidor', 'condicao_medidor', 'tipo_ocorrencia', 'justificativa_medidor', 'justificativa_retirada']);
         $input['recurso_medidor'] = $resource;
         $service = new \App\Services\MedidorOsService();
         try {
@@ -204,7 +204,7 @@ final class OrdensServicoController extends ApplicationController
                 'deliver' => $service->deliver($id, $resource, (int) $user['id_usu']),
                 'receive' => $service->receive($id, $resource, $input['condicao_medidor'], (int) $user['id_usu']),
                 'apply' => $service->apply($id, $resource, (int) $user['id_usu']),
-                'withdraw' => $service->withdraw($id, $resource, (int) $user['id_usu']),
+                'withdraw' => $service->withdraw($id, $resource, (int) $user['id_usu'], $input['justificativa_retirada']),
                 'occurrence' => $service->occurrence($resource, $input['tipo_ocorrencia'], $input['justificativa_medidor'], (int) $user['id_usu'], $id),
             };
             return redirect()->to(site_url('os/' . $id))->setStatusCode(303)->with('success', 'Operação do medidor registrada.');

@@ -20,7 +20,7 @@ final class ConfirmationPolicy
         'medidores.occurrence' => ['Confirmar a ocorrência e a alteração de estado deste medidor?', ['tipo_ocorrencia', 'justificativa_medidor'], false],
         'os.medidores.occurrence' => ['Confirmar a ocorrência e a alteração de estado deste medidor?', ['tipo_ocorrencia', 'justificativa_medidor'], false],
         'os.medidores.apply' => ['Confirmar a aplicação deste medidor na UC da OS?', [], false],
-        'os.medidores.withdraw' => ['Confirmar a retirada física deste medidor para sua viatura?', [], false],
+        'os.medidores.withdraw' => ['Confirmar a retirada física deste medidor para sua viatura? Se foi instalado nesta nova ligação, a instalação será desfeita e não poderá ser reaplicado nesta OS.', ['justificativa_retirada'], false],
         'consumiveis.entry' => ['Confirmar esta entrada de material no depósito?', ['quantidade', 'observacao'], false],
         'os.consumiveis.reserve' => ['Confirmar a reserva deste material para a OS?', ['consumivel', 'quantidade'], false],
         'os.consumiveis.deliver' => ['Confirmar a entrega física integral desta reserva?', [], false],

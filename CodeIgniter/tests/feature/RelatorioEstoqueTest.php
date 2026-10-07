@@ -114,7 +114,7 @@ final class RelatorioEstoqueTest extends AppTestCase
         $all = array_column($this->meters(), null, 'id_med');
         $this->assertCount(6, $all); $this->assertSame('UC-CE-100234', $all[1]['unidade_consumidora_ins']);
         $this->assertNull($all[1]['ordem_servico_rme']);
-        $s->withdraw(1, 1, 3);
+        $s->withdraw(1, 1, 3, 'Defeito identificado após instalação');
         $all = array_column($this->meters(), null, 'id_med');
         $this->assertCount(6, $all); $this->assertNull($all[1]['unidade_consumidora_ins']);
         $this->assertSame('1', (string) $all[1]['ordem_servico_rme']);
