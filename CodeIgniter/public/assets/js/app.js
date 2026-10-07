@@ -233,3 +233,40 @@ window.addEventListener('pageshow', () => {
         if (password) password.value = '';
     });
 });
+
+// Native details keeps GET filtering available without JavaScript.
+document.querySelectorAll('[data-filter-dropdown]').forEach(dropdown => {
+    dropdown.classList.add('is-enhanced');
+    const trigger = dropdown.querySelector('summary');
+    const popover = dropdown.querySelector('.filter-popover');
+    const place = () => {
+        if (!dropdown.open) return;
+        const bounds = trigger.getBoundingClientRect();
+        const below = window.innerHeight - bounds.bottom - 16;
+        const above = bounds.top - 16;
+        const upwards = below < 260 && above > below;
+        popover.style.top = upwards ? 'auto' : 'calc(100% + 8px)';
+        popover.style.bottom = upwards ? 'calc(100% + 8px)' : 'auto';
+        popover.style.maxHeight = Math.max(120, Math.min(620, upwards ? above : below)) + 'px';
+    };
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, {passive:true});
+    const close = () => { dropdown.open = false; trigger.focus(); };
+    dropdown.querySelector('[data-filter-close]').addEventListener('click', close);
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && dropdown.open && !document.querySelector('dialog[open]')) { event.preventDefault(); event.stopPropagation(); close(); }
+    });
+    dropdown.addEventListener('toggle', () => {
+        if (dropdown.open) {
+            place();
+            document.querySelectorAll('[data-filter-dropdown]').forEach(other => { if (other !== dropdown) other.open = false; });
+        }
+    });
+    document.addEventListener('click', event => {
+        if (dropdown.open && !dropdown.contains(event.target)) dropdown.open = false;
+    });
+    dropdown.addEventListener('focusout', () => {
+        setTimeout(() => { if (!dropdown.contains(document.activeElement)) dropdown.open = false; }, 0);
+    });
+    place();
+});

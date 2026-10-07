@@ -7,6 +7,7 @@
     <a class="btn btn-outline-light" href="<?= site_url('meus-medidores') ?>"><?= heroicon('cube', 'outline', 'icon') ?> Meus medidores</a>
 </section>
 <div class="attendance-heading"><h2>Meus atendimentos</h2></div>
+<?= $this->include('components/filter_dropdown_start') ?>
 <form class="attendance-filters" method="get" action="<?= site_url('os') ?>">
     <div class="row g-3 align-items-end">
         <?= app_field('q', 'Buscar OS, UC, empresa ou endereço', ['q'=>$q], $errors, ['max'=>150]) ?>
@@ -14,6 +15,7 @@
         <div class="col-12 attendance-filter-actions"><button class="btn btn-primary" type="submit">Filtrar</button><a class="btn btn-outline-secondary" href="<?= site_url('os') ?>">Limpar filtros</a></div>
     </div>
 </form>
+<?= $this->include('components/filter_dropdown_end') ?>
 <?php if ($errors): ?>
     <div class="alert alert-danger" role="alert">Corrija os filtros para consultar seus atendimentos.<?php if (isset($errors['page'])): ?> <?= esc($errors['page']) ?><?php endif ?></div>
 <?php elseif (!$rows): ?>

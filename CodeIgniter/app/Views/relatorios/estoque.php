@@ -7,7 +7,8 @@
 <?php endforeach ?>
 </nav>
 <section class="panel" aria-label="Estoque filtrado">
-<div class="panel-toolbar"><form method="get" action="<?= site_url('relatorios/estoque') ?>" class="row g-3 w-100">
+<div class="panel-toolbar"><?= $this->include('components/filter_dropdown_start') ?>
+<form method="get" action="<?= site_url('relatorios/estoque') ?>" class="row g-3 w-100">
 <input type="hidden" name="tipo" value="<?= esc($filters['tipo'], 'attr') ?>">
 <?= app_field('q', $filters['tipo'] === 'medidores' ? 'Série, modelo ou fabricante' : 'Nome do material', $filters, [], ['max' => 100]) ?>
 <?= app_field('detentor', $filters['tipo'] === 'medidores' ? 'Detentor / último responsável' : 'Detentor', $filters, [], ['choices' => $owners]) ?>
@@ -16,7 +17,8 @@
 <?= app_field('localizacao_med', 'Localização', $filters, [], ['choices' => ['' => 'Todas', 'deposito' => 'Depósito', 'viatura' => 'Viatura', 'cliente' => 'Cliente']]) ?>
 <?php endif ?>
 <div class="col-12 d-flex flex-wrap gap-2"><button class="btn btn-primary" type="submit">Filtrar</button><a class="btn btn-outline-secondary" href="<?= site_url('relatorios/estoque?tipo=' . $filters['tipo']) ?>">Limpar filtros</a></div>
-</form></div>
+</form>
+<?= $this->include('components/filter_dropdown_end') ?></div>
 <div class="px-3 py-3">
 <?php if ($filters['tipo'] === 'medidores'): ?>
 <p class="mb-0">Cada linha representa um medidor não excluído. Perdidos e baixados preservam o último local e responsável para auditoria; não representam saldo físico disponível. Medidor baixado não representa posse ativa.</p>
