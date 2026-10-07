@@ -12,7 +12,7 @@ final class ChecklistsTest extends AppTestCase
     {
         parent::setUp();
         $this->db->table('tbl_checklist')->insert(['id_chk'=>1,'nome_chk'=>'Exemplo de demonstração','tipo_os_chk'=>'corte','etapa_chk'=>'inicio','usuario_chk'=>1,'ativo_chk'=>0]);
-        $this->db->table('tbl_checklist_item')->insert(['id_chi'=>1,'checklist_chi'=>1,'pergunta_chi'=>'Condição demonstrativa confirmada?','nivel_chi'=>'bloqueante']);
+        $this->db->table('tbl_checklist_item')->insert(['id_chi'=>1,'checklist_chi'=>1,'pergunta_chi'=>'Condição demonstrativa confirmada?','nivel_chi'=>'bloqueante','ordem_chi'=>1]);
     }
     private function modelInput(array $overrides=[]): array { return $overrides+['nome_chk'=>'Checklist exemplo','tipo_os_chk'=>'nova_ligacao','etapa_chk'=>'fechamento','ativo_chk'=>'0']; }
     private function itemInput(array $overrides=[]): array { return $overrides+['pergunta_chi'=>'Pergunta de demonstração?','resposta_esperada_chi'=>'1','obrigatorio_chi'=>'1','nivel_chi'=>'bloqueante','ordem_chi'=>'0']; }
@@ -20,7 +20,7 @@ final class ChecklistsTest extends AppTestCase
     public static function routes(): iterable
     {
         foreach ([null,1,2,3] as $actor) {
-            foreach ([['GET','checklists'],['GET','checklists/novo'],['GET','checklists/1'],['GET','checklists/1/editar'],['POST','checklists'],['POST','checklists/1/atualizar'],['POST','checklists/1/itens'],['GET','checklists/1/itens/1/editar'],['POST','checklists/1/itens/1/atualizar'],['POST','checklists/1/itens/1/excluir']] as [$verb,$path]) {
+            foreach ([['GET','checklists'],['GET','checklists/novo'],['GET','checklists/1'],['GET','checklists/1/editar'],['POST','checklists'],['POST','checklists/1/atualizar'],['POST','checklists/1/itens'],['GET','checklists/1/itens/1/editar'],['POST','checklists/1/itens/1/atualizar'],['POST','checklists/1/itens/1/excluir'],['POST','checklists/1/itens/1/mover']] as [$verb,$path]) {
                 yield ($actor??'visitante')." $verb $path"=>[$actor,$verb,$path];
             }
         }
@@ -61,7 +61,7 @@ final class ChecklistsTest extends AppTestCase
         $this->db->table('tbl_checklist')->insert(['id_chk'=>2,'nome_chk'=>'Outro exemplo','tipo_os_chk'=>'corte','etapa_chk'=>'inicio','usuario_chk'=>1]);
         $this->requestAs(1,'POST','checklists/2/itens/1/atualizar',$this->itemInput())->assertStatus(404);
         $this->requestWithDeletionPassword(1,'POST','checklists/2/itens/1/excluir')->assertStatus(404);
-        foreach ([['nivel_chi'=>'alerta'],['pergunta_chi'=>' '],['ordem_chi'=>'-1'],['ordem_chi'=>'10000'],['resposta_esperada_chi'=>'2'],['obrigatorio_chi'=>'true']] as $overrides) {
+        foreach ([['nivel_chi'=>'alerta'],['pergunta_chi'=>' '],['resposta_esperada_chi'=>'2'],['obrigatorio_chi'=>'true']] as $overrides) {
             $this->requestAs(1,'POST','checklists/1/itens',$this->itemInput($overrides))->assertStatus(422);
         }
         foreach (['checklists','checklists/1/atualizar','checklists/1/itens','checklists/1/itens/1/atualizar','checklists/1/itens/1/excluir'] as $path) {

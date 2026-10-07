@@ -20,7 +20,7 @@ final class ConfirmacoesTest extends AppTestCase
         $this->db->table('tbl_medidor')->insert(['id_med' => 90, 'numero_med' => 'EXCLUIR-TESTE', 'modelo_med' => 'Modelo teste', 'fabricante_med' => 'Fabricante teste', 'status_med' => 'disponivel', 'localizacao_med' => 'deposito']);
         $this->db->table('tbl_consumivel')->insert(['id_con' => 90, 'nome_con' => 'Material sem saldo', 'unidade_con' => 'un', 'precisao_con' => 0]);
         $this->db->table('tbl_checklist')->insert(['id_chk' => 90, 'nome_chk' => 'Modelo de teste', 'tipo_os_chk' => 'corte', 'etapa_chk' => 'inicio', 'usuario_chk' => 1, 'ativo_chk' => 0]);
-        $this->db->table('tbl_checklist_item')->insert(['id_chi' => 90, 'checklist_chi' => 90, 'pergunta_chi' => 'Pergunta?', 'nivel_chi' => 'informativo']);
+        $this->db->table('tbl_checklist_item')->insert(['id_chi' => 90, 'checklist_chi' => 90, 'pergunta_chi' => 'Pergunta?', 'nivel_chi' => 'informativo', 'ordem_chi' => 1]);
         $this->clearPendingWork();
     }
 

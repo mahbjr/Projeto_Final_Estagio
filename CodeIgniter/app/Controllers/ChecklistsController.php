@@ -37,6 +37,15 @@ final class ChecklistsController extends ApplicationController
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422); }
     }
 
+    public function moveItem(int $id, int $item)
+    {
+        $this->item($id, $item);
+        try {
+            (new ChecklistService())->moveItem($id, $item, $this->request->getPost('direcao'), (int) service('auth')->user()['id_usu']);
+            return redirect()->to(site_url('checklists/' . $id))->setStatusCode(303)->with('success', 'Ordem das perguntas atualizada.');
+        } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422); }
+    }
+
     private function save(?int $id = null)
     {
         $input = $this->safeInput(ChecklistService::FIELDS);

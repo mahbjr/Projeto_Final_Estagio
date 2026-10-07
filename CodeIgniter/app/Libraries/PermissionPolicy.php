@@ -57,6 +57,7 @@ final class PermissionPolicy
         'checklists.item.edit' => ['gestor'],
         'checklists.item.update' => ['gestor'],
         'checklists.item.delete' => ['gestor'],
+        'checklists.item.move' => ['gestor'],
 
         'medidores.index' => ['gestor', 'operador'],
         'medidores.show' => ['gestor', 'operador'],

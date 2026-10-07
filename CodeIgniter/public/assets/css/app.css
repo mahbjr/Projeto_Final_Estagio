@@ -20,3 +20,13 @@
 .account-menu{position:relative}.account-menu summary{cursor:pointer;list-style:none}.account-menu summary::-webkit-details-marker{display:none}.account-dropdown{position:absolute;right:0;top:52px;width:225px;z-index:30;background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:0 8px 24px rgba(0,0,0,.15)}.account-dropdown a,.account-dropdown button{display:flex;align-items:center;gap:10px;padding:12px;width:100%;border:0;border-radius:6px;background:transparent;text-decoration:none;color:var(--ink);text-align:left;font-size:13px}.account-dropdown a:hover,.account-dropdown button:hover{background:#fff0f1;color:var(--brand)}.profile-dialog{width:min(680px,calc(100% - 24px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid var(--border);border-radius:12px;padding:28px;color:var(--ink)}.profile-dialog::backdrop{background:rgba(17,18,23,.6)}.profile-dialog-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px}.profile-dialog-heading h2{font-size:23px;font-weight:700;margin-bottom:6px}.profile-dialog-heading p{color:var(--muted);font-size:13px;margin:0}summary:focus-visible{outline:3px solid #e55b60;outline-offset:3px}@media(max-width:575px){.profile-dialog{padding:20px}.profile-dialog-heading h2{font-size:21px}}
 
 .confirmation-dialog{max-width:560px}.confirmation-dialog #confirmation-message{line-height:1.6}.confirmation-dialog .profile-dialog-heading h2{font-size:21px}
+
+.question-order { display: flex; align-items: center; gap: .5rem; }
+.question-order-buttons { display: flex; flex-direction: column; gap: .15rem; }
+.question-order-buttons .icon-action { width: 2.75rem; height: 2.75rem; border: 1px solid var(--border, #dfe2e8); background: transparent; }
+.question-order-buttons .icon-action:disabled { opacity: .35; cursor: default; }
+
+.checklist-items-table { min-width: 52rem; }
+.checklist-items-table td:nth-child(2) { min-width: 18rem; }
+
+.checklist-items-region:focus-visible { outline: 3px solid #e55b60; outline-offset: -3px; }

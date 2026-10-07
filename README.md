@@ -256,7 +256,7 @@ Os três papéis podem abrir o menu da conta no cabeçalho e escolher **Editar p
 
 Alterar o identificador exige um e-mail válido e único; identificadores legados inalterados são preservados. Troca de e-mail ou senha exige a senha atual e regenera a sessão. Nova senha vazia mantém a existente, respeitando mínimo de oito caracteres e máximo de 72 bytes. POST `/perfil/atualizar` usa autorização e CSRF; dados administrativos enviados manualmente são rejeitados. Erros não repopulam senhas. **Sair do sistema** continua sendo POST no menu da conta.
 
-Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras estão descritas abaixo; ordenação de checklist, retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
+Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras entregues no commit `328ac23`. Ordenação de checklist está descrita abaixo; retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
 
 
 ## Confirmações e exclusões protegidas
@@ -273,3 +273,18 @@ O campo `_confirmacao` controla a alternativa visual (`pendente`/`confirmada`); 
 Telefone de empresa, funcionário e perfil utiliza máscara de fixo/celular, com DDD e 10 ou 11 números. Telefone de funcionário/perfil continua opcional. CNPJ novo ou alterado exige 14 números, verificadores válidos e não admite sequência repetida; permanece único inclusive após exclusão lógica e é armazenado sem máscara. CEP comercial e de atendimento usa `00000-000` e mantém a normalização existente. Não há consultas externas ou novas dependências.
 
 Valores históricos de telefone e CNPJ podem permanecer inalterados ao editar outros campos. A exceção é decidida pelo Service comparando com o registro atual do banco, nunca por uma indicação do formulário. Alterações passam pelas regras atuais; nenhum dado antigo é corrigido automaticamente. Máscaras tratam edição, seleção e colagem; sem JavaScript, os mesmos critérios são aplicados no servidor.
+
+
+## Ordenação automática das perguntas de checklist
+
+Somente Gestor gerencia perguntas. A ordem não é editável nos formulários: perguntas novas entram no final, edições conservam a posição e exclusões compactam a sequência de 1 a N. Botões Subir/Descer ao lado do número trocam a pergunta com a vizinha imediata, inclusive sem JavaScript; os limites ficam desabilitados. POST `/checklists/{id}/itens/{item}/mover` aceita `direcao=subir` ou `descer`, exige autenticação, permissão e CSRF e verifica o vínculo com o modelo. Ordem enviada manualmente em criação/edição é ignorada. Exclusão continua exigindo a senha atual do Gestor e preserva as respostas históricas.
+
+Criação, edição, exclusão e movimentação usam transação e lock do checklist, após os locks dos gestores ativos, para impedir posições duplicadas por concorrência. Trocas possuem rollback integral. A estrutura física, FKs e índices permanecem iguais; posições de perguntas excluídas podem ser reaproveitadas pelas perguntas atuais, sem índice de unicidade global.
+
+### Migração de posições antigas
+
+A migration `2026-10-07-000001_NormalizeChecklistOrder` é somente de dados: organiza perguntas não excluídas de cada checklist não excluído, ativo ou inativo, por `ordem_chi` e depois `id_chi`, numerando de 1 até N. Preserva IDs, outros campos, timestamps, perguntas excluídas e avaliações/respostas. Reexecutá-la não modifica uma sequência já correta. Nenhuma migration foi executada no banco original nesta entrega. Checklists com ordem antiga zerada, repetida ou espaçada retornam 422 ao alterar perguntas até a migração explícita; não são corrigidos silenciosamente pelo uso do sistema.
+
+Antes de executar em dados existentes, suspenda as escritas, faça backup completo (incluindo histórico de migrations) e valide primeiro uma cópia isolada com nome terminado em `_tests`. Confira conexão/grupo e `php spark migrate:status -g tests`: somente esta migration deve estar pendente; não execute uma sequência de migrations desconhecida. Com esse pré-requisito confirmado, use `php spark migrate -g tests -n App` na cópia, a partir de `CodeIgniter/`, e confira a sequência, IDs, respostas e registros excluídos. A execução no banco original requer autorização específica e conexão conferida; não use scripts de recriação, refresh ou limpeza.
+
+Falhas de DML nesta migration possuem rollback transacional. A ordem anterior não fica armazenada: `down()` recusa inventá-la e exige recuperação pelo backup. Não use `migrate:rollback` para tentar restaurar posições. O runner do CodeIgniter registra a execução na tabela de migrations; eventual criação dessa tabela envolve DDL MySQL, que não tem o mesmo rollback dos dados. Em falha, verifique dados e histórico antes de repetir, mantenha escritas suspensas e use o backup para recuperar a situação anterior quando necessário.

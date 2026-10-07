@@ -50,6 +50,7 @@ $routes->post('checklists/(:num)/atualizar', 'ChecklistsController::update/$1', 
 $routes->post('checklists/(:num)/itens', 'ChecklistsController::createItem/$1', ['as' => 'checklists.item.create']);
 $routes->get('checklists/(:num)/itens/(:num)/editar', 'ChecklistsController::editItem/$1/$2', ['as' => 'checklists.item.edit']);
 $routes->post('checklists/(:num)/itens/(:num)/atualizar', 'ChecklistsController::updateItem/$1/$2', ['as' => 'checklists.item.update']);
+$routes->post('checklists/(:num)/itens/(:num)/mover', 'ChecklistsController::moveItem/$1/$2', ['as' => 'checklists.item.move']);
 $routes->post('checklists/(:num)/itens/(:num)/excluir', 'ChecklistsController::deleteItem/$1/$2', ['as' => 'checklists.item.delete']);
 
 $routes->post('os/(:num)/medidores/reservar', 'OrdensServicoController::reserveMeter/$1', ['as' => 'os.medidores.reserve']);
