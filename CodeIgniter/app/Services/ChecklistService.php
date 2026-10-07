@@ -9,7 +9,7 @@ use App\Models\ChecklistItemModel;
 final class ChecklistService extends WriteService
 {
     public const FIELDS = ['nome_chk', 'tipo_os_chk', 'etapa_chk', 'ativo_chk'];
-    public const ITEM_FIELDS = ['pergunta_chi', 'resposta_esperada_chi', 'obrigatorio_chi', 'nivel_chi'];
+    public const ITEM_FIELDS = ['pergunta_chi', 'resposta_esperada_chi', 'nivel_chi'];
 
     public function save(array $input, int $actorId, ?int $id = null): int
     {
@@ -33,7 +33,7 @@ final class ChecklistService extends WriteService
     public function saveItem(int $checklist, array $input, int $actorId, ?int $id = null): int
     {
         $data = $this->strings($input, self::ITEM_FIELDS);
-        $this->validate($data, ['pergunta_chi' => 'required|max_length[255]', 'resposta_esperada_chi' => 'required|in_list[0,1]', 'obrigatorio_chi' => 'required|in_list[0,1]', 'nivel_chi' => 'required|in_list[bloqueante,informativo]']);
+        $this->validate($data, ['pergunta_chi' => 'required|max_length[255]', 'resposta_esperada_chi' => 'required|in_list[0,1]', 'nivel_chi' => 'required|in_list[bloqueante,informativo]']);
         return $this->transaction(function () use ($checklist, $data, $actorId, $id) {
             $this->actor($actorId);
             $this->record($checklist);
@@ -45,7 +45,7 @@ final class ChecklistService extends WriteService
                 $model->update($id, $data);
                 return $id;
             }
-            return (int) $model->insert($data + ['checklist_chi' => $checklist, 'ordem_chi' => count($items) + 1]);
+            return (int) $model->insert($data + ['checklist_chi' => $checklist, 'ordem_chi' => count($items) + 1, 'obrigatorio_chi' => 1]);
         });
     }
 

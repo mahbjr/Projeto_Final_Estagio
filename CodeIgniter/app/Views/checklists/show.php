@@ -10,7 +10,7 @@
 </div></div></td><td><?= esc($item['pergunta_chi']) ?></td><td><?= $item['resposta_esperada_chi'] ? 'Sim' : 'Não' ?></td><td><?= $item['obrigatorio_chi'] ? 'Sim' : 'Não' ?></td><td><?= $item['nivel_chi'] === 'bloqueante' ? 'Bloqueante' : 'Informativo' ?></td><td><div class="table-actions"><a href="<?= site_url('checklists/' . $record['id_chk'] . '/itens/' . $item['id_chi'] . '/editar') ?>" aria-label="Editar pergunta <?= (int) $item['id_chi'] ?>">Editar</a><form data-password-confirm method="post" action="<?= site_url('checklists/' . $record['id_chk'] . '/itens/' . $item['id_chi'] . '/excluir') ?>" data-confirm="Remover esta pergunta? As respostas anteriores serão preservadas."><?= csrf_field() ?><input type="hidden" name="_confirmacao" value="pendente"><button class="btn btn-outline-danger btn-sm" type="submit" aria-label="Remover pergunta <?= (int) $item['id_chi'] ?>">Remover</button></form></div></td></tr><?php endforeach ?>
 <?php if (!$items): ?><tr><td colspan="6" class="empty-table">Adicione as perguntas antes de ativar.</td></tr><?php endif ?>
 </tbody></table></div></section>
-<section class="panel form-panel mt-4"><h2>Adicionar pergunta</h2><form method="post" action="<?= site_url('checklists/' . $record['id_chk'] . '/itens') ?>" data-validate><?= csrf_field() ?>
+<section class="panel p-4 mt-4"><h2>Adicionar pergunta</h2><form method="post" action="<?= site_url('checklists/' . $record['id_chk'] . '/itens') ?>" data-validate><?= csrf_field() ?>
 <?= view('checklists/item-fields', ['itemRecord' => $input, 'errors' => $errors]) ?>
 <button class="btn btn-primary mt-3" type="submit">Adicionar pergunta</button></form></section>
 <?= $this->endSection() ?>

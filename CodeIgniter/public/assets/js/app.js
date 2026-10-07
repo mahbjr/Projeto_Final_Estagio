@@ -270,3 +270,22 @@ document.querySelectorAll('[data-filter-dropdown]').forEach(dropdown => {
     });
     place();
 });
+
+// Optional checklist comments remain available when JavaScript is disabled.
+document.querySelectorAll('[data-checklist-comment]').forEach(container => {
+    const toggle = container.querySelector('[data-comment-toggle]');
+    const panel = container.querySelector('[data-comment-panel]');
+    const textarea = panel.querySelector('textarea');
+    const counter = container.querySelector('[data-comment-count]');
+    container.querySelector('[data-comment-control]').hidden = false;
+    const count = () => { counter.textContent = `${Array.from(textarea.value).length} / ${textarea.maxLength}`; };
+    const update = () => {
+        panel.hidden = !toggle.checked;
+        textarea.disabled = !toggle.checked;
+        count();
+    };
+    toggle.addEventListener('change', () => { update(); if (toggle.checked) textarea.focus(); });
+    textarea.addEventListener('input', count);
+    window.addEventListener('pageshow', update);
+    update();
+});

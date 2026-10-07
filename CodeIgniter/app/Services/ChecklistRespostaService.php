@@ -12,6 +12,8 @@ use CodeIgniter\Database\BaseConnection;
 
 abstract class ChecklistRespostaService extends WriteService
 {
+    public const COMMENT_MAX_LENGTH = 1000;
+
     protected function answerStage(int $orderId, int $templateId, mixed $answers, mixed $notes, int $actorId, string $stage): void
     {
         $this->transaction(function () use ($orderId, $templateId, $answers, $notes, $actorId, $stage) {
@@ -31,7 +33,7 @@ abstract class ChecklistRespostaService extends WriteService
                 $id = $item['id_chi']; $answer = $answers[$id] ?? ''; $note = $notes[$id] ?? '';
                 if (!is_string($answer) || !in_array($answer, ['', '0', '1'], true)) { $errors['resposta_' . $id] = 'Selecione Sim ou Não.'; $answer = ''; }
                 elseif ($item['obrigatorio_chi'] && $answer === '') { $errors['resposta_' . $id] = 'Responda esta pergunta obrigatória.'; }
-                if (!is_string($note) || mb_strlen($note) > 1000) { $errors['observacao_' . $id] = 'Observação deve ter até 1.000 caracteres.'; }
+                if (!is_string($note) || mb_strlen($note) > self::COMMENT_MAX_LENGTH) { $errors['observacao_' . $id] = 'Comentário deve ter até 1.000 caracteres.'; }
                 $blocked = $blocked || ($item['nivel_chi'] === 'bloqueante' && (string) $answer !== (string) $item['resposta_esperada_chi']);
                 $responses[] = ['item_cre' => $id, 'pergunta_cre' => $item['pergunta_chi'], 'nivel_cre' => $item['nivel_chi'], 'resposta_esperada_cre' => $item['resposta_esperada_chi'], 'resposta_cre' => $answer === '' ? null : $answer, 'observacao_cre' => is_string($note) ? trim($note) : ''];
             }

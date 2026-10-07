@@ -61,7 +61,7 @@ final class ChecklistsTest extends AppTestCase
         $this->db->table('tbl_checklist')->insert(['id_chk'=>2,'nome_chk'=>'Outro exemplo','tipo_os_chk'=>'corte','etapa_chk'=>'inicio','usuario_chk'=>1]);
         $this->requestAs(1,'POST','checklists/2/itens/1/atualizar',$this->itemInput())->assertStatus(404);
         $this->requestWithDeletionPassword(1,'POST','checklists/2/itens/1/excluir')->assertStatus(404);
-        foreach ([['nivel_chi'=>'alerta'],['pergunta_chi'=>' '],['resposta_esperada_chi'=>'2'],['obrigatorio_chi'=>'true']] as $overrides) {
+        foreach ([['nivel_chi'=>'alerta'],['pergunta_chi'=>' '],['resposta_esperada_chi'=>'2']] as $overrides) {
             $this->requestAs(1,'POST','checklists/1/itens',$this->itemInput($overrides))->assertStatus(422);
         }
         foreach (['checklists','checklists/1/atualizar','checklists/1/itens','checklists/1/itens/1/atualizar','checklists/1/itens/1/excluir'] as $path) {
