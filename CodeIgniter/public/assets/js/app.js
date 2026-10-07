@@ -289,3 +289,32 @@ document.querySelectorAll('[data-checklist-comment]').forEach(container => {
     window.addEventListener('pageshow', update);
     update();
 });
+
+const welcome = document.querySelector('[data-welcome]');
+if (welcome) {
+    const query = welcome.querySelector('[name=q]');
+    const list = welcome.querySelector('#welcome-results');
+    const items = [...welcome.querySelectorAll('[data-welcome-item]')];
+    const normalize = value => value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    const update = () => {
+        const valid = [...query.value].length <= 100;
+        const words = normalize(query.value.trim()).split(/\s+/u).filter(Boolean);
+        let count = 0;
+        items.forEach((item, index) => {
+            item.hidden = !valid || (words.length ? !words.every(word => item.dataset.search.includes(word)) : index >= 3);
+            if (!item.hidden) count++;
+        });
+        list.classList.toggle('is-suggestions', !words.length);
+        welcome.querySelector('[data-welcome-label]').textContent = words.length ? 'Funcionalidades' : 'Sugestões:';
+        welcome.querySelector('[data-welcome-empty]').hidden = count !== 0 || !valid;
+        welcome.querySelector('[data-welcome-count]').textContent = `${count} funcionalidades disponíveis`;
+        const error = welcome.querySelector('#welcome-error');
+        error.hidden = valid;
+        error.textContent = valid ? '' : 'Informe uma pesquisa de até 100 caracteres.';
+        query.setAttribute('aria-invalid', String(!valid));
+    };
+    query.addEventListener('input', update);
+    welcome.querySelector('.welcome-clear').addEventListener('click', event => {
+        event.preventDefault(); query.value = ''; update(); query.focus();
+    });
+}

@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/app') ?>
 <?= $this->section('content') ?>
 <div class="page-heading"><div><h1><?= esc($title) ?></h1><p>OS selecionadas pela abertura. Atendidas são todas as encerradas, qualquer que seja o resultado.</p></div></div>
-<?php if (!$errors): ?><p><a class="btn btn-outline-secondary" href="<?= esc(site_url('inicio') . '?' . http_build_query($filters), 'attr') ?>">Voltar ao dashboard com estes filtros</a></p><?php endif ?>
+<?php if (!$errors): ?><p><a class="btn btn-outline-secondary" href="<?= esc(site_url('inicio'), 'attr') ?>">Voltar ao início</a></p><?php endif ?>
 <?= $this->include('components/indicadores_filters') ?>
 <?php if ($report !== null): ?>
 <div class="row g-3 mb-4">
