@@ -35,3 +35,11 @@ function attendance_duration(int|string|null $seconds): string
     $seconds = (int) $seconds;
     return sprintf('%dh %02dmin %02ds', intdiv($seconds, 3600), intdiv($seconds % 3600, 60), $seconds % 60);
 }
+
+function os_datetime(?string $value, bool $seconds = false): string
+{
+    if ($value === null || $value === '') { return '—'; }
+    $date = \DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $value, new \DateTimeZone('America/Fortaleza'));
+    if (!$date || $date->format('Y-m-d H:i:s') !== $value) { return $value; }
+    return $date->format($seconds ? 'd/m/Y H:i:s' : 'd/m/Y H:i');
+}

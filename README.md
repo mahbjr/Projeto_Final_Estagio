@@ -313,3 +313,12 @@ Relatórios por eletricista e de estoque negam acesso direto ao Eletricista com 
 ## Filtros de pesquisa em menu suspenso
 
 Listagens de clientes, equipe, OS e medidores, Meus atendimentos/Meus medidores, dashboard e relatórios usam o botão **Filtro**, baseado no modelo visual fornecido. Abra o menu para consultar os campos existentes; Buscar/Filtrar aplica a consulta GET, preservando os valores e a paginação. As permissões e validações anteriores permanecem. O menu fecha pelo botão de fechar, Escape, clique fora ou saída do foco; campos com erro ficam visíveis ao carregar a resposta. No celular, a caixa tem rolagem própria e se posiciona conforme o espaço disponível. Sem JavaScript, o botão continua abrindo/fechando o formulário nativamente. Não foram adicionados filtros às páginas que ainda não oferecem pesquisa.
+
+
+## Telas de ordens de serviço — referências do Figma
+
+Listagem administrativa baseada em `designs/TelaOS.html`: cliente/UC agrupados, tipo/prioridade, eletricista, abertura/agendamento, badges por status e links para detalhe. Mantidos filtros existentes no menu Filtro, paginação e dados reais. Os cards do Eletricista permanecem em Meus atendimentos.
+
+Detalhe baseado em `designs/TelaEditarOS.html`, que representa a consulta/gestão da OS: cards de dados do cliente e do serviço na coluna principal, medidores/ocorrências/histórico/fotos na lateral, com uma coluna no celular. Histórico apresenta evento, autor, data, transição, observação e dados da alteração. Fotos e upload do Eletricista ficam na coluna principal antes do fechamento. Atribuição, cancelamento com motivo/confirmação, checklists, materiais, atendimento e fechamento mantêm permissões e regras existentes. Não foram adicionadas impressão/exportação ou ações administrativas de medidores apenas por aparecerem no protótipo.
+
+Cadastro/edição harmonizados com os cards. Descrição e observações têm a mesma fonte dos demais campos, áreas compactas de três linhas, lado a lado no desktop e empilhadas no celular. No detalhe, usam a mesma hierarquia de labels/conteúdo. Textos longos e quebras de linha são preservados e escapados. Datas da OS usam apresentação brasileira; auditoria mantém segundos e horários armazenados não mudam.
