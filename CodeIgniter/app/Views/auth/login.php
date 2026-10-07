@@ -15,9 +15,6 @@
         <p class="password-help">Esqueceu sua senha? Solicite uma nova ao Gestor.</p>
         <button class="btn btn-primary w-100 login-submit" type="submit">Entrar no sistema <?= heroicon('arrow-right', 'outline', 'icon') ?></button>
     </form>
-    <?php if (filter_var(env('app.demoMode', false), FILTER_VALIDATE_BOOLEAN)): ?>
-        <aside class="demo-access"><strong>Acessos para demonstração</strong><p>gestor@energia.com.br<br>operador@energia.com.br<br>eletricista1@energia.com.br</p><span>Senha: senha123</span></aside>
-    <?php endif ?>
     <p class="login-footer">Acesso seguro · GPM Soluções</p>
 </section>
 <?= $this->endSection() ?>
