@@ -33,6 +33,7 @@ class FuncionarioService extends WriteService
                 $data[$field] = is_string($input[$field] ?? null) ? trim($input[$field]) : '';
             }
             $data['cpf_usu'] = Identifiers::cpf($data['cpf_usu']);
+            $data['telefone_usu'] = $this->phone($input['telefone_usu'] ?? '', $existing['telefone_usu'] ?? null, 'telefone_usu');
             $rules = [
                 'nome_completo_usu' => 'required|max_length[120]',
                 'cpf_usu' => 'required|cpf_formato|' . ($id ? 'is_unique[tbl_usuario.cpf_usu,id_usu,{id_usu}]' : 'is_unique[tbl_usuario.cpf_usu]'),

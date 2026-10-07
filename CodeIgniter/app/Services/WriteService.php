@@ -18,6 +18,21 @@ abstract class WriteService
         $this->db = $db ?? db_connect();
     }
 
+    /** Preserve an unchanged historical value; validate every new or edited phone. */
+    protected function phone(mixed $value, ?string $original, string $field): string
+    {
+        if (!is_string($value)) { throw new FormException([$field => 'Informe um telefone válido.']); }
+        if ($original !== null && $value === $original) { return $original; }
+        $value = trim($value);
+        if ($value === '') { return ''; }
+        $digits = str_replace(['(', ')', ' ', '-'], '', $value);
+        if (preg_match('/\A[1-9]{2}[0-9]{8,9}\z/', $digits) !== 1) {
+            throw new FormException([$field => 'Informe DDD e telefone com 10 ou 11 dígitos.']);
+        }
+        $length = strlen($digits) - 6;
+        return '(' . substr($digits, 0, 2) . ') ' . substr($digits, 2, $length) . '-' . substr($digits, -4);
+    }
+
     protected function validate(array $data, array $rules): void
     {
         $validation = service('validation');

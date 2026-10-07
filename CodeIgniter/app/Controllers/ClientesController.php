@@ -81,6 +81,7 @@ class ClientesController extends ApplicationController
 
     private function form(array $record, array $errors = [], int $status = 200)
     {
+        $record['_original'] = isset($record['id_cli']) ? $this->record((int) $record['id_cli']) : [];
         return $this->page('clientes/form', ['title' => isset($record['id_cli']) ? 'Editar empresa' : 'Nova empresa', 'active' => 'clientes', 'record' => $record, 'errors' => $errors], $status);
     }
 }

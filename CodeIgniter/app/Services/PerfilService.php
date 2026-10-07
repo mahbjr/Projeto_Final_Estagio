@@ -22,10 +22,11 @@ final class PerfilService extends WriteService
                 throw new FormException([$field => 'Informe um valor válido.']);
             }
             $data[$field] = $input[$field] ?? '';
-            if (!in_array($field, ['senha_atual', 'senha', 'confirmacao'], true)) { $data[$field] = trim($data[$field]); }
+            if (!in_array($field, ['senha_atual', 'senha', 'confirmacao', 'telefone_usu'], true)) { $data[$field] = trim($data[$field]); }
         }
         return $this->transaction(function () use ($data, $actorId) {
             $actor = $this->operationalActor($actorId, ['gestor', 'operador', 'eletricista']);
+            $data['telefone_usu'] = $this->phone($data['telefone_usu'], $actor['telefone_usu'], 'telefone_usu');
             $changedLogin = $data['nome_usu'] !== $actor['nome_usu'];
             $changedCredentials = $changedLogin || $data['senha'] !== '';
             $rules = [

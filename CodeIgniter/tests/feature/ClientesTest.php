@@ -8,12 +8,25 @@ use Tests\Support\AppTestCase;
 
 final class ClientesTest extends AppTestCase
 {
+    private static function validCnpjFor(int $i): string
+    {
+        $value = sprintf('998877%06d', $i);
+        foreach ([[5,4,3,2,9,8,7,6,5,4,3,2], [6,5,4,3,2,9,8,7,6,5,4,3,2]] as $weights) {
+            $sum = 0;
+            foreach ($weights as $n => $weight) { $sum += (int) $value[$n] * $weight; }
+            $value .= $sum % 11 < 2 ? '0' : (string) (11 - $sum % 11);
+        }
+        return $value;
+    }
+
     public static function cnpjs(): array
     {
         return [
-            ['34567890000112', '34567890000112', true],
-            [' zz.12a.b34/0001-56 ', 'ZZ12AB34000156', true],
-            ['ZZ12AB34000156', 'ZZ12AB34000156', true],
+            ['11222333000181', '11222333000181', true],
+            [' 11.222.333/0001-81 ', '11222333000181', true],
+            ['34567890000112', '', false], ['00000000000000', '', false],
+            [' zz.12a.b34/0001-56 ', '', false],
+            ['ZZ12AB34000156', '', false],
             ['', '', false], ['123', '123', false], ['ZZ12AB3400015A', '', false],
             ['ZZ12AB340001567', '', false], ['ZZ12AB34000!56', '', false],
             ['ZZ12 AB34000156', '', false], ['ZZ12ÁB34000156', '', false],
@@ -113,7 +126,7 @@ final class ClientesTest extends AppTestCase
         $response->assertDontSee('<script>alert(1)</script>');
         $response->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;');
         for ($i = 0; $i < 16; $i++) {
-            $this->requestAs(2, 'POST', 'clientes', $this->clientInput(['nome_cli' => 'Empresa ' . $i, 'cnpj_cli' => sprintf('TT%010d12', $i)]))->assertStatus(303);
+            $this->requestAs(2, 'POST', 'clientes', $this->clientInput(['nome_cli' => 'Empresa ' . $i, 'cnpj_cli' => self::validCnpjFor($i)]))->assertStatus(303);
         }
         $this->requestAs(2, 'GET', 'clientes?page=2')->assertOK();
     }

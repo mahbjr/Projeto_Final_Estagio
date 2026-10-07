@@ -57,7 +57,7 @@ abstract class AppTestCase extends CIUnitTestCase
     protected function clientInput(array $overrides = []): array
     {
         return $overrides + [
-            'nome_cli' => 'Empresa de Teste Ltda', 'cnpj_cli' => 'ZZ12AB34000156',
+            'nome_cli' => 'Empresa de Teste Ltda', 'cnpj_cli' => '11222333000181',
             'email_cli' => 'contato@teste.example', 'telefone_cli' => '(85) 3333-4444',
             'endereco_cli' => 'Rua de Teste, 100', 'bairro_cli' => 'Centro', 'cidade_cli' => 'Fortaleza',
             'estado_cli' => 'CE', 'cep_cli' => '60010-000', 'status_cli' => 'ativo',

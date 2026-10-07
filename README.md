@@ -51,7 +51,7 @@ Senha das seeds: `senha123`. O quadro de acessos no login aparece somente com `a
 - Eletricista tem papel fixo. A própria conta não pode ser excluída/desativada/rebaixada; o último Gestor ativo é preservado.
 - OS `aberta`/`atribuida`/`em_atendimento` bloqueia inativação/exclusão dos envolvidos; medidores em posse bloqueiam o eletricista.
 - Escritas/logout são POST com CSRF. Sessão expira após duas horas de inatividade; situação/papel são relidos por requisição.
-- CNPJ normalizado de 14 posições, inclusive alfanumérico. UC/endereço de atendimento pertencem à OS.
+- CNPJ novo/alterado numérico, com 14 dígitos e verificadores válidos; identificadores legados inalterados são preservados. UC/endereço de atendimento pertencem à OS.
 - Soft delete mantém identificadores reservados e preserva o histórico.
 
 ## Migrar banco legado
@@ -256,7 +256,7 @@ Os três papéis podem abrir o menu da conta no cabeçalho e escolher **Editar p
 
 Alterar o identificador exige um e-mail válido e único; identificadores legados inalterados são preservados. Troca de e-mail ou senha exige a senha atual e regenera a sessão. Nova senha vazia mantém a existente, respeitando mínimo de oito caracteres e máximo de 72 bytes. POST `/perfil/atualizar` usa autorização e CSRF; dados administrativos enviados manualmente são rejeitados. Erros não repopulam senhas. **Sair do sistema** continua sendo POST no menu da conta.
 
-Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações estão descritas abaixo; máscaras, ordenação de checklist, retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
+Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras estão descritas abaixo; ordenação de checklist, retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
 
 
 ## Confirmações e exclusões protegidas
@@ -266,3 +266,10 @@ As confirmações de exclusão, atendimento e movimentações de estoque usam mo
 Excluir funcionários, empresas, medidores, consumíveis ou perguntas de checklist exige a **senha atual do Gestor em cada exclusão**. O Service confere conta ativa, papel e senha na transação, inclusive para POST manual, conservando as restrições de próprio acesso, último Gestor, pendências, posse e saldo. A senha não é repopulada, persistida na sessão ou dispensada por confirmação anterior. Remoção de fotos continua exigindo autorização e motivo, sem senha. Início/fechamento de OS, cancelamento e movimentos têm confirmação visual, sem senha de exclusão.
 
 O campo `_confirmacao` controla a alternativa visual (`pendente`/`confirmada`); não concede permissões. POSTs manuais continuam sujeitos às mesmas regras de negócio e senha, mesmo sem esse campo. A confirmação sem JavaScript usa somente as mensagens e os campos permitidos da rota efetivamente solicitada, sem destino arbitrário ou transporte de senhas do primeiro envio.
+
+
+### Máscaras e validação de dados de contato
+
+Telefone de empresa, funcionário e perfil utiliza máscara de fixo/celular, com DDD e 10 ou 11 números. Telefone de funcionário/perfil continua opcional. CNPJ novo ou alterado exige 14 números, verificadores válidos e não admite sequência repetida; permanece único inclusive após exclusão lógica e é armazenado sem máscara. CEP comercial e de atendimento usa `00000-000` e mantém a normalização existente. Não há consultas externas ou novas dependências.
+
+Valores históricos de telefone e CNPJ podem permanecer inalterados ao editar outros campos. A exceção é decidida pelo Service comparando com o registro atual do banco, nunca por uma indicação do formulário. Alterações passam pelas regras atuais; nenhum dado antigo é corrigido automaticamente. Máscaras tratam edição, seleção e colagem; sem JavaScript, os mesmos critérios são aplicados no servidor.

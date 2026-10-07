@@ -26,6 +26,64 @@ if (role && technical) {
     update();
 }
 
+// Numeric masks only run after editing; untouched historical values stay intact.
+const maskDigits = value => value.replace(/[^0-9]/g, '');
+const normalizeCnpj = value => value.trim().replace(/[./\-]/g, '').toUpperCase();
+const unchangedLegacy = field => field.hasAttribute('data-original') &&
+    (field.dataset.mask === 'cnpj' ? normalizeCnpj(field.value) === field.dataset.original : field.value === field.dataset.original);
+function validCnpj(value) {
+    const digits = normalizeCnpj(value);
+    if (!/^[0-9]{14}$/.test(digits) || /^([0-9])\1{13}$/.test(digits)) return false;
+    return [[5,4,3,2,9,8,7,6,5,4,3,2], [6,5,4,3,2,9,8,7,6,5,4,3,2]].every(weights => {
+        const remainder = weights.reduce((sum, weight, i) => sum + Number(digits[i]) * weight, 0) % 11;
+        return Number(digits[weights.length]) === (remainder < 2 ? 0 : 11 - remainder);
+    });
+}
+function formatMask(digits, kind) {
+    const template = kind === 'cnpj' ? '##.###.###/####-##' : kind === 'cep' ? '#####-###' :
+        (digits.length > 10 ? '(##) #####-####' : '(##) ####-####');
+    let result = '', index = 0;
+    for (const char of template) {
+        if (index >= digits.length) break;
+        result += char === '#' ? digits[index++] : char;
+    }
+    return result;
+}
+document.querySelectorAll('input[data-mask]').forEach(field => {
+    const limit = field.dataset.mask === 'cnpj' ? 14 : field.dataset.mask === 'cep' ? 8 : 11;
+    field.addEventListener('input', () => {
+        const count = maskDigits(field.value.slice(0, field.selectionStart ?? field.value.length)).length;
+        const digits = maskDigits(field.value).slice(0, limit);
+        field.value = formatMask(digits, field.dataset.mask);
+        let caret = 0, seen = 0;
+        while (caret < field.value.length && seen < count) {
+            if (/[0-9]/.test(field.value[caret])) seen++;
+            caret++;
+        }
+        field.setSelectionRange(caret, caret);
+    });
+    // Pasting must not lose digits to maxlength before the mask strips separators.
+    field.addEventListener('paste', event => {
+        event.preventDefault();
+        field.setRangeText(event.clipboardData.getData('text'), field.selectionStart, field.selectionEnd, 'end');
+        field.dispatchEvent(new Event('input', {bubbles: true}));
+    });
+    field.addEventListener('beforeinput', event => {
+        if (!['deleteContentBackward', 'deleteContentForward'].includes(event.inputType) || field.selectionStart !== field.selectionEnd) return;
+        let start = field.selectionStart, end = start;
+        if (event.inputType === 'deleteContentBackward') {
+            while (start > 0 && !/[0-9]/.test(field.value[start - 1])) start--;
+            if (start > 0) start--;
+        } else {
+            while (end < field.value.length && !/[0-9]/.test(field.value[end])) end++;
+            if (end < field.value.length) end++;
+        }
+        event.preventDefault();
+        field.setRangeText('', start, end, 'end');
+        field.dispatchEvent(new Event('input', {bubbles: true}));
+    });
+});
+
 // Progressive enhancement: native constraints remain available without JavaScript.
 document.querySelectorAll('form[data-validate]').forEach((form) => {
     form.noValidate = true;
@@ -40,7 +98,8 @@ document.querySelectorAll('form[data-validate]').forEach((form) => {
         let message = '';
         if (field.required && !value) message = 'Preencha este campo.';
         if (value && field.name === 'cpf_usu' && !/^[0-9]{11}$/.test(value.replace(/[.\-]/g, ''))) message = 'Informe um CPF com 11 dígitos.';
-        if (value && field.name === 'cnpj_cli' && !/^[A-Za-z0-9]{12}[0-9]{2}$/.test(value.replace(/[./\-]/g, ''))) message = 'Informe 12 letras ou números e dois dígitos finais.';
+        if (value && field.name === 'cnpj_cli' && !unchangedLegacy(field) && !validCnpj(value)) message = 'Informe um CNPJ numérico com 14 dígitos e verificadores válidos.';
+        if (value && field.dataset.mask === 'telefone' && !unchangedLegacy(field) && !/^[1-9]{2}[0-9]{8,9}$/.test(value.replace(/[() \-]/g, ''))) message = 'Informe DDD e telefone com 10 ou 11 dígitos.';
         if (value && ['cep_cli', 'cep_oss'].includes(field.name) && !/^[0-9]{8}$/.test(value.replace(/-/g, ''))) message = 'Informe um CEP com oito dígitos.';
         if (value && ['estado_cli', 'estado_oss'].includes(field.name) && !'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ').includes(value.toUpperCase())) message = 'Informe uma UF válida.';
         if (field.name === 'senha' && field.value && ([...field.value].length < 8 || new TextEncoder().encode(field.value).length > 72)) message = 'Use pelo menos oito caracteres e no máximo 72 bytes.';

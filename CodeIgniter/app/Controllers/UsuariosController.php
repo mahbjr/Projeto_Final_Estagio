@@ -68,8 +68,10 @@ class UsuariosController extends ApplicationController
         $input = $this->safeInput(self::FIELDS);
         if ($id && $this->request->getPost('papel_usu') === null) { unset($input['papel_usu']); }
         $credentials = $this->safeInput(['senha', 'confirmacao']);
+        $serviceInput = $input + $credentials;
+        $serviceInput['telefone_usu'] = $this->request->getPost('telefone_usu') ?? '';
         try {
-            $savedId = (new FuncionarioService())->save($input + $credentials, (int) service('auth')->user()['id_usu'], $id);
+            $savedId = (new FuncionarioService())->save($serviceInput, (int) service('auth')->user()['id_usu'], $id);
             return redirect()->to(site_url('usuarios/' . $savedId))->setStatusCode(303)->with('success', 'Usuário salvo com sucesso.');
         } catch (FormException $e) {
             $existing = $id ? $this->record($id) : [];
@@ -87,6 +89,7 @@ class UsuariosController extends ApplicationController
 
     private function form(array $record, array $errors = [], int $status = 200, ?string $originalRole = null)
     {
+        $record['_original'] = isset($record['id_usu']) ? $this->record((int) $record['id_usu']) : [];
         return $this->page('usuarios/form', ['title' => isset($record['id_usu']) ? 'Editar usuário' : 'Novo usuário', 'active' => 'usuarios', 'record' => $record, 'errors' => $errors, 'originalRole' => $originalRole ?? ($record['papel_usu'] ?? null)], $status);
     }
 }

@@ -1,4 +1,4 @@
-<?php $prefix = $profilePrefix ?? 'perfil'; ?>
+<?php $prefix = $profilePrefix ?? 'perfil'; $record['_original'] = $user; ?>
 <form action="<?= site_url('perfil/atualizar') ?>" method="post" data-validate>
     <?= csrf_field() ?>
     <?php if (isset($errors['operacao'])): ?><div class="alert alert-danger" role="alert"><?= esc($errors['operacao']) ?></div><?php endif ?>
