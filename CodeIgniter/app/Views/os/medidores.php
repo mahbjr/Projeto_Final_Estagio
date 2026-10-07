@@ -1,4 +1,15 @@
-<section class="panel os-data-card"><header class="os-card-heading"><h2>Medidores da OS</h2><p>Equipamentos vinculados ao atendimento</p></header><div class="os-card-body">
+<section class="panel os-data-card">
+    <header class="os-card-heading">
+        <div class="os-card-title-group">
+            <span class="os-step-number" aria-hidden="true">5</span>
+            <div>
+                <h2>Medidores da OS</h2>
+                <p>Equipamentos vinculados ao atendimento</p>
+            </div>
+        </div>
+        <span class="os-card-icon" aria-hidden="true"><?= heroicon('bolt', 'outline', 'icon') ?></span>
+    </header>
+    <div class="os-card-body">
 <?php if (!$meterReservations): ?><p class="mb-0">Nenhum medidor vinculado.</p><?php endif ?>
 <?php foreach ($meterReservations as $reservation): ?><article class="os-meter-record"><h3><?= esc($reservation['numero_med']) ?></h3><dl class="os-data-grid">
 <div><dt>Estado</dt><dd><?= esc(meter_label($reservation['status_med'])) ?></dd></div><div><dt>Localização</dt><dd><?= esc(meter_label($reservation['localizacao_med'])) ?></dd></div>

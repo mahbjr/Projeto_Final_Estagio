@@ -29,7 +29,19 @@
 </section>
 <?php endforeach ?>
 <?php endif ?>
-<section class="panel detail-panel mt-4"><header class="os-inline-heading"><h2>Aplicações e retiradas registradas</h2></header><div class="table-responsive report-table" tabindex="0" role="region" aria-label="Aplicações e retiradas de medidores, tabela com rolagem horizontal"><table class="table app-table"><thead><tr><th>Série</th><th>Operação</th><th>Data</th></tr></thead><tbody>
+<section class="panel detail-panel mt-4 os-operations-panel">
+    <header class="os-card-heading">
+        <div class="os-card-title-group">
+            <span class="os-step-number" aria-hidden="true">3</span>
+            <div>
+                <h2>Aplicações e retiradas registradas</h2>
+                <p>Histórico de operações físicas no atendimento</p>
+            </div>
+        </div>
+        <span class="os-card-icon" aria-hidden="true"><?= heroicon('arrows-right-left', 'outline', 'icon') ?></span>
+    </header>
+    <div class="os-card-body">
+        <div class="table-responsive report-table" tabindex="0" role="region" aria-label="Aplicações e retiradas de medidores, tabela com rolagem horizontal"><table class="table app-table"><thead><tr><th>Série</th><th>Operação</th><th>Data</th></tr></thead><tbody>
 <?php foreach ($meterOperations as $operation): ?><tr><td><?= esc($operation['numero_med']) ?></td><td><?= $operation['tipo_osm'] === 'instalado' ? 'Aplicação' : 'Retirada' ?></td><td><?= esc($operation['data_osm']) ?></td></tr><?php endforeach ?>
 <?php if (!$meterOperations): ?><tr><td colspan="3">Nenhuma aplicação ou retirada registrada.</td></tr><?php endif ?>
-</tbody></table></div></section>
+</tbody></table></div></div></section>
