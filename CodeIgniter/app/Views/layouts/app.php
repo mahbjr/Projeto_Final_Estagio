@@ -46,6 +46,7 @@
     <?= view('components/profile_form', ['record' => $user, 'errors' => [], 'profilePrefix' => 'perfil-modal']) ?>
 </dialog>
 <?php endif ?>
+<?= $this->include('components/confirmation_dialog') ?>
 <footer class="app-footer">GPM Soluções · Serviços de campo</footer>
 </body>
 </html>

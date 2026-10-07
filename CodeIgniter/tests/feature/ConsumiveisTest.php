@@ -27,7 +27,7 @@ final class ConsumiveisTest extends AppTestCase
     public function testAuthorization(?int $actor, string $verb, string $path): void
     {
         $before = $this->db->table('tbl_consumivel_saldo')->get()->getResultArray();
-        $response = $this->requestAs($actor, $verb, $path);
+        $response = $this->requestWithDeletionPassword($actor, $verb, $path);
         if ($actor === null) { $response->assertRedirectTo(site_url('login')); }
         elseif ($actor === 3 || ($actor === 2 && !($verb === 'GET' && in_array($path, ['consumiveis','consumiveis/1'], true)))) { $response->assertStatus(403); }
         else { $this->assertContains($response->response()->getStatusCode(), [200,303,422]); }
@@ -51,7 +51,7 @@ final class ConsumiveisTest extends AppTestCase
         $this->requestAs(1, 'POST', "consumiveis/$id/atualizar", $this->material(['unidade_con'=>'unidade']))->assertStatus(422);
         $this->requestAs(1, 'POST', "consumiveis/$id/atualizar", $this->material(['precisao_con'=>'0']))->assertStatus(422);
         $this->requestAs(1, 'POST', "consumiveis/$id/atualizar", $this->material(['nome_con'=>'Cabo atualizado']))->assertStatus(303);
-        $this->requestAs(1, 'POST', "consumiveis/$id/excluir")->assertStatus(422);
+        $this->requestWithDeletionPassword(1, 'POST', "consumiveis/$id/excluir")->assertStatus(422);
         $response = $this->requestAs(2, 'GET', "consumiveis/$id");
         $response->assertStatus(200);
         $response->assertSee('Compra teste');
@@ -62,7 +62,7 @@ final class ConsumiveisTest extends AppTestCase
         $service = new ConsumivelService($this->db);
         $id = $service->save($this->material(), 1);
         $service->save($this->material(['precisao_con'=>'0']), 1, $id);
-        $this->requestAs(1,'POST',"consumiveis/$id/excluir")->assertStatus(303);
+        $this->requestWithDeletionPassword(1,'POST',"consumiveis/$id/excluir")->assertStatus(303);
         $this->assertNotNull($this->db->table('tbl_consumivel')->where('id_con',$id)->get()->getRow()->data_exclusao_con);
         $this->assertSame(1, $this->db->table('tbl_consumivel_saldo')->where('consumivel_sco',$id)->countAllResults());
         $this->requestAs(1,'GET',"consumiveis/$id")->assertStatus(404);
@@ -110,9 +110,9 @@ final class ConsumiveisTest extends AppTestCase
     public function testCsrfExpirationMethodsAndXss(): void
     {
         foreach (['consumiveis','consumiveis/1/atualizar','consumiveis/1/entrada','consumiveis/1/excluir','os/1/consumiveis/reservar'] as $path) {
-            $this->requestAs(1,'POST',$path,[],false)->assertStatus(403);
-            $this->requestAs(1,'POST',$path,[],true,time()-7201)->assertRedirectTo(site_url('login'));
-            if ($path !== 'consumiveis') { $this->requestAs(1,'GET',$path)->assertStatus(404); }
+            $this->requestWithDeletionPassword(1,'POST',$path,[],false)->assertStatus(403);
+            $this->requestWithDeletionPassword(1,'POST',$path,[],true,time()-7201)->assertRedirectTo(site_url('login'));
+            if ($path !== 'consumiveis') { $this->requestWithDeletionPassword(1,'GET',$path)->assertStatus(404); }
         }
         $this->requestAs(1,'POST','consumiveis/1/entrada',['quantidade'=>'1','observacao'=>'<script>alert(1)</script>'])->assertStatus(303);
         $response = $this->requestAs(2,'GET','consumiveis/1');
@@ -152,7 +152,7 @@ final class ConsumiveisTest extends AppTestCase
         $this->db->table('tbl_consumivel_reserva')->insert(['ordem_servico_rco'=>1,'consumivel_rco'=>1,'eletricista_rco'=>1,'usuario_rco'=>1,'quantidade_rco'=>'2.000','entregue_rco'=>'2.000','status_rco'=>'entregue']);
         $this->requestAs(2,'POST','os/1/cancelar',['motivo'=>'Cancelar'])->assertStatus(303);
         $this->clearPendingWork();
-        $this->requestAs(1,'POST','usuarios/3/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1,'POST','usuarios/3/excluir')->assertStatus(422);
         $this->assertSame('entregue', $this->db->table('tbl_consumivel_reserva')->get()->getRow()->status_rco);
         $this->assertSame('2.000', $this->db->table('tbl_consumivel_saldo')->where('eletricista_sco',1)->get()->getRow()->quantidade_sco);
     }

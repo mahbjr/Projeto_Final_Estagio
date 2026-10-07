@@ -52,9 +52,10 @@ class ClienteService extends WriteService
         });
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($id) {
+        $this->transaction(function () use ($id, $actorId, $password) {
+            $this->confirmDeletion($actorId, $password);
             $row = $this->db->query('SELECT id_cli FROM tbl_cliente WHERE id_cli = ? AND data_exclusao_cli IS NULL FOR UPDATE', [$id])->getRowArray();
             if (!$row) { $this->notFound(); }
             if ($this->pendingOrders('cliente_oss', $id)) {

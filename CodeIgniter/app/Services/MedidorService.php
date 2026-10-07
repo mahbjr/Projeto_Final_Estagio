@@ -91,10 +91,11 @@ class MedidorService extends WriteService
         });
     }
 
-    public function delete(int $id, int $actorId): void
+    public function delete(int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($id, $actorId) {
+        $this->transaction(function () use ($id, $actorId, $password) {
             $this->lockActor($actorId);
+            $this->confirmDeletion($actorId, $password);
             $m = $this->locked($id);
             $this->assertState($m);
             $this->assertNoPending($id);

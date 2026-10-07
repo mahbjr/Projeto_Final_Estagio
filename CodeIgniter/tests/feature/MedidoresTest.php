@@ -24,7 +24,7 @@ final class MedidoresTest extends AppTestCase
     public function testRealRoutes(?int $actor, string $method, string $path, bool $allowed): void
     {
         $before = $this->db->table('tbl_estoque_mov')->countAllResults();
-        $response = $this->requestAs($actor, $method, $path, ['numero_med' => 'NEW-TEST', 'destino' => '2', 'condicao' => 'disponivel']);
+        $response = $this->requestWithDeletionPassword($actor, $method, $path, ['numero_med' => 'NEW-TEST', 'destino' => '2', 'condicao' => 'disponivel']);
         if (!$actor) { $response->assertRedirectTo(site_url('login')); }
         elseif (!$allowed) { $response->assertStatus(403); }
         else { $response->assertStatus($method === 'GET' ? 200 : 303); }
@@ -42,10 +42,10 @@ final class MedidoresTest extends AppTestCase
         $s->save(['numero_med' => 'TEST-SERIAL', 'status_med' => 'disponivel'], 1, $id);
         $s->send($id, '1', 1);
         $s->returnToDepot($id, 'disponivel', 1);
-        $s->delete($id, 1);
+        $s->delete($id, 1, 'senha123');
         $this->assertSame(6, $this->db->table('tbl_estoque_mov')->where('medidor_emv', $id)->countAllResults());
         $this->assertNotNull($this->db->table('tbl_medidor')->where('id_med', $id)->get()->getRow()->data_exclusao_med);
-        $this->requestAs(1, 'POST', "medidores/$id/excluir")->assertStatus(404);
+        $this->requestWithDeletionPassword(1, 'POST', "medidores/$id/excluir")->assertStatus(404);
         $this->requestAs(1, 'POST', 'medidores', ['numero_med' => 'TEST-SERIAL'])->assertStatus(422);
     }
 
@@ -60,17 +60,17 @@ final class MedidoresTest extends AppTestCase
         $this->db->table('tbl_usuario')->where('id_usu', 4)->update(['ativo_usu' => 0]);
         $this->requestAs(1, 'POST', 'medidores/1/enviar', ['destino' => '2'])->assertStatus(422);
         $this->db->table('tbl_medidor')->where('id_med', 1)->update(['localizacao_med' => 'viatura']);
-        $this->requestAs(1, 'POST', 'medidores/1/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1, 'POST', 'medidores/1/excluir')->assertStatus(422);
         $this->requestAs(1, 'GET', 'medidores/1')->assertSee('Estado legado incompatível');
     }
 
     public function testCsrfExpiryAndWrongVerbDoNotWrite(): void
     {
         foreach (['medidores', 'medidores/1/atualizar', 'medidores/1/enviar', 'medidores/3/devolver', 'medidores/1/excluir'] as $path) {
-            $this->requestAs(1, 'POST', $path, [], false)->assertStatus(403);
-            $this->requestAs(1, 'POST', $path, [], true, time()-7201)->assertRedirectTo(site_url('login'));
+            $this->requestWithDeletionPassword(1, 'POST', $path, [], false)->assertStatus(403);
+            $this->requestWithDeletionPassword(1, 'POST', $path, [], true, time()-7201)->assertRedirectTo(site_url('login'));
         }
-        $this->requestAs(1, 'GET', 'medidores/1/excluir')->assertStatus(404);
+        $this->requestWithDeletionPassword(1, 'GET', 'medidores/1/excluir')->assertStatus(404);
         $this->assertSame(6, $this->db->table('tbl_medidor')->countAllResults());
     }
 
@@ -79,7 +79,7 @@ final class MedidoresTest extends AppTestCase
         $this->db->query("ALTER TABLE tbl_estoque_mov ADD CONSTRAINT fail_movement CHECK (observacao_emv NOT LIKE '%usuário #%')");
         foreach ([['medidores', ['numero_med' => 'ROLLBACK']], ['medidores/1/enviar', ['destino' => '2']], ['medidores/3/devolver', ['condicao' => 'defeito']], ['medidores/1/excluir', []]] as [$path, $input]) {
             $before = $this->db->table('tbl_medidor')->orderBy('id_med')->get()->getResultArray();
-            $this->requestAs(1, 'POST', $path, $input)->assertStatus(422);
+            $this->requestWithDeletionPassword(1, 'POST', $path, $input)->assertStatus(422);
             $this->assertSame($before, $this->db->table('tbl_medidor')->orderBy('id_med')->get()->getResultArray());
         }
     }

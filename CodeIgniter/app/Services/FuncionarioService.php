@@ -84,10 +84,11 @@ class FuncionarioService extends WriteService
         });
     }
 
-    public function delete(int $id, int $actorId): void
+    public function delete(int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($id, $actorId) {
+        $this->transaction(function () use ($id, $actorId, $password) {
             $managers = $this->lockManagers($actorId);
+            $this->confirmDeletion($actorId, $password);
             $user = $this->db->query('SELECT id_usu, papel_usu, ativo_usu FROM tbl_usuario WHERE id_usu = ? AND data_exclusao_usu IS NULL FOR UPDATE', [$id])->getRowArray();
             if (!$user) { $this->notFound(); }
             if ($id === $actorId) { throw new FormException(['operacao' => 'Você não pode excluir o próprio acesso.']); }

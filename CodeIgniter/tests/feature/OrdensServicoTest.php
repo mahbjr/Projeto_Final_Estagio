@@ -28,7 +28,7 @@ final class OrdensServicoTest extends AppTestCase
     {
         $before = $this->db->table('tbl_os')->get()->getResultArray();
         $history = $this->db->table('tbl_os_historico')->countAllResults();
-        $response = $this->requestAs($actor, $verb, $path);
+        $response = $this->requestWithDeletionPassword($actor, $verb, $path);
         if ($actor === null) { $response->assertRedirectTo(site_url('login')); }
         elseif (!$allowed) { $response->assertStatus(403); }
         else { $this->assertContains($response->response()->getStatusCode(), [200,422]); }
@@ -87,9 +87,9 @@ final class OrdensServicoTest extends AppTestCase
         $input['agendamento_oss']=''; $input['prioridade_oss']='alta';
         $this->requestAs(2, 'POST', 'os/2/atualizar', $input)->assertStatus(303);
         $this->requestAs(2, 'POST', 'os/2/atualizar', ['endereco_oss'=>'Outro local'] + $input)->assertStatus(422);
-        $this->requestAs(1, 'POST', 'clientes/1/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1, 'POST', 'clientes/1/excluir')->assertStatus(422);
         $this->db->table('tbl_medidor')->update(['eletricista_posse_med'=>null]);
-        $this->requestAs(1, 'POST', 'usuarios/3/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1, 'POST', 'usuarios/3/excluir')->assertStatus(422);
     }
 
     public function testInvalidDataInactiveDestinationAndPreservedInputs(): void
@@ -133,11 +133,11 @@ final class OrdensServicoTest extends AppTestCase
     {
         $before=$this->db->table('tbl_os')->get()->getResultArray();
         foreach (['os','os/1/atualizar','os/1/atribuir','os/1/cancelar'] as $path) {
-            $this->requestAs(2,'POST',$path,$this->input(),false)->assertStatus(403);
-            $this->requestAs(2,'POST',$path,$this->input(),true,time()-7201)->assertRedirectTo(site_url('login'));
+            $this->requestWithDeletionPassword(2,'POST',$path,$this->input(),false)->assertStatus(403);
+            $this->requestWithDeletionPassword(2,'POST',$path,$this->input(),true,time()-7201)->assertRedirectTo(site_url('login'));
         }
         foreach (['os/1/atribuir','os/1/cancelar','os/1/atualizar','os/1/excluir','os/1/iniciar','os/1/encerrar'] as $path) {
-            $this->requestAs(2,'GET',$path)->assertStatus(404);
+            $this->requestWithDeletionPassword(2,'GET',$path)->assertStatus(404);
         }
         $this->assertSame($before,$this->db->table('tbl_os')->get()->getResultArray());
     }

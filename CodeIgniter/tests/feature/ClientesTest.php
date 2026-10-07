@@ -34,7 +34,7 @@ final class ClientesTest extends AppTestCase
     public function testDuplicateMasksAndExcludedIdentifiersRemainReserved(): void
     {
         $this->requestAs(1, 'POST', 'clientes', $this->clientInput(['cnpj_cli' => '12.345.678/0001-90']))->assertStatus(422);
-        $this->requestAs(1, 'POST', 'clientes/2/excluir')->assertStatus(303);
+        $this->requestWithDeletionPassword(1, 'POST', 'clientes/2/excluir')->assertStatus(303);
         $this->requestAs(1, 'POST', 'clientes', $this->clientInput(['cnpj_cli' => '23.456.789/0001-80']))->assertStatus(422);
         $this->assertSame('12345678000190', Identifiers::cnpj('12.345.678/0001-90'));
     }
@@ -68,7 +68,7 @@ final class ClientesTest extends AppTestCase
     public function testEachOsStatusControlsDeletion(string $status, bool $blocked): void
     {
         $this->db->table('tbl_os')->where('cliente_oss', 1)->update(['status_oss' => $status]);
-        $this->requestAs(1, 'POST', 'clientes/1/excluir')->assertStatus($blocked ? 422 : 303);
+        $this->requestWithDeletionPassword(1, 'POST', 'clientes/1/excluir')->assertStatus($blocked ? 422 : 303);
         $row = $this->db->table('tbl_cliente')->where('id_cli', 1)->get()->getRowArray();
         $this->assertSame($blocked, $row['data_exclusao_cli'] === null);
         $this->assertSame(2, $this->db->table('tbl_os')->where('cliente_oss', 1)->countAllResults());
@@ -81,7 +81,7 @@ final class ClientesTest extends AppTestCase
         $this->requestAs(2, 'POST', 'clientes/1/atualizar', $input)->assertStatus(422);
         $this->db->table('tbl_os')->where('cliente_oss', 1)->update(['data_exclusao_oss' => date('Y-m-d H:i:s')]);
         $this->requestAs(2, 'POST', 'clientes/1/atualizar', $input)->assertStatus(303);
-        $this->requestAs(1, 'POST', 'clientes/1/excluir')->assertStatus(303);
+        $this->requestWithDeletionPassword(1, 'POST', 'clientes/1/excluir')->assertStatus(303);
         $this->requestAs(1, 'GET', 'clientes/1')->assertStatus(404);
     }
 

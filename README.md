@@ -256,4 +256,13 @@ Os três papéis podem abrir o menu da conta no cabeçalho e escolher **Editar p
 
 Alterar o identificador exige um e-mail válido e único; identificadores legados inalterados são preservados. Troca de e-mail ou senha exige a senha atual e regenera a sessão. Nova senha vazia mantém a existente, respeitando mínimo de oito caracteres e máximo de 72 bytes. POST `/perfil/atualizar` usa autorização e CSRF; dados administrativos enviados manualmente são rejeitados. Erros não repopulam senhas. **Sair do sistema** continua sendo POST no menu da conta.
 
-Esta é a primeira etapa das correções em `bugfix/perfil-medidores-atendimento`. Confirmações de exclusão, máscaras, ordenação de checklist, retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
+Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações estão descritas abaixo; máscaras, ordenação de checklist, retirada direta de medidores e cards do Eletricista permanecem nas próximas etapas.
+
+
+## Confirmações e exclusões protegidas
+
+As confirmações de exclusão, atendimento e movimentações de estoque usam modal no estilo do projeto, com Cancelar/Confirmar. Cancelar ou fechar não executa a operação. Validação dos campos precede o modal. Sem JavaScript, o primeiro envio do formulário abre uma página de confirmação sem gravar no banco; o envio final continua nas mesmas rotas POST, com CSRF e nova validação no servidor.
+
+Excluir funcionários, empresas, medidores, consumíveis ou perguntas de checklist exige a **senha atual do Gestor em cada exclusão**. O Service confere conta ativa, papel e senha na transação, inclusive para POST manual, conservando as restrições de próprio acesso, último Gestor, pendências, posse e saldo. A senha não é repopulada, persistida na sessão ou dispensada por confirmação anterior. Remoção de fotos continua exigindo autorização e motivo, sem senha. Início/fechamento de OS, cancelamento e movimentos têm confirmação visual, sem senha de exclusão.
+
+O campo `_confirmacao` controla a alternativa visual (`pendente`/`confirmada`); não concede permissões. POSTs manuais continuam sujeitos às mesmas regras de negócio e senha, mesmo sem esse campo. A confirmação sem JavaScript usa somente as mensagens e os campos permitidos da rota efetivamente solicitada, sem destino arbitrário ou transporte de senhas do primeiro envio.

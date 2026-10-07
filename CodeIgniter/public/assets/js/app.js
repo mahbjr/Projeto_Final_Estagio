@@ -25,11 +25,6 @@ if (role && technical) {
     role.addEventListener('change', update);
     update();
 }
-document.querySelectorAll('form[data-confirm]').forEach((form) => {
-    form.addEventListener('submit', (event) => {
-        if (!window.confirm(form.dataset.confirm)) event.preventDefault();
-    });
-});
 
 // Progressive enhancement: native constraints remain available without JavaScript.
 document.querySelectorAll('form[data-validate]').forEach((form) => {
@@ -105,4 +100,77 @@ profileDialog?.querySelectorAll('[data-profile-close]').forEach(button => {
 profileDialog?.addEventListener('close', () => {
     profileDialog.querySelectorAll('input[type=password]').forEach(input => { input.value = ''; });
     accountMenu.querySelector('summary').focus();
+});
+
+// Run after field validation. Confirmation is UI; permission and password checks live on the server.
+const confirmationDialog = document.getElementById('confirmation-dialog');
+const confirmationForm = document.getElementById('confirmation-dialog-form');
+const confirmationPassword = document.getElementById('confirmation-password');
+let pendingConfirmation = null;
+let pendingSubmitter = null;
+let approvedConfirmation = null;
+document.querySelectorAll('form[data-confirm]').forEach(form => {
+    form.addEventListener('submit', event => {
+        if (event.defaultPrevented) return;
+        if (form.dataset.submitting === 'true') { event.preventDefault(); return; }
+        if (approvedConfirmation === form) {
+            form.dataset.submitting = 'true';
+            return;
+        }
+        if (!confirmationDialog || typeof confirmationDialog.showModal !== 'function') return;
+        event.preventDefault();
+        if (confirmationDialog.open) return;
+        pendingConfirmation = form;
+        pendingSubmitter = event.submitter;
+        document.getElementById('confirmation-message').textContent = form.dataset.confirm;
+        const needsPassword = form.hasAttribute('data-password-confirm');
+        document.getElementById('confirmation-password-fields').hidden = !needsPassword;
+        confirmationPassword.disabled = !needsPassword;
+        confirmationPassword.required = needsPassword;
+        confirmationPassword.value = '';
+        confirmationDialog.showModal();
+        (needsPassword ? confirmationPassword : confirmationForm.querySelector('[data-confirm-close]')).focus();
+    });
+});
+confirmationForm?.addEventListener('submit', event => {
+    event.preventDefault();
+    const form = pendingConfirmation;
+    if (!form || !confirmationForm.checkValidity()) return;
+    if (form.hasAttribute('data-password-confirm')) {
+        let field = form.querySelector('input[name="senha_atual"]');
+        if (!field) {
+            field = document.createElement('input');
+            field.type = 'hidden'; field.name = 'senha_atual'; form.append(field);
+        }
+        field.value = confirmationPassword.value;
+    }
+    const marker = form.querySelector('[name="_confirmacao"]');
+    if (marker) marker.value = 'confirmada';
+    approvedConfirmation = form;
+    form.requestSubmit(pendingSubmitter || undefined);
+    approvedConfirmation = null;
+    if (form.dataset.submitting !== 'true') {
+        if (marker) marker.value = 'pendente';
+        const field = form.querySelector('[name="senha_atual"]');
+        if (field) field.value = '';
+    }
+    confirmationDialog.close();
+});
+confirmationDialog?.querySelectorAll('[data-confirm-close]').forEach(button => {
+    button.addEventListener('click', () => confirmationDialog.close());
+});
+confirmationDialog?.addEventListener('close', () => {
+    confirmationPassword.value = '';
+    pendingSubmitter?.focus();
+    pendingConfirmation = null;
+    pendingSubmitter = null;
+});
+window.addEventListener('pageshow', () => {
+    document.querySelectorAll('form[data-confirm]').forEach(form => {
+        delete form.dataset.submitting;
+        const marker = form.querySelector('[name="_confirmacao"]');
+        if (marker) marker.value = 'pendente';
+        const password = form.querySelector('[name="senha_atual"]');
+        if (password) password.value = '';
+    });
 });

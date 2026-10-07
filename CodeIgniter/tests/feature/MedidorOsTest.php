@@ -22,14 +22,14 @@ final class MedidorOsTest extends AppTestCase
         $before=$this->meter();
         foreach (['os/1/medidores/reservar'=>[1],'os/1/medidores/1/entregar'=>[1],'os/1/medidores/1/receber'=>[1],'os/1/medidores/1/ocorrencia'=>[1,3],'medidores/1/ocorrencia'=>[1]] as $path=>$allowed) {
             foreach ([null,1,2,3] as $actor) {
-                $response=$this->requestAs($actor,'POST',$path);
+                $response=$this->requestWithDeletionPassword($actor,'POST',$path);
                 if ($actor===null) { $response->assertRedirectTo(site_url('login')); }
                 elseif (!in_array($actor,$allowed,true)) { $response->assertStatus(403); }
                 else { $this->assertContains($response->response()->getStatusCode(),[404,422]); }
             }
-            $this->requestAs(1,'POST',$path,[],false)->assertStatus(403);
-            $this->requestAs(1,'POST',$path,[],true,time()-7201)->assertRedirectTo(site_url('login'));
-            $this->requestAs(1,'GET',$path)->assertStatus(404);
+            $this->requestWithDeletionPassword(1,'POST',$path,[],false)->assertStatus(403);
+            $this->requestWithDeletionPassword(1,'POST',$path,[],true,time()-7201)->assertRedirectTo(site_url('login'));
+            $this->requestWithDeletionPassword(1,'GET',$path)->assertStatus(404);
         }
         $this->assertSame($before,$this->meter());
         $this->assertSame(0,$this->db->table('tbl_medidor_reserva')->countAllResults());
@@ -107,10 +107,10 @@ final class MedidorOsTest extends AppTestCase
         $this->requestAs(2,'POST','os/1/cancelar',['motivo'=>'Cancelada'])->assertStatus(303);
         $this->db->table('tbl_os')->where('id_oss',2)->update(['status_oss'=>'encerrada']);
         $this->db->table('tbl_medidor')->where('id_med !=',1)->update(['eletricista_posse_med'=>null]);
-        $this->requestAs(1,'POST','usuarios/3/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1,'POST','usuarios/3/excluir')->assertStatus(422);
         $this->requestAs(1,'POST','os/1/medidores/1/ocorrencia',['tipo_ocorrencia'=>'baixa','justificativa_medidor'=>'Baixa administrativa'])->assertStatus(303);
         $this->assertSame('1',(string)$this->meter()['eletricista_posse_med']);
-        $this->requestAs(1,'POST','usuarios/3/excluir')->assertStatus(303);
+        $this->requestWithDeletionPassword(1,'POST','usuarios/3/excluir')->assertStatus(303);
     }
     public function testBoundariesValidationAndEscaping(): void
     {
@@ -173,7 +173,7 @@ final class MedidorOsTest extends AppTestCase
     {
         $r=$this->reserve();
         $this->requestAs(1,'POST','medidores/1/ocorrencia',['tipo_ocorrencia'=>'dano','justificativa_medidor'=>'Dano'])->assertStatus(422);
-        $this->requestAs(1,'POST','medidores/1/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1,'POST','medidores/1/excluir')->assertStatus(422);
         $this->requestAs(1,'POST','os/1/medidores/1/ocorrencia',['tipo_ocorrencia'=>'perda','justificativa_medidor'=>'Perda'])->assertStatus(422);
         $this->db->table('tbl_usuario')->where('id_usu',3)->update(['ativo_usu'=>0]);
         $this->requestAs(1,'POST',"os/1/medidores/$r/entregar")->assertStatus(422);

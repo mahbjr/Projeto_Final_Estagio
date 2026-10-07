@@ -44,6 +44,16 @@ abstract class AppTestCase extends CIUnitTestCase
         }
     }
 
+    // Existing business-flow tests explicitly supply the seed manager password for deletions.
+    // Security tests use requestAs directly to exercise missing/incorrect credentials.
+    protected function requestWithDeletionPassword(?int $userId, string $method, string $path, array $data = [], bool $csrf = true, ?int $lastActivity = null)
+    {
+        if ($method === 'POST' && str_ends_with($path, '/excluir')) {
+            $data += ['senha_atual' => 'senha123'];
+        }
+        return $this->requestAs($userId, $method, $path, $data, $csrf, $lastActivity);
+    }
+
     protected function clientInput(array $overrides = []): array
     {
         return $overrides + [

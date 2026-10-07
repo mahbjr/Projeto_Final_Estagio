@@ -38,13 +38,13 @@ final class ChecklistEntregaTest extends AppTestCase
         $before = $this->balance();
         foreach ($routes as $path => $allowed) {
             foreach ([null,1,2,3] as $actor) {
-                $response = $this->requestAs($actor,'POST',$path);
+                $response = $this->requestWithDeletionPassword($actor,'POST',$path);
                 if ($actor === null) { $response->assertRedirectTo(site_url('login')); }
                 else { $response->assertStatus($actor === $allowed ? 422 : 403); }
             }
-            $this->requestAs($allowed,'POST',$path,[],false)->assertStatus(403);
-            $this->requestAs($allowed,'POST',$path,[],true,time()-7201)->assertRedirectTo(site_url('login'));
-            $this->requestAs($allowed,'GET',$path)->assertStatus(404);
+            $this->requestWithDeletionPassword($allowed,'POST',$path,[],false)->assertStatus(403);
+            $this->requestWithDeletionPassword($allowed,'POST',$path,[],true,time()-7201)->assertRedirectTo(site_url('login'));
+            $this->requestWithDeletionPassword($allowed,'GET',$path)->assertStatus(404);
         }
         $this->assertSame($before,$this->balance());
         $this->assertSame(0,$this->db->table('tbl_checklist_avaliacao')->countAllResults());
@@ -141,7 +141,7 @@ final class ChecklistEntregaTest extends AppTestCase
         $this->requestAs(1,'POST',"os/1/consumiveis/$r/entregar")->assertStatus(303);
         $this->requestAs(2,'POST','os/1/cancelar',['motivo'=>'Cancelada após entrega'])->assertStatus(303);
         $this->clearPendingWork();
-        $this->requestAs(1,'POST','usuarios/3/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1,'POST','usuarios/3/excluir')->assertStatus(422);
         $this->requestAs(1,'POST',"os/1/consumiveis/$r/receber",['quantidade_devolucao'=>'5.126','observacao_devolucao'=>'Maior que dívida'])->assertStatus(422);
         $this->requestAs(1,'POST',"os/1/consumiveis/$r/receber",['quantidade_devolucao'=>'2,125','observacao_devolucao'=>'Retorno parcial'])->assertStatus(303);
         $this->assertSame('22.500',$this->balance()['quantidade_sco']);
@@ -151,7 +151,7 @@ final class ChecklistEntregaTest extends AppTestCase
         $this->assertSame('0.000',$this->balance(1)['quantidade_sco']);
         $this->assertSame('conciliada',$this->db->table('tbl_consumivel_reserva')->get()->getRow()->status_rco);
         $this->requestAs(1,'POST',"os/1/consumiveis/$r/receber",['quantidade_devolucao'=>'3','observacao_devolucao'=>'Repetido'])->assertStatus(422);
-        $this->requestAs(1,'POST','usuarios/3/excluir')->assertStatus(303);
+        $this->requestWithDeletionPassword(1,'POST','usuarios/3/excluir')->assertStatus(303);
     }
 
     public function testNestedReservationIdsAndInactiveOwner(): void

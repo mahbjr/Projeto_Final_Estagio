@@ -77,10 +77,11 @@ final class ConsumivelService extends WriteService
         });
     }
 
-    public function delete(int $id, int $actor): void
+    public function delete(int $id, int $actor, mixed $password = null): void
     {
-        $this->transaction(function () use ($id, $actor) {
+        $this->transaction(function () use ($id, $actor, $password) {
             $this->actor($actor);
+            $this->confirmDeletion($actor, $password);
             $this->material($id);
             if ($this->db->table('tbl_consumivel_saldo')->where('consumivel_sco', $id)->groupStart()->where('quantidade_sco >', 0)->orWhere('reservado_sco >', 0)->groupEnd()->countAllResults()
                 || $this->db->table('tbl_consumivel_reserva')->where('consumivel_rco', $id)->where('data_exclusao_rco', null)->whereIn('status_rco', ['reservada', 'entregue'])->countAllResults()) {

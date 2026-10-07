@@ -75,6 +75,14 @@ abstract class WriteService
         return $actor;
     }
 
+    protected function confirmDeletion(int $actorId, mixed $password): void
+    {
+        $actor = $this->operationalActor($actorId, ['gestor']);
+        if (!is_string($password) || $password === '' || strlen($password) > 72 || !password_verify($password, $actor['senha_usu'])) {
+            throw new FormException(['senha_atual' => 'Informe sua senha atual corretamente para confirmar a exclusão.']);
+        }
+    }
+
     protected function operationalOrder(int $id, array $actor, array $statuses): array
     {
         $order = $this->db->query('SELECT * FROM tbl_os WHERE id_oss = ? AND data_exclusao_oss IS NULL FOR UPDATE', [$id])->getRowArray();

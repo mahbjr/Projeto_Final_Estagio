@@ -26,7 +26,7 @@ final class ConsumiveisController extends ApplicationController
     {
         $this->record($id);
         try {
-            (new ConsumivelService())->delete($id, (int) service('auth')->user()['id_usu']);
+            (new ConsumivelService())->delete($id, (int) service('auth')->user()['id_usu'], $this->request->getPost('senha_atual'));
             return redirect()->to(site_url('consumiveis'))->setStatusCode(303)->with('success', 'Material excluído. Histórico preservado.');
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422); }
     }

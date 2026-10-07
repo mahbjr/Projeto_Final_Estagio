@@ -65,7 +65,7 @@ class MedidoresController extends ApplicationController
             match ($action) {
                 'send' => $service->send($id, $this->request->getPost('destino'), $actor),
                 'returnToDepot' => $service->returnToDepot($id, $this->request->getPost('condicao'), $actor),
-                'delete' => $service->delete($id, $actor),
+                'delete' => $service->delete($id, $actor, $this->request->getPost('senha_atual')),
             };
             return redirect()->to(site_url($action === 'delete' ? 'medidores' : 'medidores/' . $id))->setStatusCode(303)->with('success', 'Operação registrada no histórico.');
         } catch (FormException $e) { return $this->detail($id, $e->errors, 422); }

@@ -56,7 +56,7 @@ class UsuariosController extends ApplicationController
     {
         $this->record($id);
         try {
-            (new FuncionarioService())->delete($id, (int) service('auth')->user()['id_usu']);
+            (new FuncionarioService())->delete($id, (int) service('auth')->user()['id_usu'], $this->request->getPost('senha_atual'));
             return redirect()->to(site_url('usuarios'))->setStatusCode(303)->with('success', 'Usuário excluído. O histórico foi preservado.');
         } catch (FormException $e) {
             return $this->page('usuarios/show', ['title' => 'Consultar usuário', 'active' => 'usuarios', 'record' => $this->record($id), 'errors' => $e->errors], 422);

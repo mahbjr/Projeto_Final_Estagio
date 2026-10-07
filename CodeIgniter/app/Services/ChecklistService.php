@@ -47,10 +47,11 @@ final class ChecklistService extends WriteService
         });
     }
 
-    public function deleteItem(int $checklist, int $id, int $actorId): void
+    public function deleteItem(int $checklist, int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($checklist, $id, $actorId) {
+        $this->transaction(function () use ($checklist, $id, $actorId, $password) {
             $this->actor($actorId);
+            $this->confirmDeletion($actorId, $password);
             $record = $this->record($checklist);
             $model = new ChecklistItemModel($this->db);
             if (!$model->where('checklist_chi', $checklist)->find($id)) { $this->notFound(); }

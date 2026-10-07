@@ -54,7 +54,7 @@ class ClientesController extends ApplicationController
     {
         $this->record($id);
         try {
-            (new ClienteService())->delete($id);
+            (new ClienteService())->delete($id, (int) service('auth')->user()['id_usu'], $this->request->getPost('senha_atual'));
             return redirect()->to(site_url('clientes'))->setStatusCode(303)->with('success', 'Empresa excluída. As OS e o histórico foram preservados.');
         } catch (FormException $e) {
             return $this->page('clientes/show', ['title' => 'Consultar empresa', 'active' => 'clientes', 'record' => $this->record($id), 'errors' => $e->errors], 422);

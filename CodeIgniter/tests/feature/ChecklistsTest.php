@@ -30,7 +30,7 @@ final class ChecklistsTest extends AppTestCase
     {
         $before=$this->db->table('tbl_checklist')->get()->getResultArray();
         $items=$this->db->table('tbl_checklist_item')->get()->getResultArray();
-        $response=$this->requestAs($actor,$verb,$path);
+        $response=$this->requestWithDeletionPassword($actor,$verb,$path);
         if ($actor===null) { $response->assertRedirectTo(site_url('login')); }
         elseif ($actor!==1) { $response->assertStatus(403); }
         else { $this->assertContains($response->response()->getStatusCode(),[200,303,422]); }
@@ -49,9 +49,9 @@ final class ChecklistsTest extends AppTestCase
         $item=$this->db->table('tbl_checklist_item')->where('checklist_chi',$id)->get()->getRowArray();$itemId=(int)$item['id_chi'];
         $this->requestAs(1,'POST',"checklists/$id/atualizar",$this->modelInput(['ativo_chk'=>'1']))->assertStatus(303);
         $this->requestAs(1,'POST',"checklists/$id/itens/$itemId/atualizar",$this->itemInput(['nivel_chi'=>'informativo','obrigatorio_chi'=>'0']))->assertStatus(303);
-        $this->requestAs(1,'POST',"checklists/$id/itens/$itemId/excluir")->assertStatus(422);
+        $this->requestWithDeletionPassword(1,'POST',"checklists/$id/itens/$itemId/excluir")->assertStatus(422);
         $this->requestAs(1,'POST',"checklists/$id/atualizar",$this->modelInput())->assertStatus(303);
-        $this->requestAs(1,'POST',"checklists/$id/itens/$itemId/excluir")->assertStatus(303);
+        $this->requestWithDeletionPassword(1,'POST',"checklists/$id/itens/$itemId/excluir")->assertStatus(303);
         $this->assertNotNull($this->db->table('tbl_checklist_item')->where('id_chi',$itemId)->get()->getRow()->data_exclusao_chi);
         $this->requestAs(1,'GET',"checklists/$id/itens/$itemId/editar")->assertStatus(404);
         $this->requestAs(1,'POST',"checklists/$id/atualizar",$this->modelInput(['ativo_chk'=>'1']))->assertStatus(422);
@@ -60,15 +60,15 @@ final class ChecklistsTest extends AppTestCase
     {
         $this->db->table('tbl_checklist')->insert(['id_chk'=>2,'nome_chk'=>'Outro exemplo','tipo_os_chk'=>'corte','etapa_chk'=>'inicio','usuario_chk'=>1]);
         $this->requestAs(1,'POST','checklists/2/itens/1/atualizar',$this->itemInput())->assertStatus(404);
-        $this->requestAs(1,'POST','checklists/2/itens/1/excluir')->assertStatus(404);
+        $this->requestWithDeletionPassword(1,'POST','checklists/2/itens/1/excluir')->assertStatus(404);
         foreach ([['nivel_chi'=>'alerta'],['pergunta_chi'=>' '],['ordem_chi'=>'-1'],['ordem_chi'=>'10000'],['resposta_esperada_chi'=>'2'],['obrigatorio_chi'=>'true']] as $overrides) {
             $this->requestAs(1,'POST','checklists/1/itens',$this->itemInput($overrides))->assertStatus(422);
         }
         foreach (['checklists','checklists/1/atualizar','checklists/1/itens','checklists/1/itens/1/atualizar','checklists/1/itens/1/excluir'] as $path) {
-            $this->requestAs(1,'POST',$path,$this->itemInput(),false)->assertStatus(403);
-            $this->requestAs(1,'POST',$path,$this->itemInput(),true,time()-7201)->assertRedirectTo(site_url('login'));
+            $this->requestWithDeletionPassword(1,'POST',$path,$this->itemInput(),false)->assertStatus(403);
+            $this->requestWithDeletionPassword(1,'POST',$path,$this->itemInput(),true,time()-7201)->assertRedirectTo(site_url('login'));
         }
-        foreach (['checklists/1/atualizar','checklists/1/itens','checklists/1/itens/1/atualizar','checklists/1/itens/1/excluir'] as $path) { $this->requestAs(1,'GET',$path)->assertStatus(404); }
+        foreach (['checklists/1/atualizar','checklists/1/itens','checklists/1/itens/1/atualizar','checklists/1/itens/1/excluir'] as $path) { $this->requestWithDeletionPassword(1,'GET',$path)->assertStatus(404); }
         $this->assertSame(1,$this->db->table('tbl_checklist_item')->countAllResults());
     }
     public function testAnswersArePreservedWhenQuestionsChangeOrAreRemoved(): void
@@ -78,7 +78,7 @@ final class ChecklistsTest extends AppTestCase
         $before=$this->db->table('tbl_checklist_resposta')->get()->getResultArray();
         $this->requestAs(1,'POST','checklists/1/atualizar',$this->modelInput())->assertStatus(422);
         $this->requestAs(1,'POST','checklists/1/itens/1/atualizar',$this->itemInput())->assertStatus(303);
-        $this->requestAs(1,'POST','checklists/1/itens/1/excluir')->assertStatus(303);
+        $this->requestWithDeletionPassword(1,'POST','checklists/1/itens/1/excluir')->assertStatus(303);
         $this->assertSame($before,$this->db->table('tbl_checklist_resposta')->get()->getResultArray());
     }
     public function testFailureAndActorAreValidatedInService(): void

@@ -29,7 +29,7 @@ final class AccessTest extends AppTestCase
     {
         $beforeUsers = $this->db->table('tbl_usuario')->get()->getResultArray();
         $beforeClients = $this->db->table('tbl_cliente')->get()->getResultArray();
-        $response = $this->requestAs($id, $method, $path);
+        $response = $this->requestWithDeletionPassword($id, $method, $path);
         if ($id === null) {
             $response->assertRedirectTo(site_url('login'));
         } elseif (!$allowed) {
@@ -60,7 +60,7 @@ final class AccessTest extends AppTestCase
     public function testNoWriteActionsAreAvailableThroughGet(): void
     {
         foreach (['logout', 'clientes/2/excluir', 'clientes/2/atualizar', 'usuarios/2/excluir', 'usuarios/2/atualizar', 'AuthController/logout'] as $path) {
-            $this->requestAs(1, 'GET', $path)->assertStatus(404);
+            $this->requestWithDeletionPassword(1, 'GET', $path)->assertStatus(404);
         }
         $this->assertSame(4, $this->db->table('tbl_usuario')->where('data_exclusao_usu', null)->countAllResults());
     }

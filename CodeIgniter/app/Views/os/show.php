@@ -16,7 +16,7 @@
 </div><button class="btn btn-primary mt-3" type="submit">Atribuir</button></form></section>
 <?php endif ?>
 <?php if ($can('os.cancel') && in_array($record['status_oss'], ['aberta', 'atribuida'], true)): ?>
-<section class="panel form-panel mt-4"><h2>Cancelar OS</h2><form method="post" action="<?= site_url('os/' . $record['id_oss'] . '/cancelar') ?>" data-validate data-confirm="Cancelar esta OS? O histórico será preservado."><?= csrf_field() ?><div class="row g-3">
+<section class="panel form-panel mt-4"><h2>Cancelar OS</h2><form method="post" action="<?= site_url('os/' . $record['id_oss'] . '/cancelar') ?>" data-validate data-confirm="Cancelar esta OS? O histórico será preservado."><?= csrf_field() ?><input type="hidden" name="_confirmacao" value="pendente"><div class="row g-3">
 <?= app_field('motivo', 'Motivo do cancelamento', $input, $errors, ['required' => true, 'type' => 'textarea', 'max' => 1000, 'column' => 'col-12']) ?>
 </div><button class="btn btn-outline-danger mt-3" type="submit">Cancelar OS</button></form></section>
 <?php endif ?>
