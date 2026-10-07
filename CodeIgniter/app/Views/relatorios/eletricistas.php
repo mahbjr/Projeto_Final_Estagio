@@ -5,13 +5,43 @@
 <?= $this->include('components/indicadores_filters') ?>
 <?php if ($report !== null): ?>
 <div class="row g-3 mb-4">
-<?php foreach (['total' => 'OS selecionadas', 'atendidas' => 'OS atendidas', 'aplicados' => 'Aplicações de medidor', 'retirados' => 'Retiradas de medidor'] as $field => $label): ?>
-<div class="col-6 col-xl-3"><section class="panel p-4 h-100"><h2 class="fs-6"><?= esc($label) ?></h2><strong class="fs-3"><?= (int) $report['summary'][$field] ?></strong></section></div>
+<?php
+$summaryCards = [
+    'total' => ['label' => 'OS selecionadas', 'badge' => 'kpi-blue', 'icon' => 'clipboard-document-list'],
+    'atendidas' => ['label' => 'OS atendidas', 'badge' => 'kpi-green', 'icon' => 'check-circle'],
+    'aplicados' => ['label' => 'Aplicações de medidor', 'badge' => 'kpi-cyan', 'icon' => 'cube-transparent'],
+    'retirados' => ['label' => 'Retiradas de medidor', 'badge' => 'kpi-amber', 'icon' => 'arrow-down-tray'],
+];
+foreach ($summaryCards as $field => $cfg):
+?>
+<div class="col-6 col-xl-3">
+    <section class="kpi-card h-100" aria-label="<?= esc($cfg['label']) ?>">
+        <div class="kpi-header">
+            <span class="kpi-icon-badge <?= $cfg['badge'] ?>" aria-hidden="true">
+                <?= heroicon($cfg['icon'], 'outline', 'icon') ?>
+            </span>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value"><?= (int) $report['summary'][$field] ?></span>
+            <h2 class="kpi-title"><?= esc($cfg['label']) ?></h2>
+        </div>
+    </section>
+</div>
 <?php endforeach ?>
 </div>
-<section class="panel p-4 mb-4" aria-label="Tempo de atendimento"><h2 class="fs-5">Tempo médio de atendimento</h2><strong class="fs-3"><?= esc(attendance_duration($report['summary']['media_segundos'])) ?></strong>
-<p class="mt-2 mb-0"><?= (int) $report['summary']['amostras'] ?> atendimento(s) com duração válida; <?= (int) $report['summary']['fora_media'] ?> encerrada(s) fora da média por horários ausentes ou invertidos.</p>
-<p class="mt-2 mb-0">Tempo corrido entre início e fechamento, incluindo esperas. Aplicações e retiradas contam operações históricas das OS selecionadas, não equipamentos distintos nem estoque atual.</p></section>
+<section class="panel p-4 mb-4" aria-label="Tempo de atendimento">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <div>
+            <h2 class="fs-5 mb-1">Tempo médio de atendimento</h2>
+            <strong class="fs-2 text-dark"><?= esc(attendance_duration($report['summary']['media_segundos'])) ?></strong>
+        </div>
+        <div class="kpi-icon-badge kpi-purple" aria-hidden="true">
+            <?= heroicon('clock', 'outline', 'icon') ?>
+        </div>
+    </div>
+    <p class="mt-2 mb-0 text-muted"><?= (int) $report['summary']['amostras'] ?> atendimento(s) com duração válida; <?= (int) $report['summary']['fora_media'] ?> encerrada(s) fora da média por horários ausentes ou invertidos.</p>
+    <p class="mt-1 mb-0 text-muted small">Tempo corrido entre início e fechamento, incluindo esperas. Aplicações e retiradas contam operações históricas das OS selecionadas, não equipamentos distintos nem estoque atual.</p>
+</section>
 <section class="panel mb-4"><div class="panel-toolbar"><h2 class="fs-5 mb-0"><?= $personal ? 'Meu resumo' : 'Resumo por eletricista' ?></h2></div>
 <div class="table-responsive report-table" tabindex="0" role="region" aria-label="Resumo por profissional, tabela com rolagem horizontal">
 <table class="table app-table"><caption class="visually-hidden">Resumo de todas as OS filtradas, independente da paginação</caption><thead><tr><th>Eletricista</th><th>OS</th><th>Atendidas</th><th>Média</th><th>Durações válidas</th><th>Fora da média</th><th>Aplicações</th><th>Retiradas</th></tr></thead><tbody>
