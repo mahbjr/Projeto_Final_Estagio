@@ -1,5 +1,15 @@
 <?php $eventLabels = ['criacao' => 'Criação', 'edicao' => 'Edição', 'atribuicao' => 'Atribuição', 'cancelamento' => 'Cancelamento', 'status' => 'Status', 'foto_adicionada'=>'Foto anexada', 'foto_removida'=>'Foto removida', 'encerramento' => 'Encerramento', 'checklist_fechamento' => 'Checklist de fechamento', 'checklist_inicio' => 'Checklist de início', 'liberacao_inicio' => 'Liberação de início', 'aplicacao_medidor'=>'Aplicação de medidor', 'retirada_medidor'=>'Retirada de medidor', 'inicio_atendimento'=>'Início do atendimento', 'observacao_atendimento'=>'Observação do atendimento', 'retirada_deposito'=>'Retirada no galpão', 'custodia_medidor'=>'Vínculo de medidor em posse', 'devolucao_medidor'=>'Devolução de medidor', 'reserva_medidor'=>'Reserva de medidor', 'ocorrencia_medidor'=>'Ocorrência de medidor']; ?>
-<section class="panel os-history-card"><header class="os-card-heading"><h2>Histórico da ordem</h2><p>Atualizações e auditoria</p></header><div class="os-card-body">
+<section class="panel os-history-card">
+    <header class="os-card-heading">
+        <div class="os-card-title-group">
+            <div>
+                <h2>Histórico da ordem</h2>
+                <p>Atualizações e auditoria</p>
+            </div>
+        </div>
+        <span class="os-card-icon" aria-hidden="true"><?= heroicon('clock', 'outline', 'icon') ?></span>
+    </header>
+    <div class="os-card-body">
 <?php if (!$history): ?><p>Sem histórico registrado.</p><?php else: ?><ol class="os-history-list">
 <?php foreach ($history as $event): ?><li>
 <h3><?= esc($eventLabels[$event['evento_osh']] ?? $event['evento_osh']) ?></h3>

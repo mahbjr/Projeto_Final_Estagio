@@ -1,4 +1,20 @@
-<section class="panel detail-panel mt-4"><header class="os-inline-heading"><h2>Checklist de <?= esc($stageLabel) ?></h2></header><p><?= esc($stage === 'inicio' ? 'Todos os modelos ativos devem estar aprovados ou liberados pelo Gestor antes do início. Se as perguntas mudarem, responda novamente.' : 'Todos os modelos ativos devem estar aprovados antes do encerramento. Bloqueios exigem correção pelo Eletricista; não há liberação pelo Gestor.') ?></p>
+<section class="panel detail-panel mt-4 os-checklist-panel">
+    <header class="os-card-heading">
+        <div class="os-card-title-group">
+            <span class="os-step-number" aria-hidden="true"><?= $stage === 'inicio' ? '1' : '4' ?></span>
+            <div>
+                <h2>Checklist de <?= esc($stageLabel) ?></h2>
+                <p><?= esc($stage === 'inicio' ? 'Todos os modelos ativos devem estar aprovados ou liberados pelo Gestor antes do início.' : 'Todos os modelos ativos devem estar aprovados antes do encerramento.') ?></p>
+            </div>
+        </div>
+        <span class="os-card-icon" aria-hidden="true"><?= heroicon('clipboard-document-check', 'outline', 'icon') ?></span>
+    </header>
+    <div class="os-card-body">
+<?php if ($stage === 'inicio'): ?>
+    <p class="text-muted small mb-3">Modelos demonstrativos — se as perguntas mudarem, responda novamente.</p>
+<?php else: ?>
+    <p class="text-muted small mb-3">Bloqueios exigem correção pelo Eletricista; não há liberação gerencial no encerramento.</p>
+<?php endif ?>
 <?php if (!$templates): ?><p>Nenhum modelo de <?= esc($stageLabel) ?> ativo para este tipo de serviço. Solicite configuração ao Gestor.</p><?php endif ?>
 <?php if ($can($stage === 'inicio' ? 'os.checklist.answer' : 'os.checklist.closing') && $orderRecord['status_oss'] === ($stage === 'inicio' ? 'atribuida' : 'em_atendimento')): ?>
 <?php foreach ($templates as $template): ?>
@@ -38,4 +54,4 @@
 <?php endif ?>
 </details>
 <?php endforeach ?>
-</section>
+</div></section>
