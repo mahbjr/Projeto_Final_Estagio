@@ -34,7 +34,7 @@ const unchangedLegacy = field => field.hasAttribute('data-original') &&
 function validCnpj(value) {
     const digits = normalizeCnpj(value);
     if (!/^[0-9]{14}$/.test(digits) || /^([0-9])\1{13}$/.test(digits)) return false;
-    return [[5,4,3,2,9,8,7,6,5,4,3,2], [6,5,4,3,2,9,8,7,6,5,4,3,2]].every(weights => {
+    return [[5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2], [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]].every(weights => {
         const remainder = weights.reduce((sum, weight, i) => sum + Number(digits[i]) * weight, 0) % 11;
         return Number(digits[weights.length]) === (remainder < 2 ? 0 : 11 - remainder);
     });
@@ -66,7 +66,7 @@ document.querySelectorAll('input[data-mask]').forEach(field => {
     field.addEventListener('paste', event => {
         event.preventDefault();
         field.setRangeText(event.clipboardData.getData('text'), field.selectionStart, field.selectionEnd, 'end');
-        field.dispatchEvent(new Event('input', {bubbles: true}));
+        field.dispatchEvent(new Event('input', { bubbles: true }));
     });
     field.addEventListener('beforeinput', event => {
         if (!['deleteContentBackward', 'deleteContentForward'].includes(event.inputType) || field.selectionStart !== field.selectionEnd) return;
@@ -80,7 +80,7 @@ document.querySelectorAll('input[data-mask]').forEach(field => {
         }
         event.preventDefault();
         field.setRangeText('', start, end, 'end');
-        field.dispatchEvent(new Event('input', {bubbles: true}));
+        field.dispatchEvent(new Event('input', { bubbles: true }));
     });
 });
 
@@ -102,7 +102,7 @@ document.querySelectorAll('form[data-validate]').forEach((form) => {
         if (value && field.dataset.mask === 'telefone' && !unchangedLegacy(field) && !/^[1-9]{2}[0-9]{8,9}$/.test(value.replace(/[() \-]/g, ''))) message = 'Informe DDD e telefone com 10 ou 11 dígitos.';
         if (value && ['cep_cli', 'cep_oss'].includes(field.name) && !/^[0-9]{8}$/.test(value.replace(/-/g, ''))) message = 'Informe um CEP com oito dígitos.';
         if (value && ['estado_cli', 'estado_oss'].includes(field.name) && !'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ').includes(value.toUpperCase())) message = 'Informe uma UF válida.';
-        if (field.name === 'senha' && field.value && ([...field.value].length < 8 || new TextEncoder().encode(field.value).length > 72)) message = 'Use pelo menos oito caracteres e no máximo 72 bytes.';
+        if (field.name === 'senha' && field.value && ([...field.value].length < 8 || new TextEncoder().encode(field.value).length > 72)) message = 'Use pelo menos oito caracteres.';
         if (field.name === 'confirmacao' && field.value !== form.elements.senha.value) message = 'A confirmação deve ser igual à senha.';
         field.setCustomValidity(message);
         if (!field.willValidate) return;
@@ -250,7 +250,7 @@ document.querySelectorAll('[data-filter-dropdown]').forEach(dropdown => {
         popover.style.maxHeight = Math.max(120, Math.min(620, upwards ? above : below)) + 'px';
     };
     window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, {passive:true});
+    window.addEventListener('scroll', place, { passive: true });
     const close = () => { dropdown.open = false; trigger.focus(); };
     dropdown.querySelector('[data-filter-close]').addEventListener('click', close);
     document.addEventListener('keydown', event => {

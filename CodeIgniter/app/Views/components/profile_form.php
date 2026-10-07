@@ -8,7 +8,7 @@
         'telefone_usu' => ['Telefone', ['type' => 'tel', 'max' => 20, 'autocomplete' => 'tel']],
         'nome_usu' => ['E-mail ou identificador de acesso', ['required' => true, 'max' => 150, 'autocomplete' => 'username', 'column' => 'col-12', 'help' => 'Para alterar, informe um e-mail válido e sua senha atual.']],
         'senha_atual' => ['Senha atual', ['type' => 'password', 'autocomplete' => 'current-password', 'column' => 'col-12', 'help' => 'Obrigatória ao alterar o e-mail ou a senha.']],
-        'senha' => ['Nova senha', ['type' => 'password', 'autocomplete' => 'new-password', 'help' => 'Deixe em branco para manter. Mínimo de oito caracteres e máximo de 72 bytes.']],
+        'senha' => ['Nova senha', ['type' => 'password', 'autocomplete' => 'new-password', 'help' => 'Deixe em branco para manter.']],
         'confirmacao' => ['Confirmar nova senha', ['type' => 'password', 'autocomplete' => 'new-password']],
     ] as $field => [$label, $options]): ?>
         <?= app_field($field, $label, $record, $errors, $options + ['id' => $prefix . '-' . $field]) ?>
