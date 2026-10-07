@@ -7,6 +7,7 @@
     <link rel="icon" href="<?= base_url('assets/images/gpmsolucoes_logo.png') ?>" type="image/png">
     <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
+    <?php if (($active ?? '') === 'inicio'): ?><link rel="stylesheet" href="<?= base_url('assets/css/welcome.css') ?>"><?php endif ?>
     <noscript><style>@media(max-width:1400px){.mobile-menu{display:none}.app-navigation{display:flex}}</style></noscript>
     <script src="<?= base_url('assets/js/app.js') ?>" defer></script>
 </head>
@@ -19,7 +20,7 @@
     </a>
     <button class="mobile-menu icon-button" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="Abrir navegação" data-nav-toggle><?= heroicon('bars-3', 'outline', 'icon') ?></button>
     <nav class="app-navigation" id="main-navigation" aria-label="Navegação principal">
-        <?php foreach ([['inicio', 'inicio', 'home', $user['papel_usu'] === 'eletricista' ? 'Meus atendimentos' : 'Visão geral'], ['clientes.index', 'clientes', 'building-office-2', 'Clientes'], ['usuarios.index', 'usuarios', 'users', 'Equipe'], ['os.index', 'os', 'clipboard-document-list', 'Ordens de serviço'], ['meus-medidores.index', 'meus-medidores', 'cube', 'Meus medidores'], ['medidores.index', 'medidores', 'cube', 'Estoque'], ['checklists.index', 'checklists', 'clipboard-document-check', 'Checklists'], ['relatorios.eletricistas', 'relatorios/eletricistas', 'chart-bar', 'Relatórios']] as [$permission, $path, $icon, $label]): ?>
+        <?php foreach ([['inicio', 'inicio', 'home', $user['papel_usu'] === 'eletricista' ? 'Meus atendimentos' : 'Bem-vindo'], ['clientes.index', 'clientes', 'building-office-2', 'Clientes'], ['usuarios.index', 'usuarios', 'users', 'Equipe'], ['os.index', 'os', 'clipboard-document-list', 'Ordens de serviço'], ['meus-medidores.index', 'meus-medidores', 'cube', 'Meus medidores'], ['medidores.index', 'medidores', 'cube', 'Estoque'], ['checklists.index', 'checklists', 'clipboard-document-check', 'Checklists'], ['relatorios.eletricistas', 'relatorios/eletricistas', 'chart-bar', 'Relatórios']] as [$permission, $path, $icon, $label]): ?>
             <?php if ($can($permission) && !($user['papel_usu'] === 'eletricista' && $path === 'os')): ?>
                 <a class="nav-item <?= (($active ?? '') === $path || ($user['papel_usu'] === 'eletricista' && $path === 'inicio' && ($active ?? '') === 'os')) ? 'is-active' : '' ?>" href="<?= site_url($path) ?>" <?= (($active ?? '') === $path || ($user['papel_usu'] === 'eletricista' && $path === 'inicio' && ($active ?? '') === 'os')) ? 'aria-current="page"' : '' ?>><?= heroicon($icon, 'outline', 'icon') ?><span><?= esc($label) ?></span></a>
             <?php endif ?>

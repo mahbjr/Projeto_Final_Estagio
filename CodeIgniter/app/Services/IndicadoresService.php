@@ -64,11 +64,6 @@ final class IndicadoresService
         return ['filters' => $values, 'errors' => $errors, 'clients' => $clients, 'owners' => $owners, 'personal' => $personal, 'owner' => $owner];
     }
 
-    public function dashboard(array $context): array
-    {
-        return $this->model->dashboard($this->queryFilters($context), $context['owner']);
-    }
-
     public function report(array $context, int $page): array
     {
         return $this->model->attendanceReport($this->queryFilters($context), $context['owner'], $page);

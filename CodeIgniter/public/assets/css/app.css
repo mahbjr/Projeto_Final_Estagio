@@ -46,6 +46,126 @@
 .os-workspace .os-inline-heading{border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:16px}.os-workspace .os-inline-heading h2{margin:0}
 .os-meter-record+.os-meter-record{border-top:1px solid var(--border);margin-top:20px;padding-top:20px}.os-meter-record h3{margin:0 0 16px}.os-detail-aside .os-meter-record .os-data-grid{grid-template-columns:1fr;gap:14px}
 
+/* Estilos aprimorados da Tela de OS (baseados em designs/TelaOSatualizada.html) */
+.os-page-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    color: #8a909c;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: inline-block;
+}
+.os-meta-text {
+    font-size: 12.5px;
+    color: #687080;
+    margin: 4px 0 0;
+}
+.os-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+}
+.os-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.os-card-title-group h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #17191f;
+    margin: 0;
+    line-height: 1.2;
+}
+.os-card-title-group p {
+    font-size: 11px;
+    color: #687080;
+    margin: 2px 0 0;
+    line-height: 1.2;
+}
+.os-step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #17191f;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.os-step-number.os-step-danger {
+    background: #dc3545;
+}
+.os-card-icon {
+    color: #9297a2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.os-card-icon .icon {
+    width: 20px;
+    height: 20px;
+}
+.os-data-grid dt {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #8a909c;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.os-data-grid dd {
+    font-size: 13.5px;
+    color: #17191f;
+}
+.os-address-val {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.os-empty-state-card {
+    background: #fafbfc;
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    padding: 24px;
+}
+.os-empty-state-icon {
+    width: 40px;
+    height: 40px;
+    background: #f0f2f5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+@media print {
+    .app-header, .app-footer, .os-detail-actions, .os-detail-back, .profile-dialog {
+        display: none !important;
+    }
+    .app-main {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .os-detail-layout {
+        display: block !important;
+    }
+    .panel {
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+}
+
 /* KPI metric cards inspired by Figma prototypes (TelaInicialDashboard and Relatorios). */
 .kpi-card {
     background: #fff;
