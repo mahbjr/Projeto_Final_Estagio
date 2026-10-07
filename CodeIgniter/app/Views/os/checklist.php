@@ -1,7 +1,7 @@
 <section class="panel detail-panel mt-4 os-checklist-panel">
     <header class="os-card-heading">
         <div class="os-card-title-group">
-            <span class="os-step-number" aria-hidden="true"><?= $stage === 'inicio' ? '1' : '4' ?></span>
+            <span class="os-step-number" aria-hidden="true"><?= $stage === 'inicio' ? '4' : '5' ?></span>
             <div>
                 <h2>Checklist de <?= esc($stageLabel) ?></h2>
                 <p><?= esc($stage === 'inicio' ? 'Todos os modelos ativos devem estar aprovados ou liberados pelo Gestor antes do início.' : 'Todos os modelos ativos devem estar aprovados antes do encerramento.') ?></p>
@@ -10,18 +10,13 @@
         <span class="os-card-icon" aria-hidden="true"><?= heroicon('clipboard-document-check', 'outline', 'icon') ?></span>
     </header>
     <div class="os-card-body">
-<?php if ($stage === 'inicio'): ?>
-    <p class="text-muted small mb-3">Modelos demonstrativos — se as perguntas mudarem, responda novamente.</p>
-<?php else: ?>
-    <p class="text-muted small mb-3">Bloqueios exigem correção pelo Eletricista; não há liberação gerencial no encerramento.</p>
-<?php endif ?>
 <?php if (!$templates): ?><p>Nenhum modelo de <?= esc($stageLabel) ?> ativo para este tipo de serviço. Solicite configuração ao Gestor.</p><?php endif ?>
 <?php if ($can($stage === 'inicio' ? 'os.checklist.answer' : 'os.checklist.closing') && $orderRecord['status_oss'] === ($stage === 'inicio' ? 'atribuida' : 'em_atendimento')): ?>
 <?php foreach ($templates as $template): ?>
 <form class="mt-4" method="post" action="<?= site_url('os/' . $orderRecord['id_oss'] . '/checklists/' . $template['id_chk'] . '/responder-' . $stage) ?>" data-validate><?= csrf_field() ?><h3><?= esc($template['nome_chk']) ?></h3>
 <?php foreach ($template['items'] as $item): ?>
 <?php $id = $item['id_chi']; $prefix = 'checklist-' . $template['id_chk'] . '-' . $id; $answer = ''; $note = ''; if (($input['template'] ?? null) === (int) $template['id_chk']) { $answer = is_string($input['respostas'][$id] ?? null) ? $input['respostas'][$id] : ''; $note = is_string($input['observacoes'][$id] ?? null) ? $input['observacoes'][$id] : ''; } $answerError = $errors['resposta_' . $id] ?? null; $noteError = $errors['observacao_' . $id] ?? null; ?>
-<div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label" for="<?= esc($prefix) ?>-resposta"><?= esc($item['pergunta_chi']) ?><?= $item['obrigatorio_chi'] ? ' *' : '' ?></label><p class="form-text"><?= $item['nivel_chi'] === 'bloqueante' ? 'Bloqueante' : 'Informativo' ?> · Esperada: <?= $item['resposta_esperada_chi'] ? 'Sim' : 'Não' ?></p>
+<div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label" for="<?= esc($prefix) ?>-resposta"><?= esc($item['pergunta_chi']) ?><?= $item['obrigatorio_chi'] ? ' *' : '' ?></label>
 <select class="form-select <?= $answerError ? 'is-invalid' : '' ?>" id="<?= esc($prefix) ?>-resposta" name="respostas[<?= (int) $id ?>]" <?= $item['obrigatorio_chi'] ? 'required' : '' ?> <?= $answerError ? 'aria-invalid="true" aria-describedby="' . esc($prefix) . '-resposta-error"' : '' ?>>
 <?php foreach (['' => 'Selecione', '1' => 'Sim', '0' => 'Não'] as $value => $label): ?><option value="<?= esc((string) $value) ?>" <?= $answer === (string) $value ? 'selected' : '' ?>><?= esc($label) ?></option><?php endforeach ?></select>
 <?php if ($answerError): ?><div class="invalid-feedback" id="<?= esc($prefix) ?>-resposta-error"><?= esc($answerError) ?></div><?php endif ?></div>
