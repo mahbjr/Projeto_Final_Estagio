@@ -256,7 +256,7 @@ Os três papéis podem abrir o menu da conta no cabeçalho e escolher **Editar p
 
 Alterar o identificador exige um e-mail válido e único; identificadores legados inalterados são preservados. Troca de e-mail ou senha exige a senha atual e regenera a sessão. Nova senha vazia mantém a existente, respeitando mínimo de oito caracteres e máximo de 72 bytes. POST `/perfil/atualizar` usa autorização e CSRF; dados administrativos enviados manualmente são rejeitados. Erros não repopulam senhas. **Sair do sistema** continua sendo POST no menu da conta.
 
-Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras entregues no commit `328ac23`. Ordenação de checklist entregue no commit `b62b11d`. Retirada direta de medidores está descrita abaixo, aguardando revisão para commit; cards do Eletricista permanecem na próxima etapa.
+Perfil entregue no commit `5a6ed1d`, na branch `bugfix/perfil-medidores-atendimento`. Confirmações entregues no commit `cc8c7db`. Máscaras entregues no commit `328ac23`. Ordenação de checklist entregue no commit `b62b11d`. Retirada direta de medidores entregue no commit `5c32306`. Cards do Eletricista estão descritos abaixo, validados e aprovados para commit.
 
 
 ## Confirmações e exclusões protegidas
@@ -298,4 +298,13 @@ POST `/meus-medidores/{id}/retirar` e `/meus-medidores/{id}/devolver` exigem con
 
 Ao iniciar nova ligação, escolha medidor elegível da própria posse após aprovação do checklist inicial. O início cria a custódia na reserva existente com estado `entregue`, cujo nome físico foi preservado; não há entrega administrativa nem segundo movimento físico. Reservas antigas podem ser retiradas pelo responsável da OS, após checklist aprovado; equipamentos já entregues conservam posse/histórico. Devolução de equipamento vinculado concilia a reserva e permite o fechamento quando os demais requisitos forem cumpridos. Aplicação, retirada em campo, cancelamento, ocorrências e baixa mantêm suas regras. Pendências históricas sem reserva conciliada não são corrigidas automaticamente.
 
-Sem alteração de esquema, migrations, seeds, dependências ou banco original/demo. Dashboard e relatórios do Eletricista permanecem até a próxima etapa de cards. Evidências de validação desta correção estão em [EntregaCadastrosBase.md](docs/EntregaCadastrosBase.md).
+Sem alteração de esquema, migrations, seeds, dependências ou banco original/demo. A etapa de cards abaixo substitui o dashboard do Eletricista e restringe relatórios a Gestor/Operador. Evidências de validação desta correção estão em [EntregaCadastrosBase.md](docs/EntregaCadastrosBase.md).
+
+
+## Correções — Meus atendimentos do Eletricista
+
+Para Eletricista, `/inicio` encaminha para `/os`, exibindo **Meus atendimentos** conforme `designs/Eletricista.html`, adaptado ao celular e desktop. Saudação, data em America/Fortaleza e quantidade de OS próprias atribuídas/em atendimento são reais; a quantidade independe dos filtros e da página. Cards mostram número, UC, empresa, endereço, tipo, prioridade, status e agendamento. **Abrir atendimento** leva ao detalhe autorizado; checklists, início, medidores e fechamento mantêm as validações existentes. Menu oferece Meus atendimentos, Meus medidores e conta, sem dashboard/relatórios.
+
+Filtros GET `q`, `status_oss` e `page`: padrão Pendentes (atribuídas/em atendimento), com consulta de outros estados e Todos. Busca por número, UC, empresa e endereço; 15 cards por página, preservando busca/status. Ordenação: em atendimento, atribuídas e demais estados; dentro de cada grupo, agendamento crescente, não agendadas ao final e ID crescente como desempate. Parâmetros malformados retornam 422 sem listagem; filtros extras não alteram o vínculo imposto no servidor. OS excluídas não aparecem; nomes de empresas históricas são preservados. Sem resultados, apresenta estado vazio, sem dados fictícios. Consulta funciona sem JavaScript.
+
+Relatórios por eletricista e de estoque negam acesso direto ao Eletricista com 403. Gestor/Operador preservam dashboard, relatórios e listagem administrativa de OS. Autenticação, conta ativa, sessão expirada, conteúdo escapado e respostas sem cache permanecem. Não há mudança de esquema, migrations, seeds, dependências, .env ou banco original/demo. A migração de posições antigas do checklist permanece pendente de autorização específica para dados existentes. Validações e limites registrados em [EntregaCadastrosBase.md](docs/EntregaCadastrosBase.md).

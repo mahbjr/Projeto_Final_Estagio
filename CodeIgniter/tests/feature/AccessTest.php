@@ -70,8 +70,9 @@ final class AccessTest extends AppTestCase
         $operator = $this->requestAs(2, 'GET', 'inicio');
         $operator->assertSee('Empresas clientes');
         $operator->assertDontSee('Acessar equipe');
-        $electrician = $this->requestAs(3, 'GET', 'inicio');
-        $electrician->assertSee('Seu espaço de atendimento');
+        $this->requestAs(3, 'GET', 'inicio')->assertRedirectTo(site_url('os'));
+        $electrician = $this->requestAs(3, 'GET', 'os');
+        $electrician->assertSee('Meus atendimentos');
         $electrician->assertDontSee('Acessar clientes');
         $operatorClient = $this->requestAs(2, 'GET', 'clientes/2');
         $operatorClient->assertDontSee('Excluir empresa');

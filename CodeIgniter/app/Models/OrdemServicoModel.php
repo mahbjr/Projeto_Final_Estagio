@@ -31,6 +31,24 @@ class OrdemServicoModel extends Model
             ->join('tbl_usuario', 'usuario_ele = id_usu', 'left');
     }
 
+    public function forAttendance(int $electrician, array $filters): self
+    {
+        $this->overview()->where('eletricista_oss', $electrician);
+        if ($filters['status_oss'] === 'pendentes') { $this->whereIn('status_oss', ['atribuida', 'em_atendimento']); }
+        elseif ($filters['status_oss'] !== 'todos') { $this->where('status_oss', $filters['status_oss']); }
+        if ($filters['q'] !== '') {
+            $this->groupStart()->like('unidade_consumidora_oss', $filters['q'])->orLike('endereco_oss', $filters['q'])
+                ->orLike('nome_cli', $filters['q'])->orLike('id_oss', $filters['q'])->groupEnd();
+        }
+        return $this->orderBy("CASE status_oss WHEN 'em_atendimento' THEN 0 WHEN 'atribuida' THEN 1 ELSE 2 END", 'ASC', false)
+            ->orderBy('agendamento_oss IS NULL', 'ASC', false)->orderBy('agendamento_oss')->orderBy('id_oss');
+    }
+
+    public function pendingAttendance(int $electrician): int
+    {
+        return $this->where('eletricista_oss', $electrician)->whereIn('status_oss', ['atribuida', 'em_atendimento'])->countAllResults();
+    }
+
     public function history(int $id): array
     {
         return $this->db->table('tbl_os_historico')->select('tbl_os_historico.*, tbl_usuario.nome_completo_usu AS ator_nome')

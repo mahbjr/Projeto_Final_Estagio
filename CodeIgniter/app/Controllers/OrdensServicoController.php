@@ -15,8 +15,8 @@ final class OrdensServicoController extends ApplicationController
     public function index()
     {
         $user = service('auth')->user();
+        if ($user['papel_usu'] === 'eletricista') { return $this->myAttendance($user); }
         $model = (new OrdemServicoModel())->overview();
-        if ($user['papel_usu'] === 'eletricista') { $model->where('eletricista_oss', $user['id_ele']); }
         $query = $this->request->getGet('q');
         $query = is_string($query) ? mb_substr(trim($query), 0, 150) : '';
         if ($query !== '') {
@@ -34,7 +34,23 @@ final class OrdensServicoController extends ApplicationController
             $model->where('agendamento_oss >=', $filters['dia'] . ' 00:00:00')->where('agendamento_oss <=', $filters['dia'] . ' 23:59:59');
         }
         $rows = $model->orderBy('id_oss', 'DESC')->paginate(15);
-        return $this->page('os/index', ['title' => $user['papel_usu'] === 'eletricista' ? 'Minhas OS' : 'Ordens de serviço', 'active' => 'os', 'rows' => $rows, 'query' => $query, 'filters' => $filters, 'pager' => $model->pager]);
+        return $this->page('os/index', ['title' => 'Ordens de serviço', 'active' => 'os', 'rows' => $rows, 'query' => $query, 'filters' => $filters, 'pager' => $model->pager]);
+    }
+
+    private function myAttendance(array $user)
+    {
+        if (empty($user['id_ele'])) { return $this->response->setStatusCode(403)->setBody('Cadastro técnico inválido.'); }
+        $filters = (new \App\Services\MeusAtendimentosService())->filters($this->request->getGet());
+        $model = new OrdemServicoModel();
+        $rows = $filters['errors'] ? [] : $model->forAttendance((int) $user['id_ele'], $filters)->paginate(15, 'default', $filters['page']);
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('America/Fortaleza'));
+        $days = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+        $months = [1=>'janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+        return $this->page('os/meus-atendimentos', $filters + [
+            'title'=>'Meus atendimentos', 'active'=>'os', 'rows'=>$rows, 'pager'=>$model->pager,
+            'pending'=>$filters['errors'] ? null : (new OrdemServicoModel())->pendingAttendance((int) $user['id_ele']),
+            'today'=>$days[(int) $now->format('w')] . ', ' . $now->format('d') . ' de ' . $months[(int) $now->format('n')] . ' de ' . $now->format('Y'),
+        ], $filters['errors'] ? 422 : 200);
     }
 
     public function show(int $id)

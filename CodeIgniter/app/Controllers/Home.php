@@ -11,6 +11,9 @@ class Home extends ApplicationController
 
     public function dashboard()
     {
+        if (service('auth')->user()['papel_usu'] === 'eletricista') {
+            return redirect()->to(site_url('os'));
+        }
         $service = new \App\Services\IndicadoresService();
         try {
             $context = $service->context(service('auth')->user(), $this->request->getGet());

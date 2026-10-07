@@ -65,10 +65,10 @@ final class OrdensServicoTest extends AppTestCase
     public function testOwnListSearchAndDirectAccess(): void
     {
         $response = $this->requestAs(3, 'GET', 'os');
-        $response->assertSee('Minhas OS');
+        $response->assertSee('Meus atendimentos');
         $response->assertSee('UC-CE-100234');
         $response->assertDontSee('UC-CE-300789');
-        $this->requestAs(3, 'GET', 'os?q=UC-CE-300789')->assertDontSee('UC-CE-300789', 'tbody');
+        $this->requestAs(3, 'GET', 'os?q=UC-CE-300789')->assertDontSee('os-card-3');
         $response = $this->requestAs(3, 'GET', 'os/3');
         $response->assertStatus(403);
         $response->assertDontSee('UC-CE-300789');

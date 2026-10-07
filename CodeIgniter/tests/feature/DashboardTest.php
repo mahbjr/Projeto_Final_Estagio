@@ -56,7 +56,7 @@ final class DashboardTest extends AppTestCase
     {
         $before=$this->db->table('tbl_os')->get()->getResultArray();
         $this->requestAs(null,'GET','inicio')->assertRedirectTo(site_url('login'));
-        foreach ([1,2,3,4] as $id) {
+        foreach ([1,2] as $id) {
             $r=$this->requestAs($id,'GET','inicio?data_inicio=2026-01-01&data_fim=2026-12-31');
             $r->assertStatus(200); $r->assertSee('Total de OS no período');
             $this->assertStringContainsString('no-store',$r->response()->getHeaderLine('Cache-Control'));
@@ -71,10 +71,10 @@ final class DashboardTest extends AppTestCase
     {
         $m=$this->metrics([],3); $this->assertSame(2,$m['total']); $this->assertCount(1,$m['owners']);
         $c=$this->service()->context($this->actor(3),[]); $this->assertArrayNotHasKey('2',$c['owners']); $this->assertArrayNotHasKey('3',$c['clients']);
-        foreach (['eletricista=2','eletricista=sem_atribuicao','cliente=3','cliente=9999'] as $q) { $this->requestAs(3,'GET','inicio?'.$q)->assertStatus(403); }
+        foreach (['eletricista=2','eletricista=sem_atribuicao','cliente=3','cliente=9999'] as $q) { $this->requestAs(3,'GET','inicio?'.$q)->assertRedirectTo(site_url('os')); }
         $r=$this->requestAs(3,'GET','inicio?data_inicio=2026-01-01&data_fim=2026-12-31');
-        $r->assertSee('Minha visão geral'); $r->assertDontSee('ELE-2024-002');
-        $this->requestAs(3,'GET','inicio?eletricista=1')->assertStatus(200);
+        $r->assertRedirectTo(site_url('os'));
+        $this->requestAs(3,'GET','inicio?eletricista=1')->assertRedirectTo(site_url('os'));
     }
     public function testMalformedFiltersDoNotProduceIndicators(): void
     {

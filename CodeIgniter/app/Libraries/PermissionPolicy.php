@@ -9,7 +9,7 @@ final class PermissionPolicy
     private const PERMISSIONS = [
         'perfil.show' => ['gestor', 'operador', 'eletricista'],
         'perfil.update' => ['gestor', 'operador', 'eletricista'],
-        'relatorios.eletricistas' => ['gestor', 'operador', 'eletricista'],
+        'relatorios.eletricistas' => ['gestor', 'operador'],
         'relatorios.estoque' => ['gestor', 'operador'],
         'os.photos.upload' => ['eletricista'],
         'os.photos.show' => ['gestor','operador','eletricista'],

@@ -27,7 +27,8 @@ final class PerfilTest extends AppTestCase
             $this->assertSame('Nome Atualizado', $after[$i]['nome_completo_usu']);
             foreach (['senha_usu', 'nome_usu', 'cpf_usu', 'cargo_usu', 'papel_usu', 'ativo_usu'] as $field) { $this->assertSame($user[$field], $after[$i][$field]); }
         }
-        $response = $this->requestAs($id, 'GET', 'inicio'); $response->assertSee('Nome Atualizado');
+        $path = $id === 3 ? 'os' : 'inicio';
+        $response = $this->requestAs($id, 'GET', $path); $response->assertSee('Nome Atualizado');
     }
 
     public function testCredentialChangesRequireCurrentPasswordAndRegenerateSession(): void
