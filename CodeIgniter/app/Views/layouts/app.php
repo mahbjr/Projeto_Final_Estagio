@@ -10,6 +10,11 @@
     <?php if (($active ?? '') === 'inicio'): ?><link rel="stylesheet" href="<?= base_url('assets/css/welcome.css') ?>"><?php endif ?>
     <noscript><style>@media(max-width:1400px){.mobile-menu{display:none}.app-navigation{display:flex}}</style></noscript>
     <script src="<?= base_url('assets/js/app.js') ?>" defer></script>
+    <?php if (($active ?? '') === 'relatorios/eletricistas'): ?>
+    <link rel="stylesheet" href="<?= base_url('assets/css/reports.css') ?>">
+    <script src="<?= base_url('assets/vendor/chartjs/chart.umd.min.js') ?>" defer></script>
+    <script src="<?= base_url('assets/js/reports.js') ?>" defer></script>
+    <?php endif ?>
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
