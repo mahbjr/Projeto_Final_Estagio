@@ -1,7 +1,7 @@
 <section class="panel detail-panel mt-4 os-photos-panel">
     <header class="os-card-heading">
         <div class="os-card-title-group">
-            <span class="os-step-number" aria-hidden="true">7</span>
+            <span class="os-step-number" aria-hidden="true">8</span>
             <div>
                 <h2>Fotos anexadas</h2>
                 <p>Registros da execução em campo (<?= count($photos) ?> de 30 fotos ativas)</p>

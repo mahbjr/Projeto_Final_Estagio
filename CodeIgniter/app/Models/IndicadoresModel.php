@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Domain\StatusOS;
 use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Model;
 

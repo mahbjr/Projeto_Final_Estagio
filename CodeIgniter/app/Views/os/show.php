@@ -42,6 +42,9 @@
 
     <div class="os-detail-layout">
         <div class="os-detail-main">
+            <!-- Iniciar atendimento ao cliente (no topo, sem número) -->
+            <?= view('os/atendimento', ['orderRecord' => $record, 'input' => $input, 'errors' => $errors]) ?>
+
             <!-- 1. Dados do cliente -->
             <section class="panel os-data-card" id="secao-dados-cliente">
                 <header class="os-card-heading">
@@ -56,20 +59,20 @@
                 </header>
                 <div class="os-card-body">
                     <dl class="os-data-grid">
-                        <div>
+                        <div class="os-data-item">
                             <dt>CLIENTE</dt>
-                            <dd class="fw-bold"><?= esc($record['nome_cli']) ?></dd>
+                            <dd><?= esc($record['nome_cli']) ?></dd>
                         </div>
-                        <div>
+                        <div class="os-data-item">
                             <dt>UNIDADE CONSUMIDORA</dt>
-                            <dd class="fw-bold">UC <?= esc($record['unidade_consumidora_oss']) ?></dd>
+                            <dd>UC <?= esc($record['unidade_consumidora_oss']) ?></dd>
                         </div>
-                        <div class="os-data-wide">
+                        <div class="os-data-item os-data-wide">
                             <dt>ENDEREÇO DO ATENDIMENTO</dt>
                             <dd class="os-address-val">
                                 <?= heroicon('map-pin', 'outline', 'icon text-danger me-1') ?>
-                                <span class="fw-bold"><?= esc($record['endereco_oss'] . ' — ' . $record['bairro_oss'] . ', ' . $record['cidade_oss'] . ' - ' . $record['estado_oss']) ?></span>
-                                <span class="text-muted ms-2">(CEP <?= esc($record['cep_oss']) ?>)</span>
+                                <span><?= esc($record['endereco_oss'] . ' — ' . $record['bairro_oss'] . ', ' . $record['cidade_oss'] . ' - ' . $record['estado_oss']) ?></span>
+                                <span class="text-muted ms-1">• CEP <?= esc($record['cep_oss']) ?></span>
                             </dd>
                         </div>
                     </dl>
@@ -90,50 +93,50 @@
                 </header>
                 <div class="os-card-body">
                     <dl class="os-data-grid">
-                        <div>
+                        <div class="os-data-item">
                             <dt>TIPO DE SERVIÇO</dt>
-                            <dd class="fw-bold"><?= esc(os_label($record['tipo_oss'])) ?></dd>
+                            <dd><?= esc(os_label($record['tipo_oss'])) ?></dd>
                         </div>
-                        <div>
+                        <div class="os-data-item">
                             <dt>RESPONSÁVEL</dt>
-                            <dd class="fw-bold"><?= esc($record['eletricista_nome'] ?: 'Não atribuído') ?></dd>
+                            <dd><?= esc($record['eletricista_nome'] ?: 'Não atribuído') ?></dd>
                         </div>
-                        <div>
+                        <div class="os-data-item">
                             <dt>INÍCIO DO ATENDIMENTO</dt>
                             <dd><?= esc($record['inicio_atendimento_oss'] ? os_datetime($record['inicio_atendimento_oss']) : 'Não iniciado') ?></dd>
                         </div>
-                        <div>
+                        <div class="os-data-item">
                             <dt>FECHAMENTO</dt>
                             <dd><?= esc($record['data_fechamento_oss'] ? os_datetime($record['data_fechamento_oss']) : 'Não encerrada') ?></dd>
                         </div>
-                        <div class="os-data-wide">
+                        <div class="os-data-item os-data-wide">
                             <dt>INSTRUÇÕES / DESCRIÇÃO</dt>
                             <dd class="preserve-lines text-secondary"><?= esc($record['descricao_oss']) ?></dd>
                         </div>
                         <?php if ($record['observacoes_administrativas_oss']): ?>
-                            <div class="os-data-wide">
+                            <div class="os-data-item os-data-wide">
                                 <dt>OBSERVAÇÕES ADMINISTRATIVAS</dt>
                                 <dd class="preserve-lines text-secondary"><?= esc($record['observacoes_administrativas_oss']) ?></dd>
                             </div>
                         <?php endif ?>
                         <?php if ($record['resultado_oss']): ?>
-                            <div>
+                            <div class="os-data-item">
                                 <dt>RESULTADO</dt>
-                                <dd class="fw-bold"><?= esc(os_label($record['resultado_oss'])) ?></dd>
+                                <dd><?= esc(os_label($record['resultado_oss'])) ?></dd>
                             </div>
                         <?php endif ?>
                         <?php if ($record['resultado_oss'] && $record['tipo_oss'] === 'corte'): ?>
-                            <div>
+                            <div class="os-data-item">
                                 <dt>CORTE CONFIRMADO</dt>
                                 <dd><?= $record['corte_confirmado_oss'] ? 'Sim' : 'Não' ?></dd>
                             </div>
-                            <div>
+                            <div class="os-data-item">
                                 <dt>LEITURA FINAL</dt>
                                 <dd><?= esc($record['leitura_final_oss'] ?? '—') ?></dd>
                             </div>
                         <?php endif ?>
                         <?php if ($record['observacoes_finais_oss']): ?>
-                            <div class="os-data-wide">
+                            <div class="os-data-item os-data-wide">
                                 <dt>OBSERVAÇÕES FINAIS</dt>
                                 <dd class="preserve-lines text-secondary"><?= esc($record['observacoes_finais_oss']) ?></dd>
                             </div>
@@ -191,13 +194,20 @@
                 </section>
             <?php endif ?>
 
-            <?= view('os/atendimento', ['orderRecord' => $record, 'input' => $input, 'errors' => $errors]) ?>
-            <?= view('os/checklist-inicio', ['orderRecord' => $record, 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'input' => $input, 'errors' => $errors]) ?>
+            <!-- 3. Operações de medidores / Aplicações e retiradas -->
             <?= view('os/medidores-campo', ['orderRecord' => $record, 'meterReservations' => $meterReservations, 'currentInstallations' => $currentInstallations, 'meterOperations' => $meterOperations]) ?>
+
+            <!-- 4. Checklist de início -->
+            <?= view('os/checklist-inicio', ['orderRecord' => $record, 'beginningTemplates' => $beginningTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'input' => $input, 'errors' => $errors]) ?>
+
+            <!-- 5. Checklist de fechamento e Encerramento -->
+            <?= view('os/fechamento', ['orderRecord' => $record, 'closingTemplates' => $closingTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'input' => $input, 'errors' => $errors]) ?>
             <?php if ($can('os.photos.upload')): ?>
                 <?= view('os/fotos', ['orderRecord' => $record, 'photos' => $photos, 'input' => $input, 'errors' => $errors]) ?>
             <?php endif ?>
-            <?= view('os/fechamento', ['orderRecord' => $record, 'closingTemplates' => $closingTemplates, 'evaluations' => $evaluations, 'latestBeginning' => $latestBeginning, 'input' => $input, 'errors' => $errors]) ?>
+
+            <!-- Registrar observação em campo (no final da página) -->
+            <?= view('os/observacao', ['orderRecord' => $record, 'input' => $input, 'errors' => $errors]) ?>
         </div>
 
         <aside class="os-detail-aside" aria-label="Medidores, histórico e fotos">
