@@ -80,6 +80,16 @@ final class IndicadoresModel extends Model
 
     public function attendanceReport(array $filters, ?int $owner, int $page): array
     {
+        // Aggregate orders alone: meter operations must never multiply chart counts.
+        $states = array_fill_keys(StatusOS::TODOS, 0);
+        $results = array_fill_keys([...StatusOS::RESULTADOS, 'sem_resultado'], 0);
+        foreach ($this->filtered($filters, $owner)->select('status_oss, resultado_oss, COUNT(*) AS total', false)
+            ->groupBy(['status_oss', 'resultado_oss'])->get()->getResultArray() as $row) {
+            $states[$row['status_oss']] += (int) $row['total'];
+            if ($row['status_oss'] === 'encerrada') {
+                $results[$row['resultado_oss'] ?? 'sem_resultado'] += (int) $row['total'];
+            }
+        }
         $summary = $this->normalizeSummary($this->attendanceQuery($filters, $owner)
             ->select($this->attendanceAggregates(), false)->get()->getRowArray());
         $owners = $this->attendanceQuery($filters, $owner)
@@ -94,7 +104,8 @@ final class IndicadoresModel extends Model
             ->select(self::DURATION . ' AS duracao_segundos, COALESCE(movimentos.aplicados, 0) AS aplicados, COALESCE(movimentos.retirados, 0) AS retirados', false)
             ->orderBy('data_abertura_oss', 'DESC')->orderBy('id_oss', 'DESC')->limit(15, ($page - 1) * 15)
             ->get()->getResultArray();
-        return ['summary' => $summary, 'ownersSummary' => $owners, 'rows' => $rows, 'page' => $page];
+        return ['summary' => $summary, 'ownersSummary' => $owners, 'rows' => $rows, 'page' => $page,
+            'states' => $states, 'results' => $results];
     }
 
 }
