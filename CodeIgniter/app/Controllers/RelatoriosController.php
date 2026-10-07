@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Domain\StatusMedidor;
-use App\Models\ConsumivelModel;
 use App\Models\MedidorModel;
 
 class RelatoriosController extends ApplicationController
@@ -38,7 +37,7 @@ class RelatoriosController extends ApplicationController
             $value = $this->request->getGet($field);
             $filters[$field] = is_string($value) ? mb_substr(trim($value), 0, 100) : '';
         }
-        $filters['tipo'] = $filters['tipo'] === 'consumiveis' ? 'consumiveis' : 'medidores';
+        $filters['tipo'] = 'medidores';
         if (!in_array($filters['status_med'], StatusMedidor::TODOS, true)) { $filters['status_med'] = ''; }
         if (!in_array($filters['localizacao_med'], ['deposito', 'viatura', 'cliente'], true)) { $filters['localizacao_med'] = ''; }
         $owners = ['todos' => 'Todos', 'deposito' => 'Depósito'];
@@ -46,7 +45,7 @@ class RelatoriosController extends ApplicationController
             $owners[(string) $owner['id_ele']] = $owner['nome_completo_usu'] . ' · ' . $owner['matricula_ele'];
         }
         if (!array_key_exists($filters['detentor'], $owners)) { $filters['detentor'] = 'todos'; }
-        $model = $filters['tipo'] === 'consumiveis' ? new ConsumivelModel() : new MedidorModel();
+        $model = new MedidorModel();
         $page = $this->request->getGet('page');
         $page = is_string($page) && preg_match('/^[1-9][0-9]{0,8}$/D', $page) ? (int) $page : 1;
         $rows = $model->stockReport($filters)->paginate(15, 'default', $page);

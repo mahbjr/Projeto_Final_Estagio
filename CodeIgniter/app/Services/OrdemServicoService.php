@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Domain\StatusOS;
-use App\Domain\Quantidade;
 use App\Exceptions\FormException;
 use App\Libraries\Identifiers;
 use App\Models\OrdemServicoModel;
@@ -114,21 +113,8 @@ final class OrdemServicoService extends WriteService
                     (new \App\Models\MedidorReservaModel($this->db))->update($reservation['id_rme'], ['status_rme' => 'devolucao_pendente']);
                 }
             }
-            $released = [];
-            $reservations = $this->db->query("SELECT * FROM tbl_consumivel_reserva WHERE ordem_servico_rco = ? AND status_rco = 'reservada' AND data_exclusao_rco IS NULL ORDER BY consumivel_rco, id_rco FOR UPDATE", [$id])->getResultArray();
-            foreach ($reservations as $reservation) {
-                $balance = $this->db->query('SELECT * FROM tbl_consumivel_saldo WHERE consumivel_sco = ? AND eletricista_sco IS NULL AND data_exclusao_sco IS NULL FOR UPDATE', [$reservation['consumivel_rco']])->getRowArray();
-                $quantity = Quantidade::stored($reservation['quantidade_rco']);
-                if (!$balance || Quantidade::stored($reservation['entregue_rco']) !== 0 || Quantidade::stored($balance['reservado_sco']) < $quantity) {
-                    throw new FormException(['operacao' => 'Reserva e saldo incompatíveis. Regularize os materiais antes de cancelar.']);
-                }
-                (new \App\Models\ConsumivelSaldoModel($this->db))->update($balance['id_sco'], ['reservado_sco' => Quantidade::decimal(Quantidade::stored($balance['reservado_sco']) - $quantity)]);
-                (new \App\Models\ConsumivelReservaModel($this->db))->update($reservation['id_rco'], ['status_rco' => 'liberada']);
-                $released[] = (int) $reservation['id_rco'];
-            }
-            // Delivered rows and custody balances remain intact, even when the OS is cancelled.
             (new OrdemServicoModel($this->db))->update($id, ['status_oss' => 'cancelada', 'data_fechamento_oss' => date('Y-m-d H:i:s')]);
-            $this->history($id, $actorId, 'cancelamento', $order['status_oss'], 'cancelada', $reason, array_filter(['reservas_consumiveis_liberadas' => $released, 'reservas_medidores_liberadas' => $releasedMeters]), $order['eletricista_oss'] === null ? null : (int) $order['eletricista_oss']);
+            $this->history($id, $actorId, 'cancelamento', $order['status_oss'], 'cancelada', $reason, array_filter(['reservas_medidores_liberadas' => $releasedMeters]), $order['eletricista_oss'] === null ? null : (int) $order['eletricista_oss']);
         });
     }
 

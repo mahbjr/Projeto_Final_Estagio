@@ -9,8 +9,8 @@ return [
     'in_list' => 'Selecione uma opção válida para {field}.',
     'is_natural_no_zero' => 'Identificador inválido.',
     'matches' => 'A confirmação deve ser igual à senha.',
-    'cnpj_formato' => 'Informe um CNPJ com 12 letras/números e dois dígitos finais.',
+    'cnpj_formato' => 'Informe um CNPJ numérico com 14 dígitos e verificadores válidos.',
     'cpf_formato' => 'Informe um CPF com 11 dígitos.',
     'cep_formato' => 'Informe um CEP com oito dígitos.',
-    'senha_segura' => 'A senha deve ter pelo menos oito caracteres e no máximo 72 bytes.',
+    'senha_segura' => 'A senha deve ter pelo menos oito caracteres.',
 ];

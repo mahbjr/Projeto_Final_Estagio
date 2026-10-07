@@ -56,7 +56,7 @@ class UsuariosController extends ApplicationController
     {
         $this->record($id);
         try {
-            (new FuncionarioService())->delete($id, (int) service('auth')->user()['id_usu']);
+            (new FuncionarioService())->delete($id, (int) service('auth')->user()['id_usu'], $this->request->getPost('senha_atual'));
             return redirect()->to(site_url('usuarios'))->setStatusCode(303)->with('success', 'Usuário excluído. O histórico foi preservado.');
         } catch (FormException $e) {
             return $this->page('usuarios/show', ['title' => 'Consultar usuário', 'active' => 'usuarios', 'record' => $this->record($id), 'errors' => $e->errors], 422);
@@ -68,8 +68,10 @@ class UsuariosController extends ApplicationController
         $input = $this->safeInput(self::FIELDS);
         if ($id && $this->request->getPost('papel_usu') === null) { unset($input['papel_usu']); }
         $credentials = $this->safeInput(['senha', 'confirmacao']);
+        $serviceInput = $input + $credentials;
+        $serviceInput['telefone_usu'] = $this->request->getPost('telefone_usu') ?? '';
         try {
-            $savedId = (new FuncionarioService())->save($input + $credentials, (int) service('auth')->user()['id_usu'], $id);
+            $savedId = (new FuncionarioService())->save($serviceInput, (int) service('auth')->user()['id_usu'], $id);
             return redirect()->to(site_url('usuarios/' . $savedId))->setStatusCode(303)->with('success', 'Usuário salvo com sucesso.');
         } catch (FormException $e) {
             $existing = $id ? $this->record($id) : [];
@@ -87,6 +89,7 @@ class UsuariosController extends ApplicationController
 
     private function form(array $record, array $errors = [], int $status = 200, ?string $originalRole = null)
     {
+        $record['_original'] = isset($record['id_usu']) ? $this->record((int) $record['id_usu']) : [];
         return $this->page('usuarios/form', ['title' => isset($record['id_usu']) ? 'Editar usuário' : 'Novo usuário', 'active' => 'usuarios', 'record' => $record, 'errors' => $errors, 'originalRole' => $originalRole ?? ($record['papel_usu'] ?? null)], $status);
     }
 }

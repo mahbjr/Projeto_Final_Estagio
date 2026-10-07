@@ -129,6 +129,8 @@ _modules/*
 /docs/
 /designs/
 AGENTS.md
+.agents/
+
 
 # CodeIgniter temporários e caches
 CodeIgniter/build/

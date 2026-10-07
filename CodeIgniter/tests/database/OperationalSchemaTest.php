@@ -84,7 +84,7 @@ final class OperationalSchemaTest extends AppTestCase
         }
         $this->assertSame($orders, $this->db->table('tbl_os')->get()->getResultArray());
         $this->assertFalse($this->db->fieldExists('prioridade_oss', 'tbl_os'));
-        $this->assertFalse($this->db->tableExists('tbl_consumivel'));
+        $this->assertFalse($this->db->tableExists('tbl_medidor_reserva'));
     }
 
     public function testCurrentInitializationAndPartialSchemaDetection(): void
@@ -95,16 +95,6 @@ final class OperationalSchemaTest extends AppTestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('parcial');
         $this->migration()->up();
-    }
-
-    public function testStockConstraintsAndDecimalPrecision(): void
-    {
-        $this->rejectsSql('UPDATE tbl_consumivel_saldo SET quantidade_sco = -1 WHERE consumivel_sco = 1');
-        $this->rejectsSql('UPDATE tbl_consumivel_saldo SET reservado_sco = 101 WHERE consumivel_sco = 1');
-        $this->rejectsSql('INSERT INTO tbl_consumivel_saldo (consumivel_sco,quantidade_sco) VALUES (1,5)');
-        $this->rejectsSql('INSERT INTO tbl_consumivel_saldo (consumivel_sco,eletricista_sco,quantidade_sco) VALUES (1,9999,5)');
-        $this->assertSame('25.500', $this->db->table('tbl_consumivel_saldo')->where('consumivel_sco', 2)->get()->getRow()->quantidade_sco);
-        $this->rejectsSql("INSERT INTO tbl_consumivel_mov (consumivel_mco,usuario_mco,tipo_mco,origem_mco,destino_mco,quantidade_mco) VALUES (1,1,'consumo','eletricista','consumo',0)");
     }
 
     public function testExclusiveReservationAndPreservedReservationHistory(): void
@@ -132,12 +122,11 @@ final class OperationalSchemaTest extends AppTestCase
         $this->clearPendingWork();
         $id = (new \App\Services\MedidorService($this->db))->save(['numero_med' => 'ETAPA-1-AUDIT'], 1);
         $this->assertSame('1', (string) $this->db->table('tbl_estoque_mov')->where('medidor_emv', $id)->get()->getRow()->usuario_emv);
+        $before = $this->db->table('tbl_medidor')->where('id_med',$id)->get()->getRowArray();
         $this->db->transBegin();
-        $this->db->table('tbl_consumivel_saldo')->where('consumivel_sco', 1)->update(['quantidade_sco' => '90.000']);
-        $this->db->table('tbl_consumivel_mov')->insert(['consumivel_mco' => 1, 'usuario_mco' => 1, 'tipo_mco' => 'entrega', 'origem_mco' => 'deposito', 'destino_mco' => 'eletricista', 'quantidade_mco' => '10.000']);
+        $this->db->table('tbl_medidor')->where('id_med',$id)->update(['modelo_med'=>'Temporário']);
         $this->db->transRollback();
-        $this->assertSame('100.000', $this->db->table('tbl_consumivel_saldo')->where('consumivel_sco', 1)->get()->getRow()->quantidade_sco);
-        $this->assertSame(2, $this->db->table('tbl_consumivel_mov')->countAllResults());
+        $this->assertSame($before,$this->db->table('tbl_medidor')->where('id_med',$id)->get()->getRowArray());
     }
 
     public function testDownRequiresBackupInsteadOfDeletingEvidence(): void

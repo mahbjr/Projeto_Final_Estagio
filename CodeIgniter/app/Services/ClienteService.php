@@ -33,16 +33,21 @@ class ClienteService extends WriteService
         if ($id) {
             $rules['id_cli'] = 'required|is_natural_no_zero';
         }
-        $this->validate($data, $rules);
-        unset($data['id_cli']);
-        return $this->transaction(function () use ($id, $data) {
+        return $this->transaction(function () use ($id, $data, $rules, $input) {
+            $existing = null;
             if ($id) {
-                $existing = $this->db->query('SELECT id_cli FROM tbl_cliente WHERE id_cli = ? AND data_exclusao_cli IS NULL FOR UPDATE', [$id])->getRowArray();
+                $existing = $this->db->query('SELECT * FROM tbl_cliente WHERE id_cli = ? AND data_exclusao_cli IS NULL FOR UPDATE', [$id])->getRowArray();
                 if (!$existing) { $this->notFound(); }
                 if ($data['status_cli'] === 'inativo' && $this->pendingOrders('cliente_oss', $id)) {
                     throw new FormException(['operacao' => 'A empresa possui OS pendentes. Conclua ou cancele os atendimentos antes de inativar.']);
                 }
             }
+            if ($existing && $data['cnpj_cli'] === $existing['cnpj_cli']) {
+                $rules['cnpj_cli']['rules'] = 'required|exact_length[14]';
+            }
+            $data['telefone_cli'] = $this->phone($input['telefone_cli'] ?? '', $existing['telefone_cli'] ?? null, 'telefone_cli');
+            $this->validate($data, $rules);
+            unset($data['id_cli']);
             $model = new ClienteModel($this->db);
             if ($id) {
                 $model->update($id, $data);
@@ -52,9 +57,10 @@ class ClienteService extends WriteService
         });
     }
 
-    public function delete(int $id): void
+    public function delete(int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($id) {
+        $this->transaction(function () use ($id, $actorId, $password) {
+            $this->confirmDeletion($actorId, $password);
             $row = $this->db->query('SELECT id_cli FROM tbl_cliente WHERE id_cli = ? AND data_exclusao_cli IS NULL FOR UPDATE', [$id])->getRowArray();
             if (!$row) { $this->notFound(); }
             if ($this->pendingOrders('cliente_oss', $id)) {

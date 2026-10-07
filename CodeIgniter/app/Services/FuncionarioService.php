@@ -33,6 +33,7 @@ class FuncionarioService extends WriteService
                 $data[$field] = is_string($input[$field] ?? null) ? trim($input[$field]) : '';
             }
             $data['cpf_usu'] = Identifiers::cpf($data['cpf_usu']);
+            $data['telefone_usu'] = $this->phone($input['telefone_usu'] ?? '', $existing['telefone_usu'] ?? null, 'telefone_usu');
             $rules = [
                 'nome_completo_usu' => 'required|max_length[120]',
                 'cpf_usu' => 'required|cpf_formato|' . ($id ? 'is_unique[tbl_usuario.cpf_usu,id_usu,{id_usu}]' : 'is_unique[tbl_usuario.cpf_usu]'),
@@ -84,10 +85,11 @@ class FuncionarioService extends WriteService
         });
     }
 
-    public function delete(int $id, int $actorId): void
+    public function delete(int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($id, $actorId) {
+        $this->transaction(function () use ($id, $actorId, $password) {
             $managers = $this->lockManagers($actorId);
+            $this->confirmDeletion($actorId, $password);
             $user = $this->db->query('SELECT id_usu, papel_usu, ativo_usu FROM tbl_usuario WHERE id_usu = ? AND data_exclusao_usu IS NULL FOR UPDATE', [$id])->getRowArray();
             if (!$user) { $this->notFound(); }
             if ($id === $actorId) { throw new FormException(['operacao' => 'Você não pode excluir o próprio acesso.']); }
@@ -120,10 +122,6 @@ class FuncionarioService extends WriteService
         }
         if ($this->db->table('tbl_medidor')->where('eletricista_posse_med', $technicalId)->where('data_exclusao_med', null)->where('status_med !=', 'baixado')->countAllResults() > 0) {
             throw new FormException(['operacao' => 'O eletricista possui medidores em posse. Regularize a devolução antes de continuar.']);
-        }
-        if ($this->db->table('tbl_consumivel_saldo')->where('eletricista_sco', $technicalId)->where('quantidade_sco >', 0)->where('data_exclusao_sco', null)->countAllResults()
-            || $this->db->table('tbl_consumivel_reserva')->where('eletricista_rco', $technicalId)->where('status_rco', 'entregue')->where('data_exclusao_rco', null)->countAllResults()) {
-            throw new FormException(['operacao' => 'O eletricista possui consumíveis ou devoluções pendentes. Regularize os materiais antes de continuar.']);
         }
     }
 }

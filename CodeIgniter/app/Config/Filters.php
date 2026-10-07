@@ -25,6 +25,7 @@ class Filters extends BaseFilters
      * or [filter_name => [classname1, classname2, ...]]
      */
     public array $aliases = [
+        'confirmation' => \App\Filters\ConfirmationFilter::class,
         'auth'         => \App\Filters\AuthFilter::class,
         'permission'   => \App\Filters\PermissionFilter::class,
         'nocache'      => \App\Filters\NoCacheFilter::class,
@@ -75,6 +76,7 @@ class Filters extends BaseFilters
             'auth',
             'permission',
             'csrf',
+            'confirmation',
         ],
         'after' => [
             'nocache',

@@ -32,8 +32,17 @@ final class ChecklistsController extends ApplicationController
     {
         $this->item($id, $item);
         try {
-            (new ChecklistService())->deleteItem($id, $item, (int) service('auth')->user()['id_usu']);
+            (new ChecklistService())->deleteItem($id, $item, (int) service('auth')->user()['id_usu'], $this->request->getPost('senha_atual'));
             return redirect()->to(site_url('checklists/' . $id))->setStatusCode(303)->with('success', 'Pergunta removida. As respostas anteriores foram preservadas.');
+        } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422); }
+    }
+
+    public function moveItem(int $id, int $item)
+    {
+        $this->item($id, $item);
+        try {
+            (new ChecklistService())->moveItem($id, $item, $this->request->getPost('direcao'), (int) service('auth')->user()['id_usu']);
+            return redirect()->to(site_url('checklists/' . $id))->setStatusCode(303)->with('success', 'Ordem das perguntas atualizada.');
         } catch (FormException $e) { return $this->details($this->record($id), $e->errors, 422); }
     }
 

@@ -7,6 +7,7 @@
     <link rel="icon" href="<?= base_url('assets/images/gpmsolucoes_logo.png') ?>" type="image/png">
     <link rel="stylesheet" href="<?= base_url('assets/vendor/bootstrap/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
+    <noscript><style>@media(max-width:1400px){.mobile-menu{display:none}.app-navigation{display:flex}}</style></noscript>
     <script src="<?= base_url('assets/js/app.js') ?>" defer></script>
 </head>
 <body>
@@ -18,22 +19,35 @@
     </a>
     <button class="mobile-menu icon-button" type="button" aria-controls="main-navigation" aria-expanded="false" aria-label="Abrir navegação" data-nav-toggle><?= heroicon('bars-3', 'outline', 'icon') ?></button>
     <nav class="app-navigation" id="main-navigation" aria-label="Navegação principal">
-        <?php foreach ([['inicio', 'inicio', 'home', 'Visão geral'], ['clientes.index', 'clientes', 'building-office-2', 'Clientes'], ['usuarios.index', 'usuarios', 'users', 'Equipe'], ['os.index', 'os', 'clipboard-document-list', 'Ordens de serviço'], ['medidores.index', 'medidores', 'cube', 'Estoque'], ['consumiveis.index', 'consumiveis', 'archive-box', 'Consumíveis'], ['checklists.index', 'checklists', 'clipboard-document-check', 'Checklists'], ['relatorios.eletricistas', 'relatorios/eletricistas', 'chart-bar', 'Relatórios']] as [$permission, $path, $icon, $label]): ?>
-            <?php if ($can($permission)): ?>
-                <a class="nav-item <?= ($active ?? '') === $path ? 'is-active' : '' ?>" href="<?= site_url($path) ?>" <?= ($active ?? '') === $path ? 'aria-current="page"' : '' ?>><?= heroicon($icon, 'outline', 'icon') ?><span><?= esc($label) ?></span></a>
+        <?php foreach ([['inicio', 'inicio', 'home', $user['papel_usu'] === 'eletricista' ? 'Meus atendimentos' : 'Visão geral'], ['clientes.index', 'clientes', 'building-office-2', 'Clientes'], ['usuarios.index', 'usuarios', 'users', 'Equipe'], ['os.index', 'os', 'clipboard-document-list', 'Ordens de serviço'], ['meus-medidores.index', 'meus-medidores', 'cube', 'Meus medidores'], ['medidores.index', 'medidores', 'cube', 'Estoque'], ['checklists.index', 'checklists', 'clipboard-document-check', 'Checklists'], ['relatorios.eletricistas', 'relatorios/eletricistas', 'chart-bar', 'Relatórios']] as [$permission, $path, $icon, $label]): ?>
+            <?php if ($can($permission) && !($user['papel_usu'] === 'eletricista' && $path === 'os')): ?>
+                <a class="nav-item <?= (($active ?? '') === $path || ($user['papel_usu'] === 'eletricista' && $path === 'inicio' && ($active ?? '') === 'os')) ? 'is-active' : '' ?>" href="<?= site_url($path) ?>" <?= (($active ?? '') === $path || ($user['papel_usu'] === 'eletricista' && $path === 'inicio' && ($active ?? '') === 'os')) ? 'aria-current="page"' : '' ?>><?= heroicon($icon, 'outline', 'icon') ?><span><?= esc($label) ?></span></a>
             <?php endif ?>
         <?php endforeach ?>
     </nav>
     <div class="account">
         <span class="avatar" aria-hidden="true"><?= esc(user_initials($user['display_name'])) ?></span>
         <span class="account-copy"><strong><?= esc($user['display_name']) ?></strong><small><?= esc(role_label($user['papel_usu'])) ?></small></span>
-        <form action="<?= site_url('logout') ?>" method="post"><?= csrf_field() ?><button class="icon-button" type="submit" aria-label="Sair do sistema" title="Sair"><?= heroicon('arrow-right-on-rectangle', 'outline', 'icon') ?></button></form>
+        <details class="account-menu">
+            <summary class="icon-button" aria-label="Abrir menu da conta" title="Minha conta"><?= heroicon('chevron-down', 'outline', 'icon') ?></summary>
+            <div class="account-dropdown">
+                <a href="<?= site_url('perfil') ?>" data-profile-open><?= heroicon('user-circle', 'outline', 'icon') ?> Editar perfil</a>
+                <form action="<?= site_url('logout') ?>" method="post"><?= csrf_field() ?><button type="submit"><?= heroicon('arrow-right-on-rectangle', 'outline', 'icon') ?> Sair do sistema</button></form>
+            </div>
+        </details>
     </div>
 </header>
 <main class="app-main" id="conteudo">
     <?php if ($success = session()->getFlashdata('success')): ?><div class="alert alert-success" role="status"><?= esc($success) ?></div><?php endif ?>
     <?= $this->renderSection('content') ?>
 </main>
+<?php if (empty($profilePage)): ?>
+<dialog class="profile-dialog" id="profile-dialog" aria-labelledby="profile-dialog-title">
+    <div class="profile-dialog-heading"><div><h2 id="profile-dialog-title">Editar perfil</h2><p>Seus dados pessoais e de acesso.</p></div><button class="btn btn-outline-secondary" type="button" aria-label="Fechar edição de perfil" data-profile-close><?= heroicon('x-mark', 'outline', 'icon') ?></button></div>
+    <?= view('components/profile_form', ['record' => $user, 'errors' => [], 'profilePrefix' => 'perfil-modal']) ?>
+</dialog>
+<?php endif ?>
+<?= $this->include('components/confirmation_dialog') ?>
 <footer class="app-footer">GPM Soluções · Serviços de campo</footer>
 </body>
 </html>

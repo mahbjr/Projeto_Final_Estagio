@@ -13,6 +13,7 @@ abstract class ApplicationController extends BaseController
         $user = service('auth')->user();
         return $this->response->setStatusCode($status)->setBody(view($view, $data + [
             'user' => $user,
+            'profilePage' => false,
             'can' => static fn (string $route): bool => PermissionPolicy::allows($route, $user['papel_usu'] ?? null),
         ]));
     }

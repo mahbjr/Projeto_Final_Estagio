@@ -9,7 +9,7 @@ use App\Models\ChecklistItemModel;
 final class ChecklistService extends WriteService
 {
     public const FIELDS = ['nome_chk', 'tipo_os_chk', 'etapa_chk', 'ativo_chk'];
-    public const ITEM_FIELDS = ['pergunta_chi', 'resposta_esperada_chi', 'obrigatorio_chi', 'nivel_chi', 'ordem_chi'];
+    public const ITEM_FIELDS = ['pergunta_chi', 'resposta_esperada_chi', 'nivel_chi'];
 
     public function save(array $input, int $actorId, ?int $id = null): int
     {
@@ -33,32 +33,70 @@ final class ChecklistService extends WriteService
     public function saveItem(int $checklist, array $input, int $actorId, ?int $id = null): int
     {
         $data = $this->strings($input, self::ITEM_FIELDS);
-        $this->validate($data, ['pergunta_chi' => 'required|max_length[255]', 'resposta_esperada_chi' => 'required|in_list[0,1]', 'obrigatorio_chi' => 'required|in_list[0,1]', 'nivel_chi' => 'required|in_list[bloqueante,informativo]', 'ordem_chi' => 'required|is_natural|less_than_equal_to[9999]']);
+        $this->validate($data, ['pergunta_chi' => 'required|max_length[255]', 'resposta_esperada_chi' => 'required|in_list[0,1]', 'nivel_chi' => 'required|in_list[bloqueante,informativo]']);
         return $this->transaction(function () use ($checklist, $data, $actorId, $id) {
             $this->actor($actorId);
             $this->record($checklist);
             $model = new ChecklistItemModel($this->db);
+            $items = $model->lockItems($checklist);
+            $this->assertSequence($items);
             if ($id) {
                 if (!$model->where('checklist_chi', $checklist)->find($id)) { $this->notFound(); }
                 $model->update($id, $data);
                 return $id;
             }
-            return (int) $model->insert($data + ['checklist_chi' => $checklist]);
+            return (int) $model->insert($data + ['checklist_chi' => $checklist, 'ordem_chi' => count($items) + 1, 'obrigatorio_chi' => 1]);
         });
     }
 
-    public function deleteItem(int $checklist, int $id, int $actorId): void
+    public function deleteItem(int $checklist, int $id, int $actorId, mixed $password = null): void
     {
-        $this->transaction(function () use ($checklist, $id, $actorId) {
+        $this->transaction(function () use ($checklist, $id, $actorId, $password) {
             $this->actor($actorId);
+            $this->confirmDeletion($actorId, $password);
             $record = $this->record($checklist);
             $model = new ChecklistItemModel($this->db);
             if (!$model->where('checklist_chi', $checklist)->find($id)) { $this->notFound(); }
+            $this->assertSequence($model->lockItems($checklist));
             if ($record['ativo_chk'] && $model->where('checklist_chi', $checklist)->countAllResults() <= 1) {
                 throw new FormException(['operacao' => 'Desative o modelo antes de remover a última pergunta.']);
             }
             $model->delete($id);
+            foreach ($model->lockItems($checklist) as $position => $item) {
+                $model->setPosition((int) $item['id_chi'], $position + 1);
+            }
         });
+    }
+
+    public function moveItem(int $checklist, int $id, mixed $direction, int $actorId): void
+    {
+        if (!is_string($direction) || !in_array($direction, ['subir', 'descer'], true)) {
+            throw new FormException(['direcao' => 'Escolha Subir ou Descer.']);
+        }
+        $this->transaction(function () use ($checklist, $id, $direction, $actorId) {
+            $this->actor($actorId);
+            $this->record($checklist);
+            $model = new ChecklistItemModel($this->db);
+            $items = $model->lockItems($checklist);
+            $index = array_search($id, array_map('intval', array_column($items, 'id_chi')), true);
+            if ($index === false) { $this->notFound(); }
+            $this->assertSequence($items);
+            $neighbor = $index + ($direction === 'subir' ? -1 : 1);
+            if (!isset($items[$neighbor])) {
+                throw new FormException(['direcao' => 'A pergunta já está no limite da sequência.']);
+            }
+            $model->setPosition($id, $neighbor + 1);
+            $model->setPosition((int) $items[$neighbor]['id_chi'], $index + 1);
+        });
+    }
+
+    private function assertSequence(array $items): void
+    {
+        foreach ($items as $index => $item) {
+            if ((int) $item['ordem_chi'] !== $index + 1) {
+                throw new FormException(['operacao' => 'Este checklist tem posições antigas. Execute a migração de ordenação antes de alterar as perguntas.']);
+            }
+        }
     }
 
     private function record(int $id): array

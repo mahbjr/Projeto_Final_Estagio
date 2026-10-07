@@ -23,55 +23,17 @@ final class MedidorOsService extends MedidorService
 
     public function reserve(int $orderId, mixed $meterId, int $actorId): void
     {
-        $this->validate(['medidor' => $meterId], ['medidor' => 'required|is_natural_no_zero']);
-        $this->transaction(function () use ($orderId, $meterId, $actorId) {
-            $actor = $this->operationalActor($actorId, ['gestor']);
-            $order = $this->operationalOrder($orderId, $actor, ['atribuida']);
-            $this->activeOwner($order);
-            $meter = $this->locked((int) $meterId);
-            $this->assertState($meter);
-            $this->assertNoPending((int) $meterId);
-            if ($order['tipo_oss'] !== 'nova_ligacao' || $meter['status_med'] !== 'disponivel') { throw new FormException(['medidor' => 'Reserve um medidor disponível para nova ligação atribuída.']); }
-            if ($this->db->table('tbl_medidor_reserva')->where('ordem_servico_rme', $orderId)->where('data_exclusao_rme', null)->whereIn('status_rme', ['reservada', 'entregue', 'devolucao_pendente'])->countAllResults()) { throw new FormException(['medidor' => 'Esta OS já possui medidor reservado ou em posse.']); }
-            $reservation = (int) (new MedidorReservaModel($this->db))->insert(['medidor_rme' => (int) $meterId, 'ordem_servico_rme' => $orderId, 'eletricista_rme' => $order['eletricista_oss'], 'usuario_rme' => $actorId]);
-            $this->transition($meter, 'reservado');
-            $this->history($order, $actorId, 'reserva_medidor', 'Medidor reservado no depósito.', ['reserva' => $reservation, 'medidor' => (int) $meterId]);
-        });
+        throw new FormException(['operacao' => 'Transferência administrativa desativada. O Eletricista registra retirada e devolução em Meus medidores.']);
     }
 
     public function deliver(int $orderId, int $reservationId, int $actorId): void
     {
-        $this->transaction(function () use ($orderId, $reservationId, $actorId) {
-            $actor = $this->operationalActor($actorId, ['gestor']);
-            $order = $this->operationalOrder($orderId, $actor, ['atribuida']);
-            $this->activeOwner($order);
-            $reservation = $this->reservation($orderId, $reservationId);
-            $meter = $this->locked((int) $reservation['medidor_rme']);
-            $this->assertState($meter);
-            if ($reservation['status_rme'] !== 'reservada' || $meter['status_med'] !== 'reservado' || (int) $reservation['eletricista_rme'] !== (int) $order['eletricista_oss']) { throw new FormException(['operacao' => 'Reserva não disponível para entrega.']); }
-            ChecklistInicioService::assertApproved($this->db, $order);
-            $this->transition($meter, 'em_transito', ['localizacao_med' => 'viatura', 'eletricista_posse_med' => $reservation['eletricista_rme']]);
-            (new MedidorReservaModel($this->db))->update($reservationId, ['status_rme' => 'entregue']);
-            $this->movement((int) $meter['id_med'], $actorId, 'transferencia', 'galpao', 'eletricista', (int) $reservation['eletricista_rme'], 'Entrega física da reserva #' . $reservationId, 'ajuste', $orderId);
-        });
+        throw new FormException(['operacao' => 'Transferência administrativa desativada. O Eletricista registra retirada e devolução em Meus medidores.']);
     }
 
     public function receive(int $orderId, int $reservationId, mixed $condition, int $actorId): void
     {
-        $this->validate(['condicao_medidor' => $condition], ['condicao_medidor' => 'required|in_list[disponivel,defeito]']);
-        $this->transaction(function () use ($orderId, $reservationId, $condition, $actorId) {
-            $actor = $this->operationalActor($actorId, ['gestor']);
-            $this->operationalOrder($orderId, $actor, ['atribuida', 'em_atendimento', 'encerrada', 'cancelada']);
-            $reservation = $this->reservation($orderId, $reservationId);
-            $meter = $this->locked((int) $reservation['medidor_rme']);
-            $this->assertState($meter);
-            if (!in_array($reservation['status_rme'], ['entregue', 'devolucao_pendente'], true) || !in_array($meter['status_med'], ['em_transito', 'defeito'], true) || $meter['localizacao_med'] !== 'viatura' || (int) $meter['eletricista_posse_med'] !== (int) $reservation['eletricista_rme']) { throw new FormException(['operacao' => 'Medidor não está em posse física nesta reserva.']); }
-            if ($meter['status_med'] === 'defeito' && $condition !== 'defeito') { throw new FormException(['condicao_medidor' => 'Receba como defeito o equipamento danificado.']); }
-            if ($meter['status_med'] === 'defeito') { (new MedidorModel($this->db))->update($meter['id_med'], ['localizacao_med' => 'deposito', 'eletricista_posse_med' => null]); }
-            else { $this->transition($meter, $condition, ['localizacao_med' => 'deposito', 'eletricista_posse_med' => null]); }
-            (new MedidorReservaModel($this->db))->update($reservationId, ['status_rme' => 'devolvida']);
-            $this->movement((int) $meter['id_med'], $actorId, 'transferencia', 'eletricista', 'galpao', (int) $reservation['eletricista_rme'], 'Recebimento físico: ' . $condition, 'ajuste', $orderId);
-        });
+        throw new FormException(['operacao' => 'Transferência administrativa desativada. O Eletricista registra retirada e devolução em Meus medidores.']);
     }
 
     public function apply(int $orderId, int $reservationId, int $actorId): void
@@ -83,7 +45,7 @@ final class MedidorOsService extends MedidorService
             $meter = $this->locked((int) $reservation['medidor_rme']);
             $this->assertState($meter);
             if ($order['tipo_oss'] !== 'nova_ligacao' || $reservation['status_rme'] !== 'entregue' || (int) $reservation['eletricista_rme'] !== $actor['id_ele'] || $meter['status_med'] !== 'em_transito' || (int) $meter['eletricista_posse_med'] !== $actor['id_ele']) {
-                throw new FormException(['operacao' => 'Aplique somente o medidor entregue em sua posse para nova ligação em atendimento.']);
+                throw new FormException(['operacao' => 'Aplique somente o medidor vinculado em sua posse para nova ligação em atendimento.']);
             }
             if ($this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $orderId)->where('medidor_osm', $meter['id_med'])->where('tipo_osm', 'retirado')->countAllResults()
                 || $this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $orderId)->where('tipo_osm', 'instalado')->countAllResults()
@@ -99,9 +61,9 @@ final class MedidorOsService extends MedidorService
         });
     }
 
-    public function withdraw(int $orderId, int $meterId, int $actorId): void
+    public function withdraw(int $orderId, int $meterId, int $actorId, mixed $reason = null): void
     {
-        $this->transaction(function () use ($orderId, $meterId, $actorId) {
+        $this->transaction(function () use ($orderId, $meterId, $actorId, $reason) {
             $actor = $this->operationalActor($actorId, ['eletricista']);
             $order = $this->operationalOrder($orderId, $actor, ['em_atendimento']);
             $meter = $this->locked($meterId);
@@ -112,13 +74,18 @@ final class MedidorOsService extends MedidorService
                 || $this->db->table('tbl_os_medidor')->where('ordem_servico_osm', $orderId)->where('medidor_osm', $meterId)->where('tipo_osm', 'retirado')->countAllResults()) {
                 throw new FormException(['operacao' => 'O medidor não está disponível para retirada nesta UC ou a retirada já foi registrada nesta OS.']);
             }
+            $exceptional = $order['tipo_oss'] === 'nova_ligacao' && (int) $installation['ordem_servico_ins'] === $orderId;
+            $reason = is_string($reason) ? trim($reason) : '';
+            if ($exceptional) {
+                $this->validate(['justificativa_retirada' => $reason], ['justificativa_retirada' => 'required|max_length[1000]']);
+            }
             $this->transition($meter, 'em_transito', ['localizacao_med' => 'viatura', 'eletricista_posse_med' => $actor['id_ele']]);
             // This table is only the current installation projection; immutable OS/movement history stays intact.
             (new \App\Models\InstalacaoAtualModel($this->db))->delete($installation['id_ins']);
             $reservationId = (int) (new MedidorReservaModel($this->db))->insert(['medidor_rme' => $meterId, 'ordem_servico_rme' => $orderId, 'eletricista_rme' => $actor['id_ele'], 'usuario_rme' => $actorId, 'status_rme' => 'entregue']);
             (new \App\Models\OsMedidorModel($this->db))->insert(['medidor_osm' => $meterId, 'ordem_servico_osm' => $orderId, 'tipo_osm' => 'retirado']);
             $this->movement($meterId, $actorId, 'entrada', 'cliente', 'eletricista', $actor['id_ele'], 'Retirada na UC ' . $order['unidade_consumidora_oss'], 'ajuste', $orderId);
-            $this->history($order, $actorId, 'retirada_medidor', 'Medidor retirado para a custódia do Eletricista.', ['reserva' => $reservationId, 'medidor' => $meterId, 'uc' => $order['unidade_consumidora_oss'], 'os_instalacao_anterior' => (int) $installation['ordem_servico_ins']]);
+            $this->history($order, $actorId, 'retirada_medidor', ($exceptional ? 'Retirada excepcional: ' . $reason : 'Medidor retirado para a custódia do Eletricista.'), ['reserva' => $reservationId, 'medidor' => $meterId, 'uc' => $order['unidade_consumidora_oss'], 'os_instalacao_anterior' => (int) $installation['ordem_servico_ins'], 'retirada_excepcional' => $exceptional, 'justificativa' => $exceptional ? $reason : null]);
         });
     }
 
@@ -137,7 +104,7 @@ final class MedidorOsService extends MedidorService
             if (!$order) { $this->assertNoPending($meterId); }
             if ($actor['papel_usu'] === 'eletricista' && ($type === 'baixa' || $meter['localizacao_med'] !== 'viatura' || (int) $meter['eletricista_posse_med'] !== $actor['id_ele'])) { throw new FormException(['operacao' => 'Registre perda, roubo ou dano somente do medidor em sua posse nesta OS.']); }
             if ($type === 'baixa' && !in_array($meter['status_med'], ['disponivel', 'defeito', 'perdido'], true)) { throw new FormException(['tipo_ocorrencia' => 'Baixa exige medidor disponível, defeituoso ou perdido.']); }
-            if ($type === 'baixa' && $meter['status_med'] === 'defeito' && $meter['localizacao_med'] === 'viatura') { throw new FormException(['operacao' => 'Receba fisicamente o medidor defeituoso antes da baixa.']); }
+            if ($type === 'baixa' && $meter['status_med'] === 'defeito' && $meter['localizacao_med'] === 'viatura') { throw new FormException(['operacao' => 'O Eletricista deve registrar a devolução do medidor defeituoso antes da baixa.']); }
             $target = match ($type) { 'dano' => 'defeito', 'baixa' => 'baixado', default => 'perdido' };
             $this->transition($meter, $target);
             $occurrence = (int) (new MedidorOcorrenciaModel($this->db))->insert(['medidor_ome' => $meterId, 'ordem_servico_ome' => $orderId, 'usuario_ome' => $actorId, 'eletricista_ome' => $meter['eletricista_posse_med'], 'tipo_ome' => $type, 'justificativa_ome' => $reason, 'estado_anterior_ome' => $meter['status_med'], 'local_anterior_ome' => $meter['localizacao_med']]);

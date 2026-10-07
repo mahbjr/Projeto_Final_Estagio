@@ -6,13 +6,15 @@ use CodeIgniter\Router\RouteCollection;
 $routes->setAutoRoute(false);
 $routes->get('login', 'AuthController::login', ['as' => 'login.form']);
 $routes->post('login', 'AuthController::authenticate', ['as' => 'login.submit']);
+$routes->get('perfil', 'PerfilController::index', ['as' => 'perfil.show']);
+$routes->post('perfil/atualizar', 'PerfilController::update', ['as' => 'perfil.update']);
 $routes->post('logout', 'AuthController::logout', ['as' => 'logout']);
 $routes->get('/', 'Home::index', ['as' => 'entrada']);
 $routes->get('inicio', 'Home::dashboard', ['as' => 'inicio']);
 $routes->get('relatorios/eletricistas', 'RelatoriosController::electricians', ['as' => 'relatorios.eletricistas']);
 $routes->get('relatorios/estoque', 'RelatoriosController::stock', ['as' => 'relatorios.estoque']);
 
-foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController', 'consumiveis' => 'ConsumiveisController'] as $resource => $controller) {
+foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController', 'medidores' => 'MedidoresController'] as $resource => $controller) {
     $routes->get($resource, $controller . '::index', ['as' => $resource . '.index']);
     $routes->get($resource . '/novo', $controller . '::new', ['as' => $resource . '.new']);
     $routes->post($resource, $controller . '::create', ['as' => $resource . '.create']);
@@ -24,10 +26,6 @@ foreach (['usuarios' => 'UsuariosController', 'clientes' => 'ClientesController'
 
 $routes->post('medidores/(:num)/enviar', 'MedidoresController::send/$1', ['as' => 'medidores.send']);
 $routes->post('medidores/(:num)/devolver', 'MedidoresController::returnToDepot/$1', ['as' => 'medidores.return']);
-$routes->post('consumiveis/(:num)/entrada', 'ConsumiveisController::entry/$1', ['as' => 'consumiveis.entry']);
-$routes->post('os/(:num)/consumiveis/reservar', 'OrdensServicoController::reserveConsumable/$1', ['as' => 'os.consumiveis.reserve']);
-$routes->post('os/(:num)/consumiveis/(:num)/entregar', 'OrdensServicoController::deliverConsumable/$1/$2', ['as' => 'os.consumiveis.deliver']);
-$routes->post('os/(:num)/consumiveis/(:num)/receber', 'OrdensServicoController::receiveConsumable/$1/$2', ['as' => 'os.consumiveis.receive']);
 $routes->post('os/(:num)/checklists/(:num)/responder-inicio', 'OrdensServicoController::answerBeginning/$1/$2', ['as' => 'os.checklist.answer']);
 $routes->post('os/(:num)/avaliacoes/(:num)/liberar-inicio', 'OrdensServicoController::releaseBeginning/$1/$2', ['as' => 'os.checklist.release']);
 
@@ -48,6 +46,7 @@ $routes->post('checklists/(:num)/atualizar', 'ChecklistsController::update/$1', 
 $routes->post('checklists/(:num)/itens', 'ChecklistsController::createItem/$1', ['as' => 'checklists.item.create']);
 $routes->get('checklists/(:num)/itens/(:num)/editar', 'ChecklistsController::editItem/$1/$2', ['as' => 'checklists.item.edit']);
 $routes->post('checklists/(:num)/itens/(:num)/atualizar', 'ChecklistsController::updateItem/$1/$2', ['as' => 'checklists.item.update']);
+$routes->post('checklists/(:num)/itens/(:num)/mover', 'ChecklistsController::moveItem/$1/$2', ['as' => 'checklists.item.move']);
 $routes->post('checklists/(:num)/itens/(:num)/excluir', 'ChecklistsController::deleteItem/$1/$2', ['as' => 'checklists.item.delete']);
 
 $routes->post('os/(:num)/medidores/reservar', 'OrdensServicoController::reserveMeter/$1', ['as' => 'os.medidores.reserve']);
@@ -59,7 +58,6 @@ $routes->post('medidores/(:num)/ocorrencia', 'MedidoresController::occurrence/$1
 $routes->post('os/(:num)/iniciar-atendimento', 'OrdensServicoController::startAttendance/$1', ['as' => 'os.attendance.start']);
 $routes->post('os/(:num)/observacoes-atendimento', 'OrdensServicoController::noteAttendance/$1', ['as' => 'os.attendance.note']);
 
-$routes->post('os/(:num)/consumiveis/(:num)/consumir', 'OrdensServicoController::consumeConsumable/$1/$2', ['as' => 'os.consumiveis.consume']);
 $routes->post('os/(:num)/medidores/(:num)/aplicar', 'OrdensServicoController::applyMeter/$1/$2', ['as' => 'os.medidores.apply']);
 $routes->post('os/(:num)/medidores/(:num)/retirar', 'OrdensServicoController::withdrawMeter/$1/$2', ['as' => 'os.medidores.withdraw']);
 
@@ -69,3 +67,7 @@ $routes->post('os/(:num)/encerrar', 'OrdensServicoController::closeAttendance/$1
 $routes->post('os/(:num)/fotos', 'OrdensServicoController::uploadPhoto/$1', ['as'=>'os.photos.upload']);
 $routes->get('os/(:num)/fotos/(:num)', 'OrdensServicoController::photo/$1/$2', ['as'=>'os.photos.show']);
 $routes->post('os/(:num)/fotos/(:num)/remover', 'OrdensServicoController::removePhoto/$1/$2', ['as'=>'os.photos.remove']);
+
+$routes->get('meus-medidores', 'MeusMedidoresController::index', ['as' => 'meus-medidores.index']);
+$routes->post('meus-medidores/(:num)/retirar', 'MeusMedidoresController::pickup/$1', ['as' => 'meus-medidores.pickup']);
+$routes->post('meus-medidores/(:num)/devolver', 'MeusMedidoresController::returnMeter/$1', ['as' => 'meus-medidores.return']);

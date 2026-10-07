@@ -9,13 +9,9 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-DELETE FROM `tbl_consumivel`;
 
-DELETE FROM `tbl_consumivel_saldo`;
 
-DELETE FROM `tbl_consumivel_reserva`;
 
-DELETE FROM `tbl_consumivel_mov`;
 
 DELETE FROM `tbl_medidor_reserva`;
 
@@ -180,6 +176,3 @@ UPDATE tbl_os_historico SET usuario_osh=CASE WHEN eletricista_osh=1 THEN 3 WHEN 
 UPDATE tbl_estoque_mov SET usuario_emv=CASE WHEN ordem_servico_emv=3 THEN 4 WHEN origem_emv='cliente' THEN 3 ELSE 1 END;
 UPDATE tbl_os SET resultado_oss='executado' WHERE status_oss='encerrada';
 INSERT INTO tbl_instalacao_atual (medidor_ins,ordem_servico_ins,unidade_consumidora_ins,usuario_ins) VALUES (5,3,'UC-CE-300789',4);
-INSERT INTO tbl_consumivel (id_con,nome_con,unidade_con,precisao_con) VALUES (1,'Lacre de demonstração','unidade',0),(2,'Fita de demonstração','metro',3);
-INSERT INTO tbl_consumivel_saldo (consumivel_sco,quantidade_sco) VALUES (1,100),(2,25.500);
-INSERT INTO tbl_consumivel_mov (consumivel_mco,usuario_mco,tipo_mco,origem_mco,destino_mco,quantidade_mco,observacao_mco) VALUES (1,1,'entrada','fornecedor','deposito',100,'Carga demonstrativa'),(2,1,'entrada','fornecedor','deposito',25.500,'Carga demonstrativa');

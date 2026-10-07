@@ -79,13 +79,14 @@ final class RelatorioEletricistasTest extends AppTestCase
     {
         $before=$this->db->table('tbl_os')->get()->getResultArray();
         $this->requestAs(null,'GET','relatorios/eletricistas')->assertRedirectTo(site_url('login'));
-        foreach ([1,2,3,4] as $id) {
+        foreach ([1,2] as $id) {
             $r=$this->requestAs($id,'GET','relatorios/eletricistas?data_inicio=2026-01-01&data_fim=2026-12-31');
             $r->assertStatus(200);$r->assertSee('Tempo médio de atendimento');
             $this->assertStringContainsString('no-store',$r->response()->getHeaderLine('Cache-Control'));
         }
         $r=$this->requestAs(3,'GET','relatorios/eletricistas?data_inicio=2026-01-01&data_fim=2026-12-31');
-        $r->assertSee('Meu relatório de atendimentos');$r->assertDontSee('UC-CE-300789');$r->assertDontSee('ELE-2024-002');
+        $r->assertStatus(403);$r->assertDontSee('UC-CE-300789');$r->assertDontSee('ELE-2024-002');
+        $this->requestAs(4,'GET','relatorios/eletricistas')->assertStatus(403);
         foreach (['eletricista=2','cliente=3','eletricista=sem_atribuicao'] as $q) {$this->requestAs(3,'GET','relatorios/eletricistas?'.$q)->assertStatus(403);}
         $this->requestAs(1,'POST','relatorios/eletricistas',[],false)->assertStatus(404);
         $this->requestAs(1,'GET','relatorios/eletricistas',[],true,time()-7201)->assertRedirectTo(site_url('login'));

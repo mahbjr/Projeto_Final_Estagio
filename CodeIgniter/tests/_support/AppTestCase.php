@@ -44,10 +44,42 @@ abstract class AppTestCase extends CIUnitTestCase
         }
     }
 
+    // Existing business-flow tests explicitly supply the seed manager password for deletions.
+    // Security tests use requestAs directly to exercise missing/incorrect credentials.
+    protected function requestWithDeletionPassword(?int $userId, string $method, string $path, array $data = [], bool $csrf = true, ?int $lastActivity = null)
+    {
+        if ($method === 'POST' && str_ends_with($path, '/excluir')) {
+            $data += ['senha_atual' => 'senha123'];
+        }
+        return $this->requestAs($userId, $method, $path, $data, $csrf, $lastActivity);
+    }
+
+    /** Historical administrative reservation fixture, not a current application action. */
+    protected function legacyMeterReservation(int $order, int $meter): int
+    {
+        $row = $this->db->table('tbl_os')->where('id_oss', $order)->get()->getRowArray();
+        $this->db->table('tbl_medidor_reserva')->insert(['ordem_servico_rme'=>$order,'medidor_rme'=>$meter,'eletricista_rme'=>$row['eletricista_oss'],'usuario_rme'=>1]);
+        $id = (int) $this->db->insertID();
+        $this->db->table('tbl_medidor')->where('id_med',$meter)->update(['status_med'=>'reservado','localizacao_med'=>'deposito','eletricista_posse_med'=>null]);
+        return $id;
+    }
+
+    protected function pickupLegacyReservation(int $order, int $reservation, int $actor = 3): void
+    {
+        $row = $this->db->table('tbl_medidor_reserva')->where('ordem_servico_rme',$order)->where('id_rme',$reservation)->get()->getRowArray();
+        (new \App\Services\MedidorCustodiaService($this->db))->pickup((int)$row['medidor_rme'],$actor);
+    }
+
+    protected function returnLegacyReservation(int $order, int $reservation, string $condition, int $actor = 3): void
+    {
+        $row = $this->db->table('tbl_medidor_reserva')->where('ordem_servico_rme',$order)->where('id_rme',$reservation)->get()->getRowArray();
+        (new \App\Services\MedidorCustodiaService($this->db))->returnMeter((int)$row['medidor_rme'],$condition,$actor);
+    }
+
     protected function clientInput(array $overrides = []): array
     {
         return $overrides + [
-            'nome_cli' => 'Empresa de Teste Ltda', 'cnpj_cli' => 'ZZ12AB34000156',
+            'nome_cli' => 'Empresa de Teste Ltda', 'cnpj_cli' => '11222333000181',
             'email_cli' => 'contato@teste.example', 'telefone_cli' => '(85) 3333-4444',
             'endereco_cli' => 'Rua de Teste, 100', 'bairro_cli' => 'Centro', 'cidade_cli' => 'Fortaleza',
             'estado_cli' => 'CE', 'cep_cli' => '60010-000', 'status_cli' => 'ativo',

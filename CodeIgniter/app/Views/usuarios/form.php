@@ -14,8 +14,8 @@
     <h2>Dados de acesso</h2>
     <div class="row g-3">
         <?= app_field('nome_usu', 'E-mail ou identificador', $record, $errors, ['required' => true, 'max' => 150, 'autocomplete' => 'username']) ?>
-        <?= app_field('papel_usu', 'Papel de acesso', $record, $errors, ['required' => true, 'choices' => $roles, 'disabled' => $fixedElectrician, 'help' => $fixedElectrician ? 'O papel de Eletricista não pode ser alterado.' : 'Na edição, a troca é permitida apenas entre Gestor e Operador.']) ?>
-        <?= app_field('senha', 'Senha', [], $errors, ['type' => 'password', 'required' => !$editing, 'autocomplete' => 'new-password', 'help' => $editing ? 'Deixe em branco para manter a senha atual.' : 'Mínimo de oito caracteres e máximo de 72 bytes.']) ?>
+        <?= app_field('papel_usu', 'Papel de acesso', $record, $errors, ['required' => true, 'choices' => $roles, 'disabled' => $fixedElectrician, 'help' => $fixedElectrician ? 'O papel de Eletricista não pode ser alterado.' : 'A troca de papel é permitida apenas entre Gestor e Operador.']) ?>
+        <?= app_field('senha', 'Senha', [], $errors, ['type' => 'password', 'required' => !$editing, 'autocomplete' => 'new-password', 'help' => $editing ? 'Deixe em branco para manter a senha atual.' : 'Mínimo de oito caracteres.']) ?>
         <?= app_field('confirmacao', 'Confirmar senha', [], $errors, ['type' => 'password', 'required' => !$editing, 'autocomplete' => 'new-password']) ?>
         <?= app_field('ativo_usu', 'Situação', $record, $errors, ['required' => true, 'choices' => ['1' => 'Ativo', '0' => 'Inativo']]) ?>
     </div>

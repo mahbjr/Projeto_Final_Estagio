@@ -74,7 +74,7 @@ final class UsuariosTest extends AppTestCase
 
     public function testOwnAccessAndLastManagerCannotBeRemoved(): void
     {
-        $this->requestAs(1, 'POST', 'usuarios/1/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1, 'POST', 'usuarios/1/excluir')->assertStatus(422);
         $this->requestAs(1, 'POST', 'usuarios/1/atualizar', $this->userInput(['nome_usu' => 'gestor@energia.com.br', 'papel_usu' => 'operador']))->assertStatus(422);
         $this->requestAs(1, 'POST', 'usuarios/1/atualizar', $this->userInput(['nome_usu' => 'gestor@energia.com.br', 'papel_usu' => 'gestor', 'ativo_usu' => '0']))->assertStatus(422);
         $this->expectException(FormException::class);
@@ -91,7 +91,7 @@ final class UsuariosTest extends AppTestCase
         $this->requestAs(1, 'POST', 'usuarios', $this->userInput(['cpf_usu' => '123 45678900']))->assertStatus(422);
         $this->requestAs(1, 'POST', 'usuarios', $this->userInput())->assertStatus(303);
         $id = (int) $this->db->table('tbl_usuario')->where('nome_usu', 'novo@teste.example')->get()->getRow()->id_usu;
-        $this->requestAs(1, 'POST', "usuarios/$id/excluir")->assertStatus(303);
+        $this->requestWithDeletionPassword(1, 'POST', "usuarios/$id/excluir")->assertStatus(303);
         $this->requestAs(1, 'POST', 'usuarios', $this->userInput(['nome_usu' => 'outro@teste.example']))->assertStatus(422);
         $this->db->table('tbl_usuario')->where('id_usu', 2)->update(['nome_completo_usu' => null, 'cpf_usu' => null, 'cargo_usu' => null]);
         $this->requestAs(2, 'GET', 'inicio')->assertStatus(200);
@@ -108,7 +108,7 @@ final class UsuariosTest extends AppTestCase
     {
         $this->db->table('tbl_medidor')->update(['eletricista_posse_med' => null]);
         $this->db->table('tbl_os')->where('eletricista_oss', 1)->update(['status_oss' => $status]);
-        $this->requestAs(1, 'POST', 'usuarios/3/excluir')->assertStatus($blocked ? 422 : 303);
+        $this->requestWithDeletionPassword(1, 'POST', 'usuarios/3/excluir')->assertStatus($blocked ? 422 : 303);
         $user = $this->db->table('tbl_usuario')->where('id_usu', 3)->get()->getRowArray();
         $technical = $this->db->table('tbl_eletricista')->where('id_ele', 1)->get()->getRowArray();
         $this->assertSame($blocked, $user['data_exclusao_usu'] === null);
@@ -122,12 +122,12 @@ final class UsuariosTest extends AppTestCase
         $input = $technical + ['nome_usu' => 'eletricista1@energia.com.br', 'ativo_usu' => '0', 'senha' => '', 'confirmacao' => ''] + $this->db->table('tbl_usuario')->where('id_usu', 3)->get()->getRowArray();
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(422);
         $this->db->table('tbl_os')->update(['status_oss' => 'encerrada']);
-        $this->requestAs(1, 'POST', 'usuarios/3/excluir')->assertStatus(422);
+        $this->requestWithDeletionPassword(1, 'POST', 'usuarios/3/excluir')->assertStatus(422);
         $this->db->table('tbl_medidor')->update(['eletricista_posse_med' => null]);
         $this->requestAs(1, 'POST', 'usuarios/3/atualizar', $input)->assertStatus(303);
         $this->assertNull($this->db->table('tbl_eletricista')->where('id_ele', 1)->get()->getRowArray()['data_exclusao_ele']);
         $this->requestAs(3, 'GET', 'inicio')->assertRedirectTo(site_url('login'));
-        $this->requestAs(1, 'POST', 'usuarios/3/excluir')->assertStatus(303);
+        $this->requestWithDeletionPassword(1, 'POST', 'usuarios/3/excluir')->assertStatus(303);
         $this->requestAs(1, 'GET', 'usuarios/3')->assertStatus(404);
     }
 

@@ -54,7 +54,7 @@ class ClientesController extends ApplicationController
     {
         $this->record($id);
         try {
-            (new ClienteService())->delete($id);
+            (new ClienteService())->delete($id, (int) service('auth')->user()['id_usu'], $this->request->getPost('senha_atual'));
             return redirect()->to(site_url('clientes'))->setStatusCode(303)->with('success', 'Empresa excluída. As OS e o histórico foram preservados.');
         } catch (FormException $e) {
             return $this->page('clientes/show', ['title' => 'Consultar empresa', 'active' => 'clientes', 'record' => $this->record($id), 'errors' => $e->errors], 422);
@@ -81,6 +81,7 @@ class ClientesController extends ApplicationController
 
     private function form(array $record, array $errors = [], int $status = 200)
     {
+        $record['_original'] = isset($record['id_cli']) ? $this->record((int) $record['id_cli']) : [];
         return $this->page('clientes/form', ['title' => isset($record['id_cli']) ? 'Editar empresa' : 'Nova empresa', 'active' => 'clientes', 'record' => $record, 'errors' => $errors], $status);
     }
 }
