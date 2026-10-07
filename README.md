@@ -34,14 +34,18 @@ Aplicação web desenvolvida em **PHP 8.3** e **CodeIgniter 4** com banco de dad
    database.default.port     = 3306
    ```
 
-3. **Migrações e Seeds (Preparação do Banco):**
-   ```bash
-   # Executar as migrações estruturais
-   php spark migrate
+3. **Preparação do Banco de Dados:**
+- **Banco novo/demonstração:**
+    ```bash
+    php spark app:prepare-demo --group demo
+    ```
+    *(Ou importe `database/schema.sql` e `database/seeds.sql` no seu MySQL)*
 
-   # Opcional: inicializar dados de demonstração em banco dedicado
-   php spark app:prepare-demo --group demo
-   ```
+- **Banco existente (aplicar migrações incrementais):**
+    ```bash
+    php spark migrate
+    ```
+
 
 4. **Execução do Servidor Local:**
    ```bash
